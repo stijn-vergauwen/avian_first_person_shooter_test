@@ -11,8 +11,12 @@ Info and documentation for development.
 
 
 ## Backlog
+- Add system_sets from crossy roads project
 - Setup character
+- Have character entity hierarchy with root entity, neck / head entity, meshes and colliders as child entities
+- Character camera at eye position, moving forward when looking down (looking down in front of you) and backwards when up 
 - Add basic movement
+- Use Avian's Transform interpolation for smooth visuals
 - Add rotation
 - Add picking up of objects
 - Allow items to configure in what orientation they should be held
