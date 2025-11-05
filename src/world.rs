@@ -41,7 +41,7 @@ pub fn setup(
     // Light
     commands.spawn((
         DirectionalLight {
-            shadows_enabled: true,
+            shadows_enabled: true, 
             ..default()
         },
         Transform {
