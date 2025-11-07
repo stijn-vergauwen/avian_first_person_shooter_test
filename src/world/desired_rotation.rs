@@ -12,6 +12,7 @@ impl Plugin for DesiredRotationPlugin {
 #[derive(Component, Copy, Clone, Debug, Default)]
 pub struct DesiredRotation {
     pub rotation: EulerAngle,
+    #[expect(unused)]
     pub rotation_type: RotationType,
 }
 

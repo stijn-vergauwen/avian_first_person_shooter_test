@@ -10,6 +10,9 @@ Info and documentation for development.
 - The in-game world should have interactable elements to test out weapons, like shooting targets and obstacles to move around.
 
 
+## Code Refactoring & Improvements
+- Pretty sure SetDesiredMovement gets fired every update, it should only fire when input has changed compared to previous tick
+
 ## Backlog
 - Setup character
 - Add basic movement

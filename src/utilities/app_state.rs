@@ -4,7 +4,7 @@ pub struct AppStatePlugin;
 
 impl Plugin for AppStatePlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<AppState>();
+        app.insert_state(AppState::InGame);
     }
 }
 

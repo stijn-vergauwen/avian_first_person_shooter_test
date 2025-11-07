@@ -14,8 +14,6 @@ const MOVEMENT_KEYBINDS: MovementKeybinds = MovementKeybinds {
     back_key: KeyCode::KeyS,
     left_key: KeyCode::KeyA,
     right_key: KeyCode::KeyD,
-    run_key: KeyCode::ShiftLeft,
-    jump_key: KeyCode::Space,
 };
 
 pub struct PlayerPlugin;
@@ -40,8 +38,6 @@ pub struct MovementKeybinds {
     pub back_key: KeyCode,
     pub left_key: KeyCode,
     pub right_key: KeyCode,
-    pub run_key: KeyCode,
-    pub jump_key: KeyCode,
 }
 
 fn spawn_player(
@@ -61,6 +57,7 @@ fn spawn_player(
             Transform::from_translation(start_position),
             RigidBody::Dynamic,
             LockedAxes::ROTATION_LOCKED,
+            ConstantForce::default(),
         ))
         .id();
 

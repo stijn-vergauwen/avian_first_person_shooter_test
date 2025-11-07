@@ -25,6 +25,7 @@ impl Fraction {
     }
 
     /// Returns the inverse of this fraction.
+    #[expect(unused)]
     pub fn inverse(&self) -> Self {
         Self(1.0 - self.0)
     }
