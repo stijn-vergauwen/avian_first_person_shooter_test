@@ -1,5 +1,8 @@
-mod system_sets;
+mod angle;
 mod app_state;
+pub mod euler_angle;
+pub mod fraction;
+mod system_sets;
 
 use bevy::prelude::*;
 

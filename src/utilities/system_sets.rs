@@ -8,22 +8,22 @@ impl Plugin for SystemSetPlugin {
         app.configure_sets(
             Update,
             (
-                InputSet,
-                UiSet::HandleRequests,
-                UiSet::UpdateUi,
-                UiSet::DespawnUi,
-                DisplaySet.run_if(in_state(AppState::InGame)),
+                InputSystems,
+                UiSystems::HandleRequests,
+                UiSystems::UpdateUi,
+                UiSystems::DespawnUi,
+                DisplaySystems.run_if(in_state(AppState::InGame)),
             )
                 .chain(),
         )
         .configure_sets(
             FixedUpdate,
             (
-                DataSet::PrepareData,
-                DataSet::HandleRequests,
-                DataSet::SpawnEntities,
-                DataSet::UpdateEntities,
-                DataSet::DespawnEntities,
+                DataSystems::PrepareData,
+                DataSystems::HandleRequests,
+                DataSystems::SpawnEntities,
+                DataSystems::UpdateEntities,
+                DataSystems::DespawnEntities,
             )
                 .chain()
                 .run_if(in_state(AppState::InGame)),
@@ -37,7 +37,7 @@ impl Plugin for SystemSetPlugin {
 /// - modifying anything visual
 /// - modifying components
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone, Copy)]
-pub struct InputSet;
+pub struct InputSystems;
 
 /// [SystemSet] for UI logic.
 ///
@@ -46,7 +46,7 @@ pub struct InputSet;
 ///
 /// To decide what falls under "UI", I think a good way to think about it is "would this be visible or left out in a cinematic?"
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone, Copy)]
-pub enum UiSet {
+pub enum UiSystems {
     HandleRequests,
     UpdateUi,
     DespawnUi,
@@ -60,7 +60,7 @@ pub enum UiSet {
 /// - sending events
 /// - modifying anything that doesn't directly change how something is displayed on screen
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone, Copy)]
-pub struct DisplaySet;
+pub struct DisplaySystems;
 
 /// [Systemset] for in-game logic that modifies game-state or simulation data.
 ///
@@ -68,7 +68,7 @@ pub struct DisplaySet;
 /// - modifying anything visual (should be limited to preparing data for [DisplaySet])
 /// - ui
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone, Copy)]
-pub enum DataSet {
+pub enum DataSystems {
     PrepareData,
     HandleRequests,
     SpawnEntities,

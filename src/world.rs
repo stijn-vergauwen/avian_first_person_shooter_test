@@ -1,11 +1,25 @@
+mod character;
+mod desired_movement;
+mod desired_rotation;
+
 use avian3d::prelude::*;
 use bevy::prelude::*;
+
+use crate::world::{
+    character::CharacterPlugin, desired_movement::DesiredMovementPlugin,
+    desired_rotation::DesiredRotationPlugin,
+};
 
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup);
+        app.add_plugins((
+            CharacterPlugin,
+            DesiredMovementPlugin,
+            DesiredRotationPlugin,
+        ))
+        .add_systems(Startup, setup);
     }
 }
 
@@ -41,7 +55,7 @@ pub fn setup(
     // Light
     commands.spawn((
         DirectionalLight {
-            shadows_enabled: true, 
+            shadows_enabled: true,
             ..default()
         },
         Transform {
