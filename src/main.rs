@@ -1,10 +1,11 @@
 mod utilities;
 mod world;
+mod player;
 
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use crate::{utilities::UtilitiesPlugin, world::WorldPlugin};
+use crate::{player::PlayerPlugin, utilities::UtilitiesPlugin, world::WorldPlugin};
 
 fn main() {
     App::new()
@@ -13,6 +14,7 @@ fn main() {
             PhysicsPlugins::default(),
             WorldPlugin,
             UtilitiesPlugin,
+            PlayerPlugin,
         ))
         .run();
 }

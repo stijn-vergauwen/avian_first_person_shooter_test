@@ -7,7 +7,7 @@ pub struct Fraction(f32);
 impl Fraction {
     pub fn new(value: f32) -> Self {
         assert!(
-            value >= 0.0 && value <= 1.0,
+            (0.0..=1.0).contains(&value),
             "Invalid Fraction, tried to initialize with a value of: {}",
             value
         );

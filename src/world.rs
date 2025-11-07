@@ -1,5 +1,5 @@
-mod character;
-mod desired_movement;
+pub mod character;
+pub mod desired_movement;
 mod desired_rotation;
 
 use avian3d::prelude::*;
@@ -43,7 +43,7 @@ pub fn setup(
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.2, 0.2))),
         RigidBody::Dynamic,
         Collider::cuboid(1.0, 1.0, 1.0),
-        Transform::from_xyz(0.0, 5.0, 0.0),
+        Transform::from_xyz(0.5, 8.0, 0.0),
     ));
 
     // Camera
