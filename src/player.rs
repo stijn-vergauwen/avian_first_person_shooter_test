@@ -72,11 +72,20 @@ fn spawn_player(
         Collider::from(body_capsule),
         ChildOf(player_root_entity),
     ));
+
+    // Spawn camera
+
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 1.6, 0.0),
+        ChildOf(player_root_entity),
+    ));
 }
 
 fn read_player_movement_input(
     player_entity: Single<Entity, With<Player>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut previous_input: Local<Option<DesiredMovement>>,
     mut commands: Commands,
 ) {
     let move_direction = move_direction_from_input(MOVEMENT_KEYBINDS, &keyboard_input);
@@ -86,10 +95,14 @@ fn read_player_movement_input(
         fraction_of_max_strength: Fraction::new_unchecked(1.0),
     });
 
-    commands.trigger(SetDesiredMovement {
-        entity: *player_entity,
-        desired_movement,
-    });
+    if desired_movement != *previous_input {
+        *previous_input = desired_movement;
+
+        commands.trigger(SetDesiredMovement {
+            entity: *player_entity,
+            desired_movement,
+        });
+    }
 }
 
 // Utilities

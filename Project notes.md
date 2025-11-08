@@ -11,12 +11,9 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- Pretty sure SetDesiredMovement gets fired every update, it should only fire when input has changed compared to previous tick
+
 
 ## Backlog
-- Setup character
-- Add basic movement
-- Use Avian's Transform interpolation for smooth visuals
 - Add rotation
 - Check if player input can be handled using observers, idk if Bevy sends observer events for this
 - Have character entity hierarchy with root entity, neck / head entity, meshes and colliders as child entities

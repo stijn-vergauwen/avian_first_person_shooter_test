@@ -29,12 +29,14 @@ pub fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Ground plane
+    let ground_shape = Cuboid::new(100.0, 1.0, 100.0);
+
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(10.0, 10.0))),
+        Mesh3d(meshes.add(ground_shape)),
         MeshMaterial3d(materials.add(Color::srgb(0.5, 0.5, 0.5))),
         RigidBody::Static,
-        Collider::cuboid(10.0, 0.1, 10.0),
-        Transform::from_xyz(0.0, -0.05, 0.0),
+        Collider::from(ground_shape),
+        Transform::from_xyz(0.0, -ground_shape.half_size.y, 0.0),
     ));
 
     // Cube
@@ -44,12 +46,6 @@ pub fn setup(
         RigidBody::Dynamic,
         Collider::cuboid(1.0, 1.0, 1.0),
         Transform::from_xyz(0.5, 8.0, 0.0),
-    ));
-
-    // Camera
-    commands.spawn((
-        Camera3d::default(),
-        Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
     // Light
