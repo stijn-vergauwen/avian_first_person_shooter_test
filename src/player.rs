@@ -2,7 +2,10 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::*, prelude::*};
 
 use crate::{
-    utilities::{fraction::Fraction, system_sets::InputSystems},
+    utilities::{
+        fraction::Fraction,
+        system_sets::{DisplaySystems, InputSystems},
+    },
     world::{
         character::Character,
         desired_movement::{DesiredMovement, SetDesiredMovement},
@@ -20,17 +23,23 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_player)
-            .add_systems(Update, read_player_movement_input.in_set(InputSystems))
-            .add_observer(|_: On<Add, DesiredMovement>| {
-                println!("DesiredMovement component added!")
-            });
+        app.add_systems(Startup, spawn_player).add_systems(
+            Update,
+            (
+                read_player_movement_input.in_set(InputSystems),
+                draw_tool_anchor.in_set(DisplaySystems),
+            ),
+        );
     }
 }
 
 /// Marker component for the player. Only 1 player should be spawned.
 #[derive(Component, Clone, Copy)]
 struct Player;
+
+/// Marker component for the anchor that is used to position objects held by the player.
+#[derive(Component, Clone, Copy)]
+struct ToolAnchor;
 
 #[derive(Copy, Clone)]
 pub struct MovementKeybinds {
@@ -80,6 +89,14 @@ fn spawn_player(
         Transform::from_xyz(0.0, 1.6, 0.0),
         ChildOf(player_root_entity),
     ));
+
+    // Spawn tool anchor
+
+    commands.spawn((
+        ToolAnchor,
+        Transform::from_xyz(0.3, 1.2, -0.4),
+        ChildOf(player_root_entity),
+    ));
 }
 
 fn read_player_movement_input(
@@ -103,6 +120,14 @@ fn read_player_movement_input(
             desired_movement,
         });
     }
+}
+
+fn draw_tool_anchor(tool_anchor: Single<&GlobalTransform, With<ToolAnchor>>, mut gizmos: Gizmos) {
+    gizmos.sphere(
+        tool_anchor.compute_transform().to_isometry(),
+        0.2,
+        PURPLE_400,
+    );
 }
 
 // Utilities
