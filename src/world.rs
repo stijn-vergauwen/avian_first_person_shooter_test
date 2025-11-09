@@ -1,13 +1,14 @@
 pub mod character;
 pub mod desired_movement;
 mod desired_rotation;
+pub mod weapons;
 
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::world::{
     character::CharacterPlugin, desired_movement::DesiredMovementPlugin,
-    desired_rotation::DesiredRotationPlugin,
+    desired_rotation::DesiredRotationPlugin, weapons::WeaponsPlugin,
 };
 
 pub struct WorldPlugin;
@@ -18,6 +19,7 @@ impl Plugin for WorldPlugin {
             CharacterPlugin,
             DesiredMovementPlugin,
             DesiredRotationPlugin,
+            WeaponsPlugin,
         ))
         .add_systems(Startup, setup);
     }
