@@ -21,7 +21,7 @@ impl Plugin for WorldPlugin {
             DesiredRotationPlugin,
             WeaponsPlugin,
         ))
-        .add_systems(Startup, setup);
+        .add_systems(Startup, (setup, spawn_external_cam));
     }
 }
 
@@ -61,5 +61,21 @@ pub fn setup(
             rotation: Quat::from_euler(EulerRot::YXZ, 10f32.to_radians(), -50f32.to_radians(), 0.0),
             ..default()
         },
+    ));
+}
+
+fn spawn_external_cam(mut commands: Commands) {
+    commands.spawn((
+        Camera3d::default(),
+        Camera {
+            viewport: Some(bevy::camera::Viewport {
+                physical_position: UVec2::ZERO,
+                physical_size: UVec2::new(360, 300),
+                ..default()
+            }),
+            order: 2,
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(-2.0, 2.5, -6.0)).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }

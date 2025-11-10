@@ -14,7 +14,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- Add external camera that looks towards the player, for debugging, place this view in the corner of screen
 - Make the test weapon a child of ToolAnchor, maybe on 'e' pressed
 - Weapon should be visible while holding it, and point towards what player is aiming at with slight position offset
 - Add object to shoot at
