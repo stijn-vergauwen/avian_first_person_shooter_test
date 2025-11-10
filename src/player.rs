@@ -9,6 +9,7 @@ use crate::{
     world::{
         character::Character,
         desired_movement::{DesiredMovement, SetDesiredMovement},
+        weapons::Weapon,
     },
 };
 
@@ -26,8 +27,8 @@ impl Plugin for PlayerPlugin {
         app.add_systems(Startup, spawn_player).add_systems(
             Update,
             (
-                read_player_movement_input.in_set(InputSystems),
-                draw_tool_anchor.in_set(DisplaySystems),
+                (read_player_movement_input, grab_test_weapon_on_keypress).in_set(InputSystems),
+                draw_player_gizmos.in_set(DisplaySystems),
             ),
         );
     }
@@ -36,6 +37,10 @@ impl Plugin for PlayerPlugin {
 /// Marker component for the player. Only 1 player should be spawned.
 #[derive(Component, Clone, Copy)]
 struct Player;
+
+/// Marker component for the player camera.
+#[derive(Component, Clone, Copy)]
+struct PlayerCamera;
 
 /// Marker component for the anchor that is used to position objects held by the player.
 #[derive(Component, Clone, Copy)]
@@ -72,7 +77,7 @@ fn spawn_player(
 
     // Spawn body
 
-    let body_capsule = Capsule3d::new(0.3, 1.0);
+    let body_capsule = Capsule3d::new(0.4, 1.0);
 
     commands.spawn((
         Transform::from_translation(Vec3::Y * (body_capsule.half_length + body_capsule.radius)),
@@ -85,8 +90,9 @@ fn spawn_player(
     // Spawn camera
 
     commands.spawn((
+        PlayerCamera,
         Camera3d::default(),
-        Transform::from_xyz(0.0, 1.6, 0.0),
+        Transform::from_xyz(0.0, 1.7, 0.0),
         ChildOf(player_root_entity),
     ));
 
@@ -94,7 +100,7 @@ fn spawn_player(
 
     commands.spawn((
         ToolAnchor,
-        Transform::from_xyz(0.3, 1.2, -0.4),
+        Transform::from_xyz(0.3, 1.4, -0.6),
         ChildOf(player_root_entity),
     ));
 }
@@ -122,11 +128,36 @@ fn read_player_movement_input(
     }
 }
 
-fn draw_tool_anchor(tool_anchor: Single<&GlobalTransform, With<ToolAnchor>>, mut gizmos: Gizmos) {
+fn grab_test_weapon_on_keypress(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut commands: Commands,
+    tool_anchor_entity: Single<Entity, With<ToolAnchor>>,
+    test_weapon_entity: Single<Entity, With<Weapon>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyE) {
+        commands
+            .entity(*test_weapon_entity)
+            .insert((ChildOf(*tool_anchor_entity), Transform::default()));
+    }
+}
+
+fn draw_player_gizmos(
+    tool_anchor: Single<&GlobalTransform, With<ToolAnchor>>,
+    player_camera: Single<&GlobalTransform, (With<PlayerCamera>, Without<ToolAnchor>)>,
+    mut gizmos: Gizmos,
+) {
+    // Tool anchor
     gizmos.sphere(
         tool_anchor.compute_transform().to_isometry(),
         0.2,
         PURPLE_400,
+    );
+
+    // Player camera
+    gizmos.ray(
+        player_camera.translation(),
+        player_camera.forward() * 10.0,
+        LIME_400,
     );
 }
 

@@ -13,7 +13,7 @@ impl Plugin for WeaponsPlugin {
 
 /// Base component for weapons.
 #[derive(Component, Clone, Copy)]
-struct Weapon;
+pub struct Weapon;
 
 fn spawn_test_weapon(mut commands: Commands, asset_server: Res<AssetServer>) {
     let weapon_model = asset_server.load("models/Blocky assault rifle.glb#Scene0");

@@ -4,7 +4,7 @@ mod desired_rotation;
 pub mod weapons;
 
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{camera::Viewport, prelude::*};
 
 use crate::world::{
     character::CharacterPlugin, desired_movement::DesiredMovementPlugin,
@@ -68,7 +68,7 @@ fn spawn_external_cam(mut commands: Commands) {
     commands.spawn((
         Camera3d::default(),
         Camera {
-            viewport: Some(bevy::camera::Viewport {
+            viewport: Some(Viewport {
                 physical_position: UVec2::ZERO,
                 physical_size: UVec2::new(360, 300),
                 ..default()

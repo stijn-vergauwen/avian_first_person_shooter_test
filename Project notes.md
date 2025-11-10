@@ -14,8 +14,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- Make the test weapon a child of ToolAnchor, maybe on 'e' pressed
-- Weapon should be visible while holding it, and point towards what player is aiming at with slight position offset
 - Add object to shoot at
 - Put visual indication at bullet hitpoint (e.g. small black sphere)
 - Add rotation

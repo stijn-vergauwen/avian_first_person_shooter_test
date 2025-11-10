@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::{utilities::system_sets::DataSystems, world::desired_movement::DesiredMovement};
 
-const MAX_MOVEMENT_STRENGTH: f32 = 5.0;
+const MAX_MOVEMENT_STRENGTH: f32 = 10.0;
 
 pub struct CharacterPlugin;
 
