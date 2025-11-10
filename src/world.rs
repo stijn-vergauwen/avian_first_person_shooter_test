@@ -4,7 +4,7 @@ mod desired_rotation;
 pub mod weapons;
 
 use avian3d::prelude::*;
-use bevy::{camera::Viewport, prelude::*};
+use bevy::{camera::Viewport, color::palettes::tailwind::*, prelude::*};
 
 use crate::world::{
     character::CharacterPlugin, desired_movement::DesiredMovementPlugin,
@@ -31,7 +31,7 @@ pub fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Ground plane
-    let ground_shape = Cuboid::new(100.0, 1.0, 100.0);
+    let ground_shape = Cuboid::new(200.0, 1.0, 200.0);
 
     commands.spawn((
         Mesh3d(meshes.add(ground_shape)),
@@ -41,14 +41,35 @@ pub fn setup(
         Transform::from_xyz(0.0, -ground_shape.half_size.y, 0.0),
     ));
 
-    // Cube
+    // Wall
+    let wall_shape = Cuboid::new(40.0, 5.0, 0.4);
+
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.2, 0.2))),
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 1.0, 1.0),
-        Transform::from_xyz(0.5, 8.0, 0.0),
+        Mesh3d(meshes.add(wall_shape)),
+        MeshMaterial3d(materials.add(StandardMaterial::from_color(STONE_500))),
+        RigidBody::Static,
+        Collider::from(wall_shape),
+        Transform {
+            translation: Vec3::new(-10.0, wall_shape.half_size.y, 0.0),
+            rotation: Quat::from_axis_angle(Vec3::Y, 90f32.to_radians()),
+            ..default()
+        },
     ));
+
+    // Cubes
+    let cube_shape = Cuboid::new(1.0, 1.0, 1.0);
+    let cube_mesh = meshes.add(cube_shape);
+    let cube_material = materials.add(StandardMaterial::from_color(AMBER_400));
+
+    for index in 0..20 {
+        commands.spawn((
+            Mesh3d(cube_mesh.clone()),
+            MeshMaterial3d(cube_material.clone()),
+            RigidBody::Dynamic,
+            Collider::from(cube_shape),
+            Transform::from_xyz(5.0, 5.0 + index as f32 * 1.2, -10.0),
+        ));
+    }
 
     // Light
     commands.spawn((

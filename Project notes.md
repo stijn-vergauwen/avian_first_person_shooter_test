@@ -14,7 +14,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- Add object to shoot at
 - Put visual indication at bullet hitpoint (e.g. small black sphere)
 - Add rotation
 - Check if player input can be handled using observers, idk if Bevy sends observer events for this
