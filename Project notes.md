@@ -14,8 +14,7 @@ Info and documentation for development.
 
 
 ## Backlog
-- Put visual indication at bullet hitpoint (e.g. small black sphere)
-- Add rotation
+- Add player rotation
 - Check if player input can be handled using observers, idk if Bevy sends observer events for this
 - Have character entity hierarchy with root entity, neck / head entity, meshes and colliders as child entities
 - Character camera at eye position, moving forward when looking down (looking down in front of you) and backwards when up 
