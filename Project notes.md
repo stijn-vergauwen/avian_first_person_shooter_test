@@ -11,7 +11,7 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- clamp vertical rotation
+
 
 ## Backlog
 - Have character entity hierarchy with root entity, neck / head entity, meshes and colliders as child entities

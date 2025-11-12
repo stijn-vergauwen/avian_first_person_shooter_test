@@ -1,4 +1,4 @@
-mod angle;
+pub mod angle;
 mod app_state;
 pub mod euler_angle;
 pub mod fraction;

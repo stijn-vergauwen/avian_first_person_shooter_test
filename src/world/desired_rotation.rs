@@ -1,5 +1,12 @@
-use crate::utilities::euler_angle::EulerAngle;
+use std::ops::Range;
+
+use crate::utilities::{angle::Angle, euler_angle::EulerAngle};
 use bevy::prelude::*;
+
+const VERTICAL_ROTATION_RANGE: Range<Angle> = Range {
+    start: Angle::from_degrees(-80.0),
+    end: Angle::from_degrees(80.0),
+};
 
 pub struct DesiredRotationPlugin;
 
@@ -47,12 +54,14 @@ fn on_set_desired_rotation(
         .get_mut(set_desired_rotation.entity)
         .expect("SetDesiredRotation should always point to existing entity with DesiredRotation component.");
 
-    let new_rotation = match set_desired_rotation.desired_rotation.rotation_type {
+    let mut new_rotation = match set_desired_rotation.desired_rotation.rotation_type {
         RotationType::AbsoluteRotation => set_desired_rotation.desired_rotation.rotation,
         RotationType::DeltaRotation => {
             desired_rotation.rotation + set_desired_rotation.desired_rotation.rotation
         }
     };
+
+    new_rotation.x = new_rotation.x.clamp(&VERTICAL_ROTATION_RANGE);
 
     desired_rotation.rotation = new_rotation;
 }
