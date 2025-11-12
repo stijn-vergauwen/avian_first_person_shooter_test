@@ -4,7 +4,7 @@ use std::ops::{Add, AddAssign};
 
 // TODO: add conversions to & from Quaterions
 
-#[derive(Copy, Clone, Default, Debug)]
+#[derive(Copy, Clone, Default, Debug, PartialEq)]
 pub struct EulerAngle {
     /// The rotation around the X axis.
     pub x: Angle,
@@ -20,7 +20,6 @@ impl EulerAngle {
         Self { x, y, z, order }
     }
 
-    #[expect(unused)]
     pub fn from_radians(x: f32, y: f32, z: f32, order: EulerRot) -> Self {
         Self::new(Angle(x), Angle(y), Angle(z), order)
     }

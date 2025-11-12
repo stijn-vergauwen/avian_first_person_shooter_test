@@ -9,20 +9,19 @@ impl Plugin for DesiredRotationPlugin {
     }
 }
 
-#[derive(Component, Copy, Clone, Debug, Default)]
+#[derive(Component, Copy, Clone, Debug, Default, PartialEq)]
 pub struct DesiredRotation {
     pub rotation: EulerAngle,
-    #[expect(unused)]
     pub rotation_type: RotationType,
 }
 
 #[derive(EntityEvent, Copy, Clone)]
 pub struct SetDesiredRotation {
     pub entity: Entity,
-    pub desired_rotation: Option<DesiredRotation>,
+    pub desired_rotation: DesiredRotation,
 }
 
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum RotationType {
     /// Update the rotation value to the given rotation.
     #[expect(unused)]
@@ -32,11 +31,11 @@ pub enum RotationType {
     DeltaRotation,
 }
 
-fn on_set_desired_rotation(set_desired_rotation: On<SetDesiredRotation>, mut commands: Commands) {
-    let z_rotation = set_desired_rotation
-        .desired_rotation
-        .map(|desired_rotation| desired_rotation.rotation.z.radians())
-        .unwrap_or(0.0);
+fn on_set_desired_rotation(
+    set_desired_rotation: On<SetDesiredRotation>,
+    mut desired_rotation_query: Query<&mut DesiredRotation>,
+) {
+    let z_rotation = set_desired_rotation.desired_rotation.rotation.z.radians();
 
     assert_eq!(
         0.0, z_rotation,
@@ -44,10 +43,16 @@ fn on_set_desired_rotation(set_desired_rotation: On<SetDesiredRotation>, mut com
         z_rotation
     );
 
-    let mut entity_commands = commands.entity(set_desired_rotation.entity);
+    let mut desired_rotation = desired_rotation_query
+        .get_mut(set_desired_rotation.entity)
+        .expect("SetDesiredRotation should always point to existing entity with DesiredRotation component.");
 
-    match set_desired_rotation.desired_rotation {
-        Some(desired_rotation) => entity_commands.insert(desired_rotation),
-        None => entity_commands.remove::<DesiredRotation>(),
+    let new_rotation = match set_desired_rotation.desired_rotation.rotation_type {
+        RotationType::AbsoluteRotation => set_desired_rotation.desired_rotation.rotation,
+        RotationType::DeltaRotation => {
+            desired_rotation.rotation + set_desired_rotation.desired_rotation.rotation
+        }
     };
+
+    desired_rotation.rotation = new_rotation;
 }

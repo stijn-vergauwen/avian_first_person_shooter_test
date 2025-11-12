@@ -1,14 +1,21 @@
 use avian3d::prelude::*;
-use bevy::{color::palettes::tailwind::*, prelude::*};
+use bevy::{
+    color::palettes::tailwind::*,
+    input::mouse::AccumulatedMouseMotion,
+    prelude::*,
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow, WindowFocused},
+};
 
 use crate::{
     utilities::{
+        euler_angle::EulerAngle,
         fraction::Fraction,
         system_sets::{DisplaySystems, InputSystems},
     },
     world::{
-        character::Character,
+        character::{Character, CharacterHead},
         desired_movement::{DesiredMovement, SetDesiredMovement},
+        desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
         weapons::Weapon,
     },
 };
@@ -20,6 +27,13 @@ const MOVEMENT_KEYBINDS: MovementKeybinds = MovementKeybinds {
     right_key: KeyCode::KeyD,
 };
 
+/// Upper threshold for delta mouse motion in a single update, this is to ignore motion spikes caused by input through Parsec.
+const UPPER_MOUSE_MOTION_THRESHOLD: f32 = 1000.0;
+
+/// Mouse sensitivity calculated as: how many pixels the mouse needs to move in a direction to rotate by 1 radian in that direction.
+/// - Higher value = less sensitive.
+const PIXELS_PER_RADIAN: f32 = 400f32;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -27,7 +41,13 @@ impl Plugin for PlayerPlugin {
         app.add_systems(Startup, spawn_player).add_systems(
             Update,
             (
-                (read_player_movement_input, grab_test_weapon_on_keypress).in_set(InputSystems),
+                (
+                    lock_mouse_cursor_on_window_focused,
+                    handle_movement_input,
+                    handle_rotation_input,
+                    grab_test_weapon_on_keypress,
+                )
+                    .in_set(InputSystems),
                 draw_player_gizmos.in_set(DisplaySystems),
             ),
         );
@@ -54,6 +74,21 @@ pub struct MovementKeybinds {
     pub right_key: KeyCode,
 }
 
+// TODO: split to module
+fn lock_mouse_cursor_on_window_focused(
+    mut on_window_focused: MessageReader<WindowFocused>,
+    mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
+) {
+    for message in on_window_focused.read() {
+        cursor_options.visible = !message.focused;
+        cursor_options.grab_mode = if message.focused {
+            CursorGrabMode::Locked
+        } else {
+            CursorGrabMode::None
+        };
+    }
+}
+
 fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -72,6 +107,7 @@ fn spawn_player(
             RigidBody::Dynamic,
             LockedAxes::ROTATION_LOCKED,
             ConstantForce::default(),
+            DesiredRotation::default(),
         ))
         .id();
 
@@ -91,6 +127,7 @@ fn spawn_player(
 
     commands.spawn((
         PlayerCamera,
+        CharacterHead,
         Camera3d::default(),
         Transform::from_xyz(0.0, 1.7, 0.0),
         ChildOf(player_root_entity),
@@ -105,9 +142,9 @@ fn spawn_player(
     ));
 }
 
-fn read_player_movement_input(
-    player_entity: Single<Entity, With<Player>>,
+fn handle_movement_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    player_entity: Single<Entity, With<Player>>,
     mut previous_input: Local<Option<DesiredMovement>>,
     mut commands: Commands,
 ) {
@@ -126,6 +163,43 @@ fn read_player_movement_input(
             desired_movement,
         });
     }
+}
+
+fn handle_rotation_input(
+    accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
+    player_entity: Single<Entity, With<Player>>,
+    mut commands: Commands,
+) {
+    let Some(desired_rotation) = calculate_desired_rotation(accumulated_mouse_motion.delta) else {
+        return;
+    };
+
+    commands.trigger(SetDesiredRotation {
+        entity: *player_entity,
+        desired_rotation,
+    });
+}
+
+fn calculate_desired_rotation(delta_motion: Vec2) -> Option<DesiredRotation> {
+    if delta_motion.length() > UPPER_MOUSE_MOTION_THRESHOLD {
+        println!("Mouse motion above threshold!");
+    }
+
+    (delta_motion.length() > 0.0 && delta_motion.length() < UPPER_MOUSE_MOTION_THRESHOLD).then(
+        || {
+            let delta_rotation = EulerAngle::from_radians(
+                -delta_motion.y / PIXELS_PER_RADIAN,
+                -delta_motion.x / PIXELS_PER_RADIAN,
+                0.0,
+                EulerRot::default(),
+            );
+
+            DesiredRotation {
+                rotation: delta_rotation,
+                rotation_type: RotationType::DeltaRotation,
+            }
+        },
+    )
 }
 
 fn grab_test_weapon_on_keypress(

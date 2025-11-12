@@ -1,6 +1,6 @@
 pub mod character;
 pub mod desired_movement;
-mod desired_rotation;
+pub mod desired_rotation;
 pub mod weapons;
 
 use avian3d::prelude::*;
