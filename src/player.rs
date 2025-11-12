@@ -1,19 +1,16 @@
-use avian3d::prelude::*;
-use bevy::{
-    color::palettes::tailwind::*,
-    input::mouse::AccumulatedMouseMotion,
-    prelude::*,
-    window::{CursorGrabMode, CursorOptions, PrimaryWindow, WindowFocused},
-};
+mod cursor_lock;
+mod spawner;
+
+use bevy::{color::palettes::tailwind::*, input::mouse::AccumulatedMouseMotion, prelude::*};
 
 use crate::{
+    player::{cursor_lock::CursorLockPlugin, spawner::PlayerSpawnerPlugin},
     utilities::{
         euler_angle::EulerAngle,
         fraction::Fraction,
         system_sets::{DisplaySystems, InputSystems},
     },
     world::{
-        character::{Character, CharacterHead},
         desired_movement::{DesiredMovement, SetDesiredMovement},
         desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
         weapons::Weapon,
@@ -38,19 +35,19 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_player).add_systems(
-            Update,
-            (
+        app.add_plugins((CursorLockPlugin, PlayerSpawnerPlugin))
+            .add_systems(
+                Update,
                 (
-                    lock_mouse_cursor_on_window_focused,
-                    handle_movement_input,
-                    handle_rotation_input,
-                    grab_test_weapon_on_keypress,
-                )
-                    .in_set(InputSystems),
-                draw_player_gizmos.in_set(DisplaySystems),
-            ),
-        );
+                    (
+                        handle_movement_input,
+                        handle_rotation_input,
+                        grab_test_weapon_on_keypress,
+                    )
+                        .in_set(InputSystems),
+                    draw_player_gizmos.in_set(DisplaySystems),
+                ),
+            );
     }
 }
 
@@ -72,74 +69,6 @@ pub struct MovementKeybinds {
     pub back_key: KeyCode,
     pub left_key: KeyCode,
     pub right_key: KeyCode,
-}
-
-// TODO: split to module
-fn lock_mouse_cursor_on_window_focused(
-    mut on_window_focused: MessageReader<WindowFocused>,
-    mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-) {
-    for message in on_window_focused.read() {
-        cursor_options.visible = !message.focused;
-        cursor_options.grab_mode = if message.focused {
-            CursorGrabMode::Locked
-        } else {
-            CursorGrabMode::None
-        };
-    }
-}
-
-fn spawn_player(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let start_position = Vec3::ZERO;
-
-    // Spawn root
-
-    let player_root_entity = commands
-        .spawn((
-            Player,
-            Character { is_active: true },
-            Visibility::Inherited,
-            Transform::from_translation(start_position),
-            RigidBody::Dynamic,
-            LockedAxes::ROTATION_LOCKED,
-            ConstantForce::default(),
-            DesiredRotation::default(),
-        ))
-        .id();
-
-    // Spawn body
-
-    let body_capsule = Capsule3d::new(0.4, 1.0);
-
-    commands.spawn((
-        Transform::from_translation(Vec3::Y * (body_capsule.half_length + body_capsule.radius)),
-        Mesh3d(meshes.add(body_capsule)),
-        MeshMaterial3d(materials.add(StandardMaterial::from_color(CYAN_700))),
-        Collider::from(body_capsule),
-        ChildOf(player_root_entity),
-    ));
-
-    // Spawn camera
-
-    commands.spawn((
-        PlayerCamera,
-        CharacterHead,
-        Camera3d::default(),
-        Transform::from_xyz(0.0, 1.7, 0.0),
-        ChildOf(player_root_entity),
-    ));
-
-    // Spawn tool anchor
-
-    commands.spawn((
-        ToolAnchor,
-        Transform::from_xyz(0.3, 1.4, -0.6),
-        ChildOf(player_root_entity),
-    ));
 }
 
 fn handle_movement_input(
