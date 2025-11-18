@@ -1,7 +1,13 @@
-use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 use avian3d::prelude::*;
+use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 
-use crate::{player::{Player, PlayerCamera, ToolAnchor}, world::{character::{Character, CharacterHead}, desired_rotation::DesiredRotation}};
+use crate::{
+    player::{ItemAnchor, Player, PlayerCamera},
+    world::{
+        character::{Character, CharacterHead},
+        desired_rotation::DesiredRotation,
+    },
+};
 
 pub struct PlayerSpawnerPlugin;
 
@@ -47,11 +53,13 @@ fn spawn_player(
 
     // Spawn head
 
-    let player_head_entity = commands.spawn((
-        CharacterHead,
-        Transform::from_xyz(0.0, 1.7, 0.0),
-        ChildOf(player_root_entity),
-    )).id();
+    let player_head_entity = commands
+        .spawn((
+            CharacterHead,
+            Transform::from_xyz(0.0, 1.7, 0.0),
+            ChildOf(player_root_entity),
+        ))
+        .id();
 
     // Spawn camera
 
@@ -62,10 +70,10 @@ fn spawn_player(
         ChildOf(player_head_entity),
     ));
 
-    // Spawn tool anchor
+    // Spawn Item anchor
 
     commands.spawn((
-        ToolAnchor,
+        ItemAnchor::default(),
         Transform::from_xyz(0.3, -0.3, -0.6),
         ChildOf(player_head_entity),
     ));

@@ -1,11 +1,16 @@
 mod cursor_lock;
+mod item_anchor;
 mod spawner;
 
 use bevy::{color::palettes::tailwind::*, input::mouse::AccumulatedMouseMotion, prelude::*};
 
 use crate::{
-    player::{cursor_lock::CursorLockPlugin, spawner::PlayerSpawnerPlugin},
-    utilities::{euler_angle::EulerAngle, fraction::Fraction, system_sets::InputSystems},
+    player::{
+        cursor_lock::CursorLockPlugin,
+        item_anchor::{ItemAnchor, ItemAnchorPlugin},
+        spawner::PlayerSpawnerPlugin,
+    },
+    utilities::{euler_angle::EulerAngle, fraction::Fraction, system_sets::{DisplaySystems, InputSystems}},
     world::{
         desired_movement::{DesiredMovement, SetDesiredMovement},
         desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
@@ -31,7 +36,7 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((CursorLockPlugin, PlayerSpawnerPlugin))
+        app.add_plugins((CursorLockPlugin, PlayerSpawnerPlugin, ItemAnchorPlugin))
             .add_systems(
                 Update,
                 (
@@ -41,7 +46,7 @@ impl Plugin for PlayerPlugin {
                         grab_test_weapon_on_keypress,
                     )
                         .in_set(InputSystems),
-                    // draw_player_gizmos.in_set(DisplaySystems),
+                    draw_player_gizmos.in_set(DisplaySystems),
                 ),
             );
     }
@@ -54,10 +59,6 @@ struct Player;
 /// Marker component for the player camera.
 #[derive(Component, Clone, Copy)]
 struct PlayerCamera;
-
-/// Marker component for the anchor that is used to position objects held by the player.
-#[derive(Component, Clone, Copy)]
-struct ToolAnchor;
 
 #[derive(Copy, Clone)]
 pub struct MovementKeybinds {
@@ -129,24 +130,21 @@ fn calculate_desired_rotation(delta_motion: Vec2) -> Option<DesiredRotation> {
 
 fn grab_test_weapon_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut commands: Commands,
-    tool_anchor_entity: Single<Entity, With<ToolAnchor>>,
+    mut item_anchor: Single<&mut ItemAnchor>,
     test_weapon_entity: Single<Entity, With<Weapon>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyE) {
-        commands
-            .entity(*test_weapon_entity)
-            .insert((ChildOf(*tool_anchor_entity), Transform::default()));
+        item_anchor.target_item_entity = Some(*test_weapon_entity);
     }
 }
 
 #[allow(unused)]
 fn draw_player_gizmos(
-    tool_anchor: Single<&GlobalTransform, With<ToolAnchor>>,
-    player_camera: Single<&GlobalTransform, (With<PlayerCamera>, Without<ToolAnchor>)>,
+    tool_anchor: Single<&GlobalTransform, With<ItemAnchor>>,
+    player_camera: Single<&GlobalTransform, (With<PlayerCamera>, Without<ItemAnchor>)>,
     mut gizmos: Gizmos,
 ) {
-    // Tool anchor
+    // Item anchor
     gizmos.sphere(
         tool_anchor.compute_transform().to_isometry(),
         0.2,
