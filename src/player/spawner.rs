@@ -45,21 +45,28 @@ fn spawn_player(
         ChildOf(player_root_entity),
     ));
 
+    // Spawn head
+
+    let player_head_entity = commands.spawn((
+        CharacterHead,
+        Transform::from_xyz(0.0, 1.7, 0.0),
+        ChildOf(player_root_entity),
+    )).id();
+
     // Spawn camera
 
     commands.spawn((
         PlayerCamera,
-        CharacterHead,
         Camera3d::default(),
-        Transform::from_xyz(0.0, 1.7, 0.0),
-        ChildOf(player_root_entity),
+        Transform::from_xyz(0.0, 0.0, -0.0),
+        ChildOf(player_head_entity),
     ));
 
     // Spawn tool anchor
 
     commands.spawn((
         ToolAnchor,
-        Transform::from_xyz(0.3, 1.4, -0.6),
-        ChildOf(player_root_entity),
+        Transform::from_xyz(0.3, -0.3, -0.6),
+        ChildOf(player_head_entity),
     ));
 }

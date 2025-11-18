@@ -67,7 +67,7 @@ fn shoot_weapon_on_click(
         if let Some(hit_data) = spatial_query.cast_ray(
             origin,
             direction,
-            40.0,
+            100.0,
             false,
             &SpatialQueryFilter::default(),
         ) {
@@ -97,7 +97,7 @@ fn draw_weapon_fire_direction(
 ) {
     gizmos.ray(
         weapon_transform.translation(),
-        weapon_transform.forward() * 10.0,
+        weapon_transform.forward() * 100.0,
         RED_500,
     );
 }

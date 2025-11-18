@@ -5,11 +5,7 @@ use bevy::{color::palettes::tailwind::*, input::mouse::AccumulatedMouseMotion, p
 
 use crate::{
     player::{cursor_lock::CursorLockPlugin, spawner::PlayerSpawnerPlugin},
-    utilities::{
-        euler_angle::EulerAngle,
-        fraction::Fraction,
-        system_sets::{DisplaySystems, InputSystems},
-    },
+    utilities::{euler_angle::EulerAngle, fraction::Fraction, system_sets::InputSystems},
     world::{
         desired_movement::{DesiredMovement, SetDesiredMovement},
         desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
@@ -45,7 +41,7 @@ impl Plugin for PlayerPlugin {
                         grab_test_weapon_on_keypress,
                     )
                         .in_set(InputSystems),
-                    draw_player_gizmos.in_set(DisplaySystems),
+                    // draw_player_gizmos.in_set(DisplaySystems),
                 ),
             );
     }
@@ -144,6 +140,7 @@ fn grab_test_weapon_on_keypress(
     }
 }
 
+#[allow(unused)]
 fn draw_player_gizmos(
     tool_anchor: Single<&GlobalTransform, With<ToolAnchor>>,
     player_camera: Single<&GlobalTransform, (With<PlayerCamera>, Without<ToolAnchor>)>,
