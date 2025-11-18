@@ -29,7 +29,7 @@ const UPPER_MOUSE_MOTION_THRESHOLD: f32 = 1000.0;
 
 /// Mouse sensitivity calculated as: how many pixels the mouse needs to move in a direction to rotate by 1 radian in that direction.
 /// - Higher value = less sensitive.
-const PIXELS_PER_RADIAN: f32 = 400f32;
+const PIXELS_PER_RADIAN: f32 = 600f32;
 
 pub struct PlayerPlugin;
 

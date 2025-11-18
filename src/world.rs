@@ -1,14 +1,17 @@
 pub mod character;
 pub mod desired_movement;
 pub mod desired_rotation;
+mod grabbable_object;
 pub mod weapons;
 
 use avian3d::prelude::*;
 use bevy::{camera::Viewport, color::palettes::tailwind::*, prelude::*};
+use rand::Rng;
 
 use crate::world::{
     character::CharacterPlugin, desired_movement::DesiredMovementPlugin,
-    desired_rotation::DesiredRotationPlugin, weapons::WeaponsPlugin,
+    desired_rotation::DesiredRotationPlugin, grabbable_object::GrabbableObject,
+    weapons::WeaponsPlugin,
 };
 
 pub struct WorldPlugin;
@@ -21,11 +24,18 @@ impl Plugin for WorldPlugin {
             DesiredRotationPlugin,
             WeaponsPlugin,
         ))
-        .add_systems(Startup, (setup, spawn_external_cam));
+        .add_systems(
+            Startup,
+            (
+                spawn_static_entities,
+                spawn_dynamic_entities,
+                spawn_external_cam,
+            ),
+        );
     }
 }
 
-pub fn setup(
+fn spawn_static_entities(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -56,21 +66,6 @@ pub fn setup(
         },
     ));
 
-    // Cubes
-    let cube_shape = Cuboid::new(1.0, 1.0, 1.0);
-    let cube_mesh = meshes.add(cube_shape);
-    let cube_material = materials.add(StandardMaterial::from_color(AMBER_400));
-
-    for index in 0..20 {
-        commands.spawn((
-            Mesh3d(cube_mesh.clone()),
-            MeshMaterial3d(cube_material.clone()),
-            RigidBody::Dynamic,
-            Collider::from(cube_shape),
-            Transform::from_xyz(5.0, 5.0 + index as f32 * 1.2, -10.0),
-        ));
-    }
-
     // Light
     commands.spawn((
         DirectionalLight {
@@ -83,6 +78,57 @@ pub fn setup(
             ..default()
         },
     ));
+}
+
+fn spawn_dynamic_entities(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    // Tower of cubes
+    let cube_shape = Cuboid::new(1.0, 1.0, 1.0);
+    let cube_mesh = meshes.add(cube_shape);
+    let cube_material = materials.add(StandardMaterial::from_color(AMBER_400));
+    let spawn_count = 20;
+    let spawn_position = Vec3::new(5.0, 5.0, -10.0);
+
+    for index in 0..spawn_count {
+        commands.spawn((
+            Mesh3d(cube_mesh.clone()),
+            MeshMaterial3d(cube_material.clone()),
+            RigidBody::Dynamic,
+            Collider::from(cube_shape),
+            Transform::from_translation(spawn_position + Vec3::Y * index as f32 * 1.2),
+        ));
+    }
+
+    // Pile of grabbable cubes
+    let cube_shape = Cuboid::from_length(0.3);
+    let cube_mesh = meshes.add(cube_shape);
+    let cube_material = materials.add(StandardMaterial::from_color(PURPLE_700));
+    let mut rng = rand::rng();
+    let spawn_count = 40;
+    let spawn_position = Vec3::new(0.0, 0.0, -6.0);
+    let horizontal_spread = 0.3;
+
+    for index in 0..spawn_count {
+        let vertical_offset = Vec3::Y * index as f32 * cube_shape.half_size.y;
+        let horizontal_offset = Vec3::new(
+            rng.random_range(-horizontal_spread..horizontal_spread),
+            0.0,
+            rng.random_range(-horizontal_spread..horizontal_spread),
+        );
+
+        commands.spawn((
+            GrabbableObject,
+            Mesh3d(cube_mesh.clone()),
+            MeshMaterial3d(cube_material.clone()),
+            RigidBody::Dynamic,
+            Collider::from(cube_shape),
+            Restitution::new(0.8),
+            Transform::from_translation(spawn_position + vertical_offset + horizontal_offset),
+        ));
+    }
 }
 
 fn spawn_external_cam(mut commands: Commands) {
