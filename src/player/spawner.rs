@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 
 use crate::{
-    player::{ItemAnchor, Player, PlayerCamera},
+    player::{ItemAnchor, Player, PlayerBody, PlayerCamera},
     world::{
         character::{Character, CharacterHead},
         desired_rotation::DesiredRotation,
@@ -44,6 +44,7 @@ fn spawn_player(
     let body_capsule = Capsule3d::new(0.4, 1.0);
 
     commands.spawn((
+        PlayerBody,
         Transform::from_translation(Vec3::Y * (body_capsule.half_length + body_capsule.radius)),
         Mesh3d(meshes.add(body_capsule)),
         MeshMaterial3d(materials.add(StandardMaterial::from_color(CYAN_700))),
@@ -57,6 +58,7 @@ fn spawn_player(
         .spawn((
             CharacterHead,
             Transform::from_xyz(0.0, 1.7, 0.0),
+            Visibility::Inherited,
             ChildOf(player_root_entity),
         ))
         .id();
@@ -66,6 +68,7 @@ fn spawn_player(
     commands.spawn((
         PlayerCamera,
         Camera3d::default(),
+        IsDefaultUiCamera,
         Transform::from_xyz(0.0, 0.0, -0.0),
         ChildOf(player_head_entity),
     ));

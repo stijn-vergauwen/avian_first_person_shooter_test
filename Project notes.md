@@ -11,11 +11,11 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-
+- update item_anchor position etc using forces instead of directly modifying position or rotation.
 
 ## Backlog
 - Have character entity hierarchy with root entity, neck / head entity, meshes and colliders as child entities
-- Character camera at eye position, moving forward when looking down (looking down in front of you) and backwards when up 
+- Character camera at eye position, moving forward when looking down (looking down in front of you) and backwards when up
 - Add picking up of objects when looking at them
 - Add test object that can be picked up but isn't a weapon (like a radio)
 - Allow items to configure in what orientation they should be held

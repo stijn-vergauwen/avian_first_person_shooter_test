@@ -1,10 +1,14 @@
-use avian3d::prelude::{SpatialQuery, SpatialQueryFilter};
+use avian3d::prelude::*;
 use bevy::{
     color::palettes::tailwind::{RED_500, RED_900},
     prelude::*,
 };
 
-use crate::utilities::system_sets::{DisplaySystems, InputSystems};
+use crate::{
+    player::PlayerBody,
+    utilities::system_sets::{DisplaySystems, InputSystems},
+    world::grabbable_object::GrabbableObject,
+};
 
 pub struct WeaponsPlugin;
 
@@ -37,7 +41,7 @@ fn setup_bullet_hit_point_assets(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     commands.insert_resource(BulletHitPointAssets {
-        mesh: meshes.add(Sphere::new(0.1)),
+        mesh: meshes.add(Sphere::new(0.05)),
         material: materials.add(StandardMaterial::from_color(RED_900)),
     });
 }
@@ -47,6 +51,8 @@ fn spawn_test_weapon(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn((
         Weapon,
+        GrabbableObject,
+        Collider::cuboid(0.1, 0.1, 0.6),
         Transform::from_xyz(0.0, 1.0, 0.0),
         SceneRoot(weapon_model),
     ));
@@ -54,22 +60,23 @@ fn spawn_test_weapon(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn shoot_weapon_on_click(
     mouse_input: Res<ButtonInput<MouseButton>>,
-    weapon_transform: Single<&GlobalTransform, With<Weapon>>,
+    weapon: Single<(Entity, &GlobalTransform), With<Weapon>>,
+    player_body_entity: Single<Entity, With<PlayerBody>>,
     global_transform_query: Query<&GlobalTransform, Without<Weapon>>,
     spatial_query: SpatialQuery,
     mut commands: Commands,
     bullet_hit_point_assets: Res<BulletHitPointAssets>,
 ) {
     if mouse_input.just_pressed(MouseButton::Left) {
-        let origin = weapon_transform.translation();
-        let direction = weapon_transform.forward();
+        let origin = weapon.1.translation(); // TODO: start raycast in front of weapon instead of inside it.
+        let direction = weapon.1.forward();
 
         if let Some(hit_data) = spatial_query.cast_ray(
             origin,
             direction,
             100.0,
             false,
-            &SpatialQueryFilter::default(),
+            &SpatialQueryFilter::from_excluded_entities([weapon.0, player_body_entity.entity()]),
         ) {
             let global_hit_point_position = origin + direction * hit_data.distance;
             let global_transform_of_entity_hit =

@@ -1,7 +1,7 @@
 pub mod character;
 pub mod desired_movement;
 pub mod desired_rotation;
-mod grabbable_object;
+pub mod grabbable_object;
 pub mod weapons;
 
 use avian3d::prelude::*;

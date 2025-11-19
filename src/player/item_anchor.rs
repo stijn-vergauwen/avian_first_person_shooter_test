@@ -1,3 +1,4 @@
+use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
 
 use crate::utilities::system_sets::DataSystems;
@@ -21,7 +22,7 @@ pub struct ItemAnchor {
 
 fn update_target_item_position(
     item_anchor: Single<(&ItemAnchor, &GlobalTransform)>,
-    mut target_item_query: Query<&mut Transform, Without<ItemAnchor>>,
+    mut target_item_query: Query<(&mut Transform, Option<&mut LinearVelocity>), Without<ItemAnchor>>,
 ) {
     let Some(target_item_entity) = item_anchor.0.target_item_entity else {
         return;
@@ -31,6 +32,11 @@ fn update_target_item_position(
         .get_mut(target_item_entity)
         .expect("ItemAnchor should always point to existing entity or None.");
 
-    target_item.translation = item_anchor.1.translation();
-    target_item.rotation = item_anchor.1.rotation();
+    target_item.0.translation = item_anchor.1.translation();
+    target_item.0.rotation = item_anchor.1.rotation();
+
+    // Reset linear velocity as temp fix for rigidbody movement issue
+    if let Some(mut velocity) = target_item.1 {
+        velocity.0 = Vec3::ZERO;
+    }
 }
