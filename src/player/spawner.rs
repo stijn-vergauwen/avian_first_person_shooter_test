@@ -4,7 +4,7 @@ use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 use crate::{
     player::{ItemAnchor, Player, PlayerBody, PlayerCamera},
     world::{
-        character::{Character, CharacterHead},
+        character::{Character, CharacterHead, CharacterNeck},
         desired_rotation::DesiredRotation,
     },
 };
@@ -41,7 +41,7 @@ fn spawn_player(
 
     // Spawn body
 
-    let body_capsule = Capsule3d::new(0.4, 1.0);
+    let body_capsule = Capsule3d::new(0.3, 1.0);
 
     commands.spawn((
         PlayerBody,
@@ -52,16 +52,38 @@ fn spawn_player(
         ChildOf(player_root_entity),
     ));
 
-    // Spawn head
+    // Spawn neck root
 
-    let player_head_entity = commands
+    let player_neck_entity = commands
         .spawn((
-            CharacterHead,
-            Transform::from_xyz(0.0, 1.7, 0.0),
+            CharacterNeck,
+            Transform::from_xyz(0.0, 1.5, 0.0),
             Visibility::Inherited,
             ChildOf(player_root_entity),
         ))
         .id();
+
+    // Spawn head root
+
+    let player_head_entity = commands
+        .spawn((
+            CharacterHead,
+            Transform::from_xyz(0.0, 0.15, 0.0),
+            Visibility::Inherited,
+            ChildOf(player_neck_entity),
+        ))
+        .id();
+
+    // Spawn head mesh
+    let head_shape = Cuboid::from_length(0.35);
+
+    commands.spawn((
+        Transform::from_xyz(0.0, head_shape.half_size.y, 0.0),
+        Mesh3d(meshes.add(head_shape)),
+        MeshMaterial3d(materials.add(StandardMaterial::from_color(CYAN_700))),
+        Collider::from(head_shape),
+        ChildOf(player_head_entity),
+    ));
 
     // Spawn camera
 
@@ -69,7 +91,7 @@ fn spawn_player(
         PlayerCamera,
         Camera3d::default(),
         IsDefaultUiCamera,
-        Transform::from_xyz(0.0, 0.0, -0.0),
+        Transform::from_xyz(0.0, head_shape.half_size.y, -(head_shape.half_size.z + 0.01)),
         ChildOf(player_head_entity),
     ));
 

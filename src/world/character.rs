@@ -29,6 +29,10 @@ pub struct Character {
 #[derive(Component, Clone, Copy)]
 pub struct CharacterHead;
 
+/// Marker component.
+#[derive(Component, Clone, Copy)]
+pub struct CharacterNeck;
+
 fn update_movement_force(
     mut characters_query: Query<(
         &Character,
@@ -58,8 +62,15 @@ fn update_movement_force(
 }
 
 fn update_rotation(
-    mut character: Single<(&mut Transform, &Character, &DesiredRotation), Without<CharacterHead>>,
-    mut character_head: Single<&mut Transform, With<CharacterHead>>,
+    mut character: Single<(&mut Transform, &Character, &DesiredRotation)>,
+    mut character_neck: Single<&mut Transform, (With<CharacterNeck>, Without<Character>)>,
+    mut character_head: Single<
+        &mut Transform,
+        (
+            With<CharacterHead>,
+            (Without<Character>, Without<CharacterNeck>),
+        ),
+    >,
 ) {
     if !character.1.is_active {
         return;
@@ -68,5 +79,10 @@ fn update_rotation(
     let desired_rotation = character.2;
 
     character.0.rotation = Quat::from_axis_angle(Vec3::Y, desired_rotation.rotation.y.radians());
-    character_head.rotation = Quat::from_axis_angle(Vec3::X, desired_rotation.rotation.x.radians());
+
+    // My idea here is to 'spread' the head rotation over the length of the neck, to get rotation & movement closer to how your real neck moves.
+    let half_vertical_rotation =
+        Quat::from_axis_angle(Vec3::X, desired_rotation.rotation.x.radians() / 2.0);
+    character_neck.rotation = half_vertical_rotation;
+    character_head.rotation = half_vertical_rotation;
 }
