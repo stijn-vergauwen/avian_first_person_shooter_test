@@ -13,14 +13,14 @@ Info and documentation for development.
 ## Code Refactoring & Improvements
 - update item_anchor position etc using forces instead of directly modifying position or rotation.
 
+Weapon anchor rework idea: it should be an interpolated position between an offset from the player body and an offset from the player head. A possible mismatch that I expect is that sometimes you hold an object that you want to keep holding 'in front of you', sometimes it should move up and down with you and sometimes it shouldn't. I think separating the anchor from being a child element and instead being 'target position offsets' would fix this, you can then interpolate between.
+
 
 ## Backlog
+- Add player jump
 - Add test object that can be picked up but isn't a weapon (like a radio)
 - Allow items to configure in what orientation they should be held
 - Able to shoot weapon that is currently being held
-- Add player jump
-
-Weapon anchor rework idea: it should be an interpolated position between an offset from the player body and an offset from the player head. A possible mismatch that I expect is that sometimes you hold an object that you want to keep holding 'in front of you', sometimes it should move up and down with you and sometimes it shouldn't. I think separating the anchor from being a child element and instead being 'target position offsets' would fix this, you can then interpolate between.
 
 
 ## Thoughts For Future Projects

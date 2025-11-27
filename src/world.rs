@@ -3,15 +3,14 @@ pub mod desired_movement;
 pub mod desired_rotation;
 pub mod grabbable_object;
 pub mod weapons;
+pub mod interaction_target;
 
 use avian3d::prelude::*;
 use bevy::{camera::Viewport, color::palettes::tailwind::*, prelude::*};
 use rand::Rng;
 
 use crate::world::{
-    character::CharacterPlugin, desired_movement::DesiredMovementPlugin,
-    desired_rotation::DesiredRotationPlugin, grabbable_object::GrabbableObject,
-    weapons::WeaponsPlugin,
+    character::CharacterPlugin, desired_movement::DesiredMovementPlugin, desired_rotation::DesiredRotationPlugin, grabbable_object::GrabbableObject, interaction_target::InteractionTargetPlugin, weapons::WeaponsPlugin
 };
 
 pub struct WorldPlugin;
@@ -23,6 +22,7 @@ impl Plugin for WorldPlugin {
             DesiredMovementPlugin,
             DesiredRotationPlugin,
             WeaponsPlugin,
+            InteractionTargetPlugin,
         ))
         .add_systems(
             Startup,
