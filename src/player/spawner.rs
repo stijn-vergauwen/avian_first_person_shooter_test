@@ -129,7 +129,7 @@ fn spawn_player(
         .entity(player_root_entity)
         .insert(Grounded::from_config(GroundedConfig {
             raycast_height_offset: 0.05,
-            max_distance: 0.2,
-            query_filter: SpatialQueryFilter::DEFAULT,
+            max_distance: 0.08,
+            query_filter: SpatialQueryFilter::from_excluded_entities(vec![player_body_mesh_entity]),
         }));
 }

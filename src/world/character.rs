@@ -1,9 +1,14 @@
+pub mod jump;
+
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
     utilities::system_sets::DataSystems,
-    world::{desired_movement::DesiredMovement, desired_rotation::DesiredRotation},
+    world::{
+        character::jump::CharacterJumpPlugin, desired_movement::DesiredMovement,
+        desired_rotation::DesiredRotation,
+    },
 };
 
 const MAX_MOVEMENT_STRENGTH: f32 = 10.0;
@@ -12,7 +17,7 @@ pub struct CharacterPlugin;
 
 impl Plugin for CharacterPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.add_plugins(CharacterJumpPlugin).add_systems(
             FixedUpdate,
             (update_movement_force, update_rotation).in_set(DataSystems::UpdateEntities),
         );

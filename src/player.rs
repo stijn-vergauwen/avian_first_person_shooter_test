@@ -18,7 +18,11 @@ use crate::{
         system_sets::{DisplaySystems, InputSystems},
     },
     world::{
-        desired_movement::{DesiredMovement, SetDesiredMovement}, desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation}, grabbable_object::GrabbableObject, grounded::Grounded, interaction_target::PlayerInteractionTarget
+        character::jump::AttemptJump,
+        desired_movement::{DesiredMovement, SetDesiredMovement},
+        desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
+        grabbable_object::GrabbableObject,
+        interaction_target::PlayerInteractionTarget,
     },
 };
 
@@ -27,6 +31,7 @@ const MOVEMENT_KEYBINDS: MovementKeybinds = MovementKeybinds {
     back_key: KeyCode::KeyS,
     left_key: KeyCode::KeyA,
     right_key: KeyCode::KeyD,
+    jump_key: KeyCode::Space,
 };
 
 /// Upper threshold for delta mouse motion in a single update, this is to ignore motion spikes caused by input through Parsec.
@@ -37,6 +42,8 @@ const UPPER_MOUSE_MOTION_THRESHOLD: f32 = 1000.0;
 const PIXELS_PER_RADIAN: f32 = 600f32;
 
 const MAX_GRAB_DISTANCE: f32 = 2.5;
+
+const JUMP_FORCE: f32 = 200.0;
 
 pub struct PlayerPlugin;
 
@@ -54,10 +61,11 @@ impl Plugin for PlayerPlugin {
                 (
                     handle_movement_input,
                     handle_rotation_input,
+                    handle_jump_input,
                     set_item_anchor_target_on_keypress,
                 )
                     .in_set(InputSystems),
-                (draw_player_gizmos, log_player_grounded).in_set(DisplaySystems),
+                draw_player_gizmos.in_set(DisplaySystems),
             ),
         );
     }
@@ -81,6 +89,7 @@ pub struct MovementKeybinds {
     pub back_key: KeyCode,
     pub left_key: KeyCode,
     pub right_key: KeyCode,
+    pub jump_key: KeyCode,
 }
 
 fn handle_movement_input(
@@ -111,36 +120,25 @@ fn handle_rotation_input(
     player_entity: Single<Entity, With<Player>>,
     mut commands: Commands,
 ) {
-    let Some(desired_rotation) = calculate_desired_rotation(accumulated_mouse_motion.delta) else {
-        return;
-    };
-
-    commands.trigger(SetDesiredRotation {
-        entity: *player_entity,
-        desired_rotation,
-    });
+    if let Some(desired_rotation) = calculate_desired_rotation(accumulated_mouse_motion.delta) {
+        commands.trigger(SetDesiredRotation {
+            entity: *player_entity,
+            desired_rotation,
+        });
+    }
 }
 
-fn calculate_desired_rotation(delta_motion: Vec2) -> Option<DesiredRotation> {
-    if delta_motion.length() > UPPER_MOUSE_MOTION_THRESHOLD {
-        println!("Mouse motion above threshold!");
+fn handle_jump_input(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    player_entity: Single<Entity, With<Player>>,
+    mut commands: Commands,
+) {
+    if keyboard_input.just_pressed(MOVEMENT_KEYBINDS.jump_key) {
+        commands.trigger(AttemptJump {
+            entity: *player_entity,
+            jump_force: JUMP_FORCE,
+        });
     }
-
-    (delta_motion.length() > 0.0 && delta_motion.length() < UPPER_MOUSE_MOTION_THRESHOLD).then(
-        || {
-            let delta_rotation = EulerAngle::from_radians(
-                -delta_motion.y / PIXELS_PER_RADIAN,
-                -delta_motion.x / PIXELS_PER_RADIAN,
-                0.0,
-                EulerRot::default(),
-            );
-
-            DesiredRotation {
-                rotation: delta_rotation,
-                rotation_type: RotationType::DeltaRotation,
-            }
-        },
-    )
 }
 
 fn set_item_anchor_target_on_keypress(
@@ -181,12 +179,6 @@ fn draw_player_gizmos(
     );
 }
 
-fn log_player_grounded(
-    player_grounded: Single<&Grounded, With<Player>>,
-) {
-    println!("Player grounded: {}", player_grounded.is_grounded());
-}
-
 // Utilities
 
 fn move_direction_from_input(
@@ -212,4 +204,26 @@ fn move_direction_from_input(
     }
 
     Dir3::new(direction).ok()
+}
+
+fn calculate_desired_rotation(delta_motion: Vec2) -> Option<DesiredRotation> {
+    if delta_motion.length() > UPPER_MOUSE_MOTION_THRESHOLD {
+        println!("Mouse motion above threshold!");
+    }
+
+    (delta_motion.length() > 0.0 && delta_motion.length() < UPPER_MOUSE_MOTION_THRESHOLD).then(
+        || DesiredRotation {
+            rotation: delta_rotation_from_mouse_motion(delta_motion),
+            rotation_type: RotationType::DeltaRotation,
+        },
+    )
+}
+
+fn delta_rotation_from_mouse_motion(delta_motion: Vec2) -> EulerAngle {
+    EulerAngle::from_radians(
+        -delta_motion.y / PIXELS_PER_RADIAN,
+        -delta_motion.x / PIXELS_PER_RADIAN,
+        0.0,
+        EulerRot::default(),
+    )
 }

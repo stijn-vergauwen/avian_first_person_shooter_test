@@ -17,7 +17,7 @@ Weapon anchor rework idea: it should be an interpolated position between an offs
 
 
 ## Backlog
-- Add player jump
+- Add player sprinting
 - Add test object that can be picked up but isn't a weapon (like a radio)
 - Allow items to configure in what orientation they should be held
 - Able to shoot weapon that is currently being held
