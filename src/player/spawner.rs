@@ -6,6 +6,7 @@ use crate::{
     world::{
         character::{Character, CharacterHead, CharacterNeck},
         desired_rotation::DesiredRotation,
+        grounded::{Grounded, GroundedConfig},
         interaction_target::{
             CurrentInteractionTarget, InteractionTargetConfig, PlayerInteractionTarget,
         },
@@ -100,7 +101,7 @@ fn spawn_player(
             Camera3d::default(),
             IsDefaultUiCamera,
             CurrentInteractionTarget::from_config(InteractionTargetConfig {
-                max_range: MAX_GRAB_DISTANCE,
+                max_distance: MAX_GRAB_DISTANCE,
                 query_filter: SpatialQueryFilter::from_excluded_entities(vec![
                     player_body_mesh_entity,
                     player_head_mesh_entity,
@@ -122,4 +123,13 @@ fn spawn_player(
     // Spawn PlayerInteractionTarget resource
 
     commands.insert_resource(PlayerInteractionTarget::new(player_camera_entity));
+
+    // Add Grounded component to player root
+    commands
+        .entity(player_root_entity)
+        .insert(Grounded::from_config(GroundedConfig {
+            raycast_height_offset: 0.05,
+            max_distance: 0.2,
+            query_filter: SpatialQueryFilter::DEFAULT,
+        }));
 }

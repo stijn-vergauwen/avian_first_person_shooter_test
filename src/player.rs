@@ -18,10 +18,7 @@ use crate::{
         system_sets::{DisplaySystems, InputSystems},
     },
     world::{
-        desired_movement::{DesiredMovement, SetDesiredMovement},
-        desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
-        grabbable_object::GrabbableObject,
-        interaction_target::PlayerInteractionTarget,
+        desired_movement::{DesiredMovement, SetDesiredMovement}, desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation}, grabbable_object::GrabbableObject, grounded::Grounded, interaction_target::PlayerInteractionTarget
     },
 };
 
@@ -60,7 +57,7 @@ impl Plugin for PlayerPlugin {
                     set_item_anchor_target_on_keypress,
                 )
                     .in_set(InputSystems),
-                draw_player_gizmos.in_set(DisplaySystems),
+                (draw_player_gizmos, log_player_grounded).in_set(DisplaySystems),
             ),
         );
     }
@@ -155,7 +152,7 @@ fn set_item_anchor_target_on_keypress(
     if keyboard_input.just_pressed(KeyCode::KeyE) {
         item_anchor.target_item_entity = None;
 
-        if let Some(target) = player_interaction_target.current_target
+        if let Some(target) = player_interaction_target.current_target()
             && grabbable_query.contains(target.entity)
         {
             item_anchor.target_item_entity = Some(target.entity)
@@ -182,6 +179,12 @@ fn draw_player_gizmos(
         player_camera.forward() * 10.0,
         LIME_400,
     );
+}
+
+fn log_player_grounded(
+    player_grounded: Single<&Grounded, With<Player>>,
+) {
+    println!("Player grounded: {}", player_grounded.is_grounded());
 }
 
 // Utilities

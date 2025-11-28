@@ -25,7 +25,7 @@ pub struct PlayerInteractionTarget {
     /// Should point to the entity from which you want player interaction raycasts to happen. For example the player camera entity.
     player_interaction_entity: Entity,
     /// A copy of the latest InteractionTarget data in the CurrentInteractionTarget component.
-    pub current_target: Option<InteractionTarget>,
+    current_target: Option<InteractionTarget>,
 }
 
 impl PlayerInteractionTarget {
@@ -35,12 +35,16 @@ impl PlayerInteractionTarget {
             current_target: None,
         }
     }
+
+    pub fn current_target(&self) -> Option<InteractionTarget> {
+        self.current_target
+    }
 }
 
 /// Component that tracks current InteractionTarget using raycast.
 #[derive(Component, Clone)]
 pub struct CurrentInteractionTarget {
-    pub target: Option<InteractionTarget>,
+    target: Option<InteractionTarget>,
     config: InteractionTargetConfig,
 }
 
@@ -60,7 +64,7 @@ pub struct InteractionTarget {
 
 #[derive(Clone)]
 pub struct InteractionTargetConfig {
-    pub max_range: f32,
+    pub max_distance: f32,
     pub query_filter: SpatialQueryFilter,
 }
 
@@ -104,7 +108,7 @@ fn query_target(
     let hit_data = spatial_query.cast_ray(
         origin,
         direction,
-        config.max_range,
+        config.max_distance,
         false,
         &config.query_filter,
     )?;

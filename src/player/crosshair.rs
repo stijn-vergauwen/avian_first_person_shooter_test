@@ -53,7 +53,7 @@ fn update_crosshair_color(
     grabbable_query: Query<&GrabbableObject>,
     mut crosshair_color: Single<&mut BorderColor, With<Crosshair>>,
 ) {
-    let new_color = match player_interaction_target.current_target {
+    let new_color = match player_interaction_target.current_target() {
         Some(target) if grabbable_query.contains(target.entity) => Color::Srgba(TEAL_400),
         _ => Color::Srgba(NEUTRAL_400),
     };
