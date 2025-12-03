@@ -1,6 +1,6 @@
 mod crosshair;
 mod cursor_lock;
-mod item_anchor;
+mod grabbed_object;
 mod spawner;
 
 use bevy::{color::palettes::tailwind::*, input::mouse::AccumulatedMouseMotion, prelude::*};
@@ -9,20 +9,16 @@ use crate::{
     player::{
         crosshair::CrosshairPlugin,
         cursor_lock::CursorLockPlugin,
-        item_anchor::{ItemAnchor, ItemAnchorPlugin},
+        grabbed_object::{GrabbedObject, GrabbedObjectPlugin},
         spawner::PlayerSpawnerPlugin,
     },
     utilities::{
-        euler_angle::EulerAngle,
-        fraction::Fraction,
-        system_sets::{DisplaySystems, InputSystems},
+        DrawGizmos, euler_angle::EulerAngle, fraction::Fraction, system_sets::{DisplaySystems, InputSystems}
     },
     world::{
         character::jump::AttemptJump,
         desired_movement::{DesiredMovement, SetDesiredMovement},
         desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
-        grabbable_object::GrabbableObject,
-        interaction_target::PlayerInteractionTarget,
     },
 };
 
@@ -53,7 +49,7 @@ impl Plugin for PlayerPlugin {
         app.add_plugins((
             CursorLockPlugin,
             PlayerSpawnerPlugin,
-            ItemAnchorPlugin,
+            GrabbedObjectPlugin,
             CrosshairPlugin,
         ))
         .add_systems(
@@ -63,7 +59,6 @@ impl Plugin for PlayerPlugin {
                     handle_movement_input,
                     handle_rotation_input,
                     handle_jump_input,
-                    set_item_anchor_target_on_keypress,
                 )
                     .in_set(InputSystems),
                 draw_player_gizmos.in_set(DisplaySystems),
@@ -148,37 +143,10 @@ fn handle_jump_input(
     }
 }
 
-fn set_item_anchor_target_on_keypress(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut item_anchor: Single<&mut ItemAnchor>,
-    player_interaction_target: Res<PlayerInteractionTarget>,
-    grabbable_query: Query<&GrabbableObject>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyE) {
-        item_anchor.target_item_entity = None;
-
-        if let Some(target) = player_interaction_target.current_target()
-            && grabbable_query.contains(target.entity)
-        {
-            item_anchor.target_item_entity = Some(target.entity)
-        }
-    }
-}
-
-#[allow(unused)]
 fn draw_player_gizmos(
-    tool_anchor: Single<&GlobalTransform, With<ItemAnchor>>,
-    player_camera: Single<&GlobalTransform, (With<PlayerCamera>, Without<ItemAnchor>)>,
+    player_camera: Single<&GlobalTransform, (With<PlayerCamera>, With<DrawGizmos>)>,
     mut gizmos: Gizmos,
 ) {
-    // Item anchor
-    gizmos.sphere(
-        tool_anchor.compute_transform().to_isometry(),
-        0.2,
-        PURPLE_400,
-    );
-
-    // Player camera
     gizmos.ray(
         player_camera.translation(),
         player_camera.forward() * 10.0,

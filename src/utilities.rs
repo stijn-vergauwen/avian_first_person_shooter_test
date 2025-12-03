@@ -15,3 +15,7 @@ impl Plugin for UtilitiesPlugin {
         app.add_plugins((AppStatePlugin, SystemSetPlugin));
     }
 }
+
+/// Marker component for entities whos gizmos should be drawn.
+#[derive(Component, Clone, Copy)]
+pub struct DrawGizmos;

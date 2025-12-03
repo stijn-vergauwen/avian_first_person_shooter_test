@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 
 use crate::{
-    player::{ItemAnchor, MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera},
+    player::{GrabbedObject, MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera},
     world::{
         character::{Character, CharacterHead, CharacterNeck},
         desired_rotation::DesiredRotation,
@@ -115,7 +115,7 @@ fn spawn_player(
     // Spawn Item anchor
 
     commands.spawn((
-        ItemAnchor::default(),
+        GrabbedObject::default(),
         Transform::from_xyz(0.3, -0.3, -0.6),
         ChildOf(player_head_entity),
     ));
