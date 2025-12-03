@@ -5,8 +5,7 @@ use bevy::{
 };
 
 use crate::{
-    player::PlayerBody,
-    utilities::system_sets::{DisplaySystems, InputSystems},
+    utilities::system_sets::DisplaySystems,
     world::grabbable_object::GrabbableObject,
 };
 
@@ -15,13 +14,8 @@ pub struct WeaponsPlugin;
 impl Plugin for WeaponsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, (spawn_test_weapon, setup_bullet_hit_point_assets))
-            .add_systems(
-                Update,
-                (
-                    shoot_weapon_on_click.in_set(InputSystems),
-                    draw_weapon_fire_direction.in_set(DisplaySystems),
-                ),
-            );
+            .add_systems(Update, draw_weapon_fire_direction.in_set(DisplaySystems))
+            .add_observer(on_shoot_weapon);
     }
 }
 
@@ -34,6 +28,11 @@ pub struct BulletHitPointAssets {
 /// Base component for weapons.
 #[derive(Component, Clone, Copy)]
 pub struct Weapon;
+
+#[derive(EntityEvent, Clone, Copy)]
+pub struct ShootWeapon {
+    pub entity: Entity,
+}
 
 fn setup_bullet_hit_point_assets(
     mut commands: Commands,
@@ -58,43 +57,43 @@ fn spawn_test_weapon(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-fn shoot_weapon_on_click(
-    mouse_input: Res<ButtonInput<MouseButton>>,
-    weapon: Single<(Entity, &GlobalTransform), With<Weapon>>,
-    player_body_entity: Single<Entity, With<PlayerBody>>,
+fn on_shoot_weapon(
+    shoot_weapon: On<ShootWeapon>,
+    weapons_query: Query<(Entity, &GlobalTransform), With<Weapon>>,
     global_transform_query: Query<&GlobalTransform, Without<Weapon>>,
     spatial_query: SpatialQuery,
     mut commands: Commands,
     bullet_hit_point_assets: Res<BulletHitPointAssets>,
 ) {
-    if mouse_input.just_pressed(MouseButton::Left) {
-        let origin = weapon.1.translation(); // TODO: start raycast in front of weapon instead of inside it.
-        let direction = weapon.1.forward();
+    let (weapon_entity, global_weapon_transform) = weapons_query
+        .get(shoot_weapon.entity)
+        .expect("ShootWeapon should always point to weapon entity.");
 
-        if let Some(hit_data) = spatial_query.cast_ray(
-            origin,
-            direction,
-            100.0,
-            false,
-            &SpatialQueryFilter::from_excluded_entities([weapon.0, player_body_entity.entity()]),
-        ) {
-            let global_hit_point_position = origin + direction * hit_data.distance;
-            let global_transform_of_entity_hit =
-                global_transform_query.get(hit_data.entity).expect(
-                    "Raycast hit should always point to an entity with GlobalTransform component.",
-                );
-            let global_position_of_entity_hit = global_transform_of_entity_hit.translation();
+    let origin = global_weapon_transform.translation(); // TODO: start raycast in front of weapon instead of inside it.
+    let direction = global_weapon_transform.forward();
 
-            commands.spawn((
-                Mesh3d(bullet_hit_point_assets.mesh.clone()),
-                MeshMaterial3d(bullet_hit_point_assets.material.clone()),
-                Transform::from_translation(
-                    global_transform_of_entity_hit.rotation().inverse()
-                        * (global_hit_point_position - global_position_of_entity_hit),
-                ),
-                ChildOf(hit_data.entity),
-            ));
-        }
+    if let Some(hit_data) = spatial_query.cast_ray(
+        origin,
+        direction,
+        100.0,
+        false,
+        &SpatialQueryFilter::from_excluded_entities([weapon_entity]),
+    ) {
+        let global_hit_point_position = origin + direction * hit_data.distance;
+        let global_transform_of_entity_hit = global_transform_query
+            .get(hit_data.entity)
+            .expect("Raycast hit should always point to an entity with GlobalTransform component.");
+        let global_position_of_entity_hit = global_transform_of_entity_hit.translation();
+
+        commands.spawn((
+            Mesh3d(bullet_hit_point_assets.mesh.clone()),
+            MeshMaterial3d(bullet_hit_point_assets.material.clone()),
+            Transform::from_translation(
+                global_transform_of_entity_hit.rotation().inverse()
+                    * (global_hit_point_position - global_position_of_entity_hit),
+            ),
+            ChildOf(hit_data.entity),
+        ));
     }
 }
 

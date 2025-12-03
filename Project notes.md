@@ -11,14 +11,13 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- update item_anchor position etc using forces instead of directly modifying position or rotation.
+- Split shooting to WeaponHit event on weapon fire, with position data etc
+- update grabbed_object position & rotation using forces instead of directly modifying position or rotation.
 
 Weapon anchor rework idea: it should be an interpolated position between an offset from the player body and an offset from the player head. A possible mismatch that I expect is that sometimes you hold an object that you want to keep holding 'in front of you', sometimes it should move up and down with you and sometimes it shouldn't. I think separating the anchor from being a child element and instead being 'target position offsets' would fix this, you can then interpolate between.
 
 
 ## Backlog
-- Able to shoot weapon that is currently being held
-- Remove player colliders from weapon shoot excluded colliders
 - Apply force to object hit by weapon shot
 - Add test object that can be picked up but isn't a weapon (like a radio)
 - Allow items to configure in what orientation they should be held
