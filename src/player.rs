@@ -32,6 +32,7 @@ const MOVEMENT_KEYBINDS: MovementKeybinds = MovementKeybinds {
     left_key: KeyCode::KeyA,
     right_key: KeyCode::KeyD,
     jump_key: KeyCode::Space,
+    run_key: KeyCode::ShiftLeft,
 };
 
 /// Upper threshold for delta mouse motion in a single update, this is to ignore motion spikes caused by input through Parsec.
@@ -90,6 +91,7 @@ pub struct MovementKeybinds {
     pub left_key: KeyCode,
     pub right_key: KeyCode,
     pub jump_key: KeyCode,
+    pub run_key: KeyCode,
 }
 
 fn handle_movement_input(
@@ -99,10 +101,15 @@ fn handle_movement_input(
     mut commands: Commands,
 ) {
     let move_direction = move_direction_from_input(MOVEMENT_KEYBINDS, &keyboard_input);
+    let fraction_of_max_strength =
+        Fraction::new_unchecked(match keyboard_input.pressed(MOVEMENT_KEYBINDS.run_key) {
+            true => 1.0,
+            false => 0.5,
+        });
 
     let desired_movement = move_direction.map(|direction| DesiredMovement {
         direction,
-        fraction_of_max_strength: Fraction::new_unchecked(1.0),
+        fraction_of_max_strength,
     });
 
     if desired_movement != *previous_input {
