@@ -100,7 +100,7 @@ fn spawn_dynamic_entities(
             MeshMaterial3d(cube_material.clone()),
             RigidBody::Dynamic,
             Collider::from(cube_shape),
-            ColliderDensity(0.5),
+            ColliderDensity(100.0),
             Transform::from_translation(spawn_position + Vec3::Y * index as f32 * 1.2),
             SleepingDisabled,
         ));
@@ -129,7 +129,7 @@ fn spawn_dynamic_entities(
             MeshMaterial3d(cube_material.clone()),
             RigidBody::Dynamic,
             Collider::from(cube_shape),
-            ColliderDensity(2.0),
+            ColliderDensity(300.0),
             Restitution::new(0.8),
             Transform::from_translation(spawn_position + vertical_offset + horizontal_offset),
             SleepingDisabled,
@@ -149,6 +149,6 @@ fn spawn_external_cam(mut commands: Commands) {
             order: 2,
             ..default()
         },
-        Transform::from_translation(Vec3::new(-2.0, 2.5, -6.0)).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_translation(Vec3::new(6.0, 2.5, 10.0)).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }

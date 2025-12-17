@@ -38,6 +38,7 @@ fn spawn_player(
             Visibility::Inherited,
             Transform::from_translation(start_position),
             RigidBody::Dynamic,
+            Mass(70.0),
             LockedAxes::ROTATION_LOCKED,
             ConstantForce::default(),
             DesiredRotation::default(),
@@ -116,8 +117,8 @@ fn spawn_player(
     // Spawn GrabbedObject
 
     commands.spawn((
-        GrabbedObject::new(PdControllerConfig::from_parameters(0.8, 0.2, 0.0)),
-        Transform::from_xyz(0.3, -0.3, -0.6),
+        GrabbedObject::new(PdControllerConfig::from_parameters(5.0, 0.8, 0.0)),
+        Transform::from_xyz(0.3, -0.3, -1.6),
         ChildOf(player_head_entity),
     ));
 

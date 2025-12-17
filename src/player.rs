@@ -40,7 +40,7 @@ const PIXELS_PER_RADIAN: f32 = 600f32;
 
 const MAX_GRAB_DISTANCE: f32 = 2.5;
 
-const JUMP_FORCE: f32 = 200.0;
+const JUMP_FORCE: f32 = 25_000.0;
 
 pub struct PlayerPlugin;
 

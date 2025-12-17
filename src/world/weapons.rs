@@ -9,7 +9,7 @@ use crate::{
     world::grabbable_object::GrabbableObject,
 };
 
-const BULLET_HIT_FORCE: f32 = 30.0;
+const BULLET_HIT_FORCE: f32 = 6_000.0;
 
 pub struct WeaponsPlugin;
 
@@ -63,6 +63,7 @@ fn spawn_test_weapon(mut commands: Commands, asset_server: Res<AssetServer>) {
         GrabbableObject,
         RigidBody::Dynamic,
         Collider::cuboid(0.1, 0.1, 0.6),
+        Mass(3.0),
         Transform::from_xyz(0.0, 1.0, 0.0),
         SceneRoot(weapon_model),
         DrawGizmos,
