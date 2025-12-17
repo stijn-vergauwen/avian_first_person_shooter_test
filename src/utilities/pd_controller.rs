@@ -76,6 +76,11 @@ where
         self.values.velocity
     }
 
+    /// Returns the controllers current 'acceleration' value.
+    pub fn acceleration(&self) -> T {
+        self.values.acceleration
+    }
+
     /// Sets the controllers current 'position' value.
     ///
     /// Use this before each controller update call when the in-game 'position' value might deviate from what the controller calculated last update cycle.

@@ -3,6 +3,7 @@ use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 
 use crate::{
     player::{GrabbedObject, MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera},
+    utilities::pd_controller::config::PdControllerConfig,
     world::{
         character::{Character, CharacterHead, CharacterNeck},
         desired_rotation::DesiredRotation,
@@ -112,10 +113,10 @@ fn spawn_player(
         ))
         .id();
 
-    // Spawn Item anchor
+    // Spawn GrabbedObject
 
     commands.spawn((
-        GrabbedObject::default(),
+        GrabbedObject::new(PdControllerConfig::from_parameters(0.8, 0.2, 0.0)),
         Transform::from_xyz(0.3, -0.3, -0.6),
         ChildOf(player_head_entity),
     ));

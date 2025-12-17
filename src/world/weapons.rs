@@ -61,6 +61,7 @@ fn spawn_test_weapon(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Weapon,
         GrabbableObject,
+        RigidBody::Dynamic,
         Collider::cuboid(0.1, 0.1, 0.6),
         Transform::from_xyz(0.0, 1.0, 0.0),
         SceneRoot(weapon_model),
