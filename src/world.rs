@@ -2,16 +2,18 @@ pub mod character;
 pub mod desired_movement;
 pub mod desired_rotation;
 pub mod grabbable_object;
-pub mod weapons;
-pub mod interaction_target;
 pub mod grounded;
+pub mod interaction_target;
+pub mod weapons;
 
 use avian3d::prelude::*;
 use bevy::{camera::Viewport, color::palettes::tailwind::*, prelude::*};
 use rand::Rng;
 
 use crate::world::{
-    character::CharacterPlugin, desired_movement::DesiredMovementPlugin, desired_rotation::DesiredRotationPlugin, grabbable_object::GrabbableObject, grounded::GroundedPlugin, interaction_target::InteractionTargetPlugin, weapons::WeaponsPlugin
+    character::CharacterPlugin, desired_movement::DesiredMovementPlugin,
+    desired_rotation::DesiredRotationPlugin, grabbable_object::GrabbableObject,
+    grounded::GroundedPlugin, interaction_target::InteractionTargetPlugin, weapons::WeaponsPlugin,
 };
 
 pub struct WorldPlugin;
@@ -31,6 +33,7 @@ impl Plugin for WorldPlugin {
             (
                 spawn_static_entities,
                 spawn_dynamic_entities,
+                spawn_radio,
                 spawn_external_cam,
             ),
         );
@@ -135,6 +138,20 @@ fn spawn_dynamic_entities(
             SleepingDisabled,
         ));
     }
+}
+
+fn spawn_radio(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let radio_model = asset_server.load("models/Radio.glb#Scene0");
+
+    commands.spawn((
+        GrabbableObject,
+        RigidBody::Dynamic,
+        Collider::cuboid(0.4, 0.2, 0.15),
+        Mass(3.0),
+        Transform::from_xyz(-2.0, 1.0, -1.0),
+        SceneRoot(radio_model),
+        SleepingDisabled,
+    ));
 }
 
 fn spawn_external_cam(mut commands: Commands) {

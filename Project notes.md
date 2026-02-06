@@ -11,13 +11,10 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- update grabbed_object position & rotation using forces instead of directly modifying position or rotation.
 
-Weapon anchor rework idea: it should be an interpolated position between an offset from the player body and an offset from the player head. A possible mismatch that I expect is that sometimes you hold an object that you want to keep holding 'in front of you', sometimes it should move up and down with you and sometimes it shouldn't. I think separating the anchor from being a child element and instead being 'target position offsets' would fix this, you can then interpolate between.
 
 
 ## Backlog
-- Add test object that can be picked up but isn't a weapon (like a radio)
 - Allow items to configure in what orientation they should be held
 
 
@@ -28,3 +25,6 @@ Weapon anchor rework idea: it should be an interpolated position between an offs
         - then multiple struct variants that implement this trait, a default one that copies what I already have, one for rotation that uses quaternion & scaled axis types, and one that leaves out initial response param so I can remove some of the calculations.
     - make generic components for controlling an entities position or rotation, both directly and through physics engine.
         - Idea is that you spawn in this controller component with it's parameters, and then you only have to interact with it to set the target, updating is handled within the plugin
+
+- Weapon anchor rework idea: it should be an interpolated position between an offset from the player body and an offset from the player head.
+    - A possible mismatch that I expect is that sometimes you hold an object that you want to keep holding 'in front of you', sometimes it should move up and down with you and sometimes it shouldn't. I think separating the anchor from being a child element and instead being 'target position offsets' would fix this, you can then interpolate between.
