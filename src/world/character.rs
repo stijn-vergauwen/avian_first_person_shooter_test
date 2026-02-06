@@ -66,6 +66,7 @@ fn update_movement_force(
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn update_rotation(
     mut character: Single<(&mut Transform, &Character, &DesiredRotation)>,
     mut character_neck: Single<&mut Transform, (With<CharacterNeck>, Without<Character>)>,

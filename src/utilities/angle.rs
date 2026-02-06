@@ -1,5 +1,5 @@
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
-use std::ops::{Add, AddAssign, Range};
+use std::ops::{Add, AddAssign, Div, Mul, Range, Sub};
 
 /// An angle in radians.
 ///
@@ -81,6 +81,30 @@ impl Add for Angle {
 impl AddAssign for Angle {
     fn add_assign(&mut self, rhs: Self) {
         self.0.add_assign(rhs.0);
+    }
+}
+
+impl Sub for Angle {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Angle(self.0 - rhs.0)
+    }
+}
+
+impl Mul<f32> for Angle {
+    type Output = Self;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Angle(self.0 * rhs)
+    }
+}
+
+impl Div<f32> for Angle {
+    type Output = Self;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Angle(self.0 / rhs)
     }
 }
 

@@ -6,6 +6,7 @@ use crate::{
     utilities::{
         DrawGizmos,
         pd_controller::{PdController, config::PdControllerConfig},
+        quaternion_pd_controller::QuaternionPdController,
         system_sets::{DataSystems, DisplaySystems, InputSystems},
     },
     world::{
@@ -28,7 +29,11 @@ impl Plugin for GrabbedObjectPlugin {
         )
         .add_systems(
             FixedUpdate,
-            update_grabbed_object_position.in_set(DataSystems::UpdateEntities),
+            (
+                update_grabbed_object_position,
+                update_grabbed_object_rotation,
+            )
+                .in_set(DataSystems::UpdateEntities),
         );
     }
 }
@@ -38,13 +43,20 @@ impl Plugin for GrabbedObjectPlugin {
 pub struct GrabbedObject {
     pub entity: Option<Entity>,
     position_force_controller: PdController<Vec3>,
+    rotation_force_controller: QuaternionPdController,
 }
 
 impl GrabbedObject {
-    pub fn new(position_force_controller_config: PdControllerConfig) -> Self {
+    pub fn new(
+        position_force_controller_config: PdControllerConfig,
+        rotation_force_controller_config: PdControllerConfig,
+    ) -> Self {
         Self {
             entity: None,
             position_force_controller: PdController::new(position_force_controller_config),
+            rotation_force_controller: QuaternionPdController::new(
+                rotation_force_controller_config,
+            ),
         }
     }
 }
@@ -70,7 +82,10 @@ fn grab_object_on_keypress(
 fn update_grabbed_object_position(
     mut grabbed_object: Single<(&mut GrabbedObject, &GlobalTransform)>,
     mut player: Single<Forces, With<Player>>,
-    mut target_item_query: Query<(&GlobalTransform, Forces), (Without<GrabbedObject>, Without<Player>)>,
+    mut target_item_query: Query<
+        (&GlobalTransform, Forces),
+        (Without<GrabbedObject>, Without<Player>),
+    >,
     time: Res<Time>,
 ) {
     let Some(target_item_entity) = grabbed_object.0.entity else {
@@ -96,6 +111,34 @@ fn update_grabbed_object_position(
 
     // Apply opposite position force to player
     player.apply_force(-position_controller.acceleration());
+}
+
+#[allow(clippy::type_complexity)]
+fn update_grabbed_object_rotation(
+    mut grabbed_object: Single<(&mut GrabbedObject, &GlobalTransform)>,
+    mut target_item_query: Query<(&GlobalTransform, Forces), Without<GrabbedObject>>,
+    time: Res<Time>,
+) {
+    let Some(target_item_entity) = grabbed_object.0.entity else {
+        return;
+    };
+
+    let mut target_item = target_item_query.get_mut(target_item_entity).expect(
+        "GrabbedObject should always point to existing entity with RigidBody component, or None.",
+    );
+
+    let player_rotation = grabbed_object.1.rotation();
+    let rotation_controller = &mut grabbed_object.0.rotation_force_controller;
+
+    rotation_controller.set_shortest_target_position(player_rotation);
+
+    let new_acceleration = rotation_controller.update_from_physics_sim(
+        target_item.0.rotation(),
+        target_item.1.angular_velocity(),
+        time.delta_secs(),
+    );
+
+    target_item.1.apply_angular_acceleration(new_acceleration);
 }
 
 fn shoot_held_weapon(

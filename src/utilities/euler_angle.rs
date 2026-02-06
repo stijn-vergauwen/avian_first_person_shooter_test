@@ -1,6 +1,6 @@
 use crate::utilities::angle::Angle;
 use bevy::prelude::*;
-use std::ops::{Add, AddAssign};
+use std::ops::{Add, AddAssign, Div, Mul, Sub};
 
 // TODO: add conversions to & from Quaterions
 
@@ -38,5 +38,29 @@ impl AddAssign for EulerAngle {
         self.x.add_assign(rhs.x);
         self.y.add_assign(rhs.y);
         self.z.add_assign(rhs.z);
+    }
+}
+
+impl Sub for EulerAngle {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        EulerAngle::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z, self.order)
+    }
+}
+
+impl Mul<f32> for EulerAngle {
+    type Output = Self;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        EulerAngle::new(self.x * rhs, self.y * rhs, self.z * rhs, self.order)
+    }
+}
+
+impl Div<f32> for EulerAngle {
+    type Output = Self;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        EulerAngle::new(self.x / rhs, self.y / rhs, self.z / rhs, self.order)
     }
 }

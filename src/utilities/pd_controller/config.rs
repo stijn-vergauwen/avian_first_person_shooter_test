@@ -5,10 +5,6 @@ pub struct PdControllerConfig {
     pub velocity_multiplier: f32,
     pub acceleration_divisor: f32,
     pub target_velocity_multiplier: f32,
-    /// Max velocity in m/s.
-    pub max_velocity: f32,
-    /// Max acceleration in m/s/s.
-    pub max_acceleration: f32,
 }
 
 impl PdControllerConfig {
@@ -39,21 +35,7 @@ impl PdControllerConfig {
             velocity_multiplier: damping / (PI * speed),
             acceleration_divisor: 1.0 / (PI * 2.0 * speed).powf(2.0),
             target_velocity_multiplier: (initial_response * damping) / (PI * 2.0 * speed),
-            max_velocity: f32::MAX,
-            max_acceleration: f32::MAX,
         }
-    }
-
-    #[allow(unused)]
-    pub fn with_max_velocity(mut self, max_velocity: f32) -> Self {
-        self.max_velocity = max_velocity;
-        self
-    }
-
-    #[allow(unused)]
-    pub fn with_max_acceleration(mut self, max_acceleration: f32) -> Self {
-        self.max_acceleration = max_acceleration;
-        self
     }
 }
 

@@ -1,6 +1,5 @@
 mod calculations;
 pub mod config;
-mod constrain_value;
 mod values;
 
 use std::{
@@ -11,7 +10,6 @@ use std::{
 
 use calculations::{calculate_acceleration, calculate_position, calculate_velocity};
 use config::PdControllerConfig;
-use constrain_value::ConstrainValue;
 use values::PdControllerValues;
 
 // PD controller code taken from 2D IK test project.
@@ -36,8 +34,7 @@ where
         + Mul<f32, Output = T>
         + Add<T, Output = T>
         + Sub<T, Output = T>
-        + Div<f32, Output = T>
-        + ConstrainValue,
+        + Div<f32, Output = T>,
 {
     pub fn new(config: PdControllerConfig) -> Self {
         Self {
@@ -119,8 +116,7 @@ where
             self.config,
             self.target_position,
             target_velocity,
-        )
-        .constrain(self.config.max_acceleration);
+        );
     }
 
     /// Updates the velocity value of this controller.
@@ -128,7 +124,7 @@ where
         validate_delta_seconds(delta_seconds);
 
         self.values.velocity =
-            calculate_velocity(self.values, delta_seconds).constrain(self.config.max_velocity);
+            calculate_velocity(self.values, delta_seconds);
     }
 
     /// Updates the position value of this controller.

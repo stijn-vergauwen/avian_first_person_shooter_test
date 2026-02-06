@@ -17,8 +17,15 @@ Weapon anchor rework idea: it should be an interpolated position between an offs
 
 
 ## Backlog
+- run cargo update and enable dynamic_linking feature
 - Add test object that can be picked up but isn't a weapon (like a radio)
 - Allow items to configure in what orientation they should be held
 
 
 ## Thoughts For Future Projects
+- Reworks for PID controller:
+    - make single interface, allows splitting to more specific contrtoller implementations (quaternions, without initial response, etc)
+        - I'm thinking a common PidController trait, maybe with a generic T for 'position' type and a associated type for velocity & acceleration that defaults to T
+        - then multiple struct variants that implement this trait, a default one that copies what I already have, one for rotation that uses quaternion & scaled axis types, and one that leaves out initial response param so I can remove some of the calculations.
+    - make generic components for controlling an entities position or rotation, both directly and through physics engine.
+        - Idea is that you spawn in this controller component with it's parameters, and then you only have to interact with it to set the target, updating is handled within the plugin
