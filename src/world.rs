@@ -136,6 +136,7 @@ fn spawn_dynamic_entities(
             Restitution::new(0.8),
             Transform::from_translation(spawn_position + vertical_offset + horizontal_offset),
             SleepingDisabled,
+            MaxAngularSpeed(40.0),
         ));
     }
 }
@@ -145,12 +146,13 @@ fn spawn_radio(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn((
         GrabbableObject,
+        SceneRoot(radio_model),
+        Transform::from_xyz(-2.0, 1.0, -1.0),
         RigidBody::Dynamic,
         Collider::cuboid(0.4, 0.2, 0.15),
-        Mass(3.0),
-        Transform::from_xyz(-2.0, 1.0, -1.0),
-        SceneRoot(radio_model),
+        Mass(5.0),
         SleepingDisabled,
+        MaxAngularSpeed(40.0),
     ));
 }
 
