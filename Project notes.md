@@ -11,19 +11,18 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
+- fix grabbed object rotation issue when rotating past -90 degrees around Y axis, objects suddenly jump to the side and correct themselves
 
 
 
 ## Backlog
-- Allow items to configure in what orientation they should be held
-- fix grabbed object rotation issue when rotating past -90 degrees around Y axis, objects suddenly jump to the side and correct themselves
 - add 'weapon inspector' mode that you can switch to when pressing T
 - leave inspector mode on T or esc key
 - when inspecting, unlock & show the mouse cursor
 - when inspecting, disable player movement and rotation input
 - when inspecting, click on object and drag the mouse to rotate
     - rotation should happen on Y axis for horizontal movement, and on X axis for vertical movement
-- button to reset object to default orientation (value inside orientation component or quat::origin if component not added)
+- button to reset object to default orientation (value inside orientation component or quat::identity if component not added)
 - when leaving inspector, keep the relative rotation of the object to the player as it had in the inspector
 - Should now be able to pick up objects, inspect them, rotate them around, carry them in any orientation, and reset them to their default rotation anytime
 

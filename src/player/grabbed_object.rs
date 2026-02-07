@@ -10,7 +10,7 @@ use crate::{
         system_sets::{DataSystems, DisplaySystems, InputSystems},
     },
     world::{
-        grabbable_object::GrabbableObject,
+        grabbable_object::{GrabOrientation, GrabbableObject},
         interaction_target::PlayerInteractionTarget,
         weapons::{ShootWeapon, Weapon},
     },
@@ -117,6 +117,7 @@ fn update_grabbed_object_position(
 fn update_grabbed_object_rotation(
     mut grabbed_object: Single<(&mut GrabbedObject, &GlobalTransform)>,
     mut target_item_query: Query<(&GlobalTransform, Forces), Without<GrabbedObject>>,
+    grab_orientation_query: Query<&GrabOrientation, With<GrabbableObject>>,
     time: Res<Time>,
 ) {
     let Some(target_item_entity) = grabbed_object.0.entity else {
@@ -130,7 +131,11 @@ fn update_grabbed_object_rotation(
     let player_rotation = grabbed_object.1.rotation();
     let rotation_controller = &mut grabbed_object.0.rotation_force_controller;
 
-    rotation_controller.set_shortest_target_position(player_rotation);
+    let grab_orientation = grab_orientation_query
+        .get(target_item_entity)
+        .map_or(Quat::IDENTITY, |component| component.orientation);
+
+    rotation_controller.set_shortest_target_position(player_rotation * grab_orientation);
 
     let new_acceleration = rotation_controller.update_from_physics_sim(
         target_item.0.rotation(),

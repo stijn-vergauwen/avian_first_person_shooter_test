@@ -6,14 +6,20 @@ pub mod grounded;
 pub mod interaction_target;
 pub mod weapons;
 
+use std::f32::consts::PI;
+
 use avian3d::prelude::*;
 use bevy::{camera::Viewport, color::palettes::tailwind::*, prelude::*};
 use rand::Rng;
 
 use crate::world::{
-    character::CharacterPlugin, desired_movement::DesiredMovementPlugin,
-    desired_rotation::DesiredRotationPlugin, grabbable_object::GrabbableObject,
-    grounded::GroundedPlugin, interaction_target::InteractionTargetPlugin, weapons::WeaponsPlugin,
+    character::CharacterPlugin,
+    desired_movement::DesiredMovementPlugin,
+    desired_rotation::DesiredRotationPlugin,
+    grabbable_object::{GrabOrientation, GrabbableObject},
+    grounded::GroundedPlugin,
+    interaction_target::InteractionTargetPlugin,
+    weapons::WeaponsPlugin,
 };
 
 pub struct WorldPlugin;
@@ -146,6 +152,7 @@ fn spawn_radio(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn((
         GrabbableObject,
+        GrabOrientation::new(Quat::from_axis_angle(Vec3::Y, PI)),
         SceneRoot(radio_model),
         Transform::from_xyz(-2.0, 1.0, -1.0),
         RigidBody::Dynamic,
