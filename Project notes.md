@@ -11,7 +11,7 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- fix grabbed object rotation issue when rotating past -90 degrees around Y axis, objects suddenly jump to the side and correct themselves
+- reset the 'previous target position' to the new current target when grabbing an object. Currently the 'target velocity' is calculated based on the target position of the object that was previously grabbed (which could be a very large delta)
 
 
 

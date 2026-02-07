@@ -16,6 +16,9 @@ use crate::{
     },
 };
 
+/// Angular acceleration values from the PD controller above this value will be ignored. This is to prevent spikes caused by some issue in the controller logic (not sure how to fix the underlying issue but this patches it).
+const IGNORE_ACCELERATION_ABOVE: f32 = 600.0;
+
 pub struct GrabbedObjectPlugin;
 
 impl Plugin for GrabbedObjectPlugin {
@@ -142,6 +145,10 @@ fn update_grabbed_object_rotation(
         target_item.1.angular_velocity(),
         time.delta_secs(),
     );
+
+    if new_acceleration.length() > IGNORE_ACCELERATION_ABOVE {
+        return;
+    }
 
     target_item.1.apply_angular_acceleration(new_acceleration);
 }

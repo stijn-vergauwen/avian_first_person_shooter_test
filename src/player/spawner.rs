@@ -118,8 +118,8 @@ fn spawn_player(
 
     commands.spawn((
         GrabbedObject::new(
-            PdControllerConfig::from_parameters(5.0, 1.0, 0.0),
-            PdControllerConfig::from_parameters(3.0, 1.0, 0.0),
+            PdControllerConfig::from_parameters(5.0, 1.4, 1.0),
+            PdControllerConfig::from_parameters(2.5, 0.6, 0.6),
         ),
         Transform::from_xyz(0.3, -0.3, -1.6),
         ChildOf(player_head_entity),
