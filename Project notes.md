@@ -11,8 +11,6 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- reset the 'previous target position' to the new current target when grabbing an object. Currently the 'target velocity' is calculated based on the target position of the object that was previously grabbed (which could be a very large delta)
-
 
 
 ## Backlog

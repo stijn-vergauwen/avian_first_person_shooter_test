@@ -62,6 +62,12 @@ where
         self.target_position = target_position;
     }
 
+    /// Sets a new start position for the controller. This resets the controller to a new position without it reacting to a target velocity spike.
+    pub fn set_start_position(&mut self, start_position: T) {
+        self.target_position = start_position;
+        self.prev_target_position = start_position;
+    }
+
     /// Returns the controllers current 'position' value.
     #[expect(unused)]
     pub fn position(&self) -> T {

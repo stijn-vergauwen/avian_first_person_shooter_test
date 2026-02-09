@@ -85,15 +85,10 @@ impl QuaternionPdController {
         self.target_position = target_position;
     }
 
-    /// Sets a new target position that makes sure the controller takes the shortest path.
-    ///
-    /// It should guarantee the shortest path by flipping the Quaternion if the dot product is below 0.0, I have taken this code from the 'slerp' function on [`Quat`].
-    pub fn set_shortest_target_position(&mut self, mut target_position: Quat) {
-        if self.values.position.dot(target_position) < 0.0 {
-            target_position = -target_position;
-        }
-
-        self.set_target_position(target_position);
+    /// Sets a new start position for the controller. This resets the controller to a new position without it reacting to a target velocity spike.
+    pub fn set_start_position(&mut self, start_position: Quat) {
+        self.target_position = start_position;
+        self.prev_target_position = start_position;
     }
 
     /// Updates the values of this controller.
@@ -116,7 +111,26 @@ impl QuaternionPdController {
         self.set_position(position);
         self.set_velocity(velocity);
 
-        let target_velocity = self.calculate_target_velocity(delta_seconds);
+        let mut target_velocity = self.calculate_target_velocity(delta_seconds);
+
+        // Info for debugging acceleration spikes when crossing specific angle:
+        // - calling the normal set_target_position instead of set_shortes_target_position fixed target_velocity spikes, but acceleration spikes keep happening. So possible issue with flipping Quat when dot product < 0.0.
+        // - the acceleration spike happens 1 update before the target_velocity spike when using set_shortest_target_position.
+        // - sometimes the acceleration spike happens even when the target position didn't even change that update or past few updates. This makes me believe it might be inside the calculate_acceleration function.
+        // - setting initial_response to something else than 0.0 seems to amplify the problem but doesn't seem to be a cause.
+
+        // - Yep think I found it: the sign of an angle on 1 axis flips from positive to negative (in this case from 4.677 to -1.531, describing almost the same angle in radians but the other way around) when converting the result of the Quat calculation to a scaled axis.
+        // - Correction: The sign of angles don't only get flipped on 1 axis or only when converting to scaled axis. It happens in the Quat too and on all axes.
+        // - This happens for both the target_position as well as values.position, but can happen at different times (idk if it ever happens at the same time)
+        // - Since target_position comes from the player transform and values.position comes from the object's transform / physics sim. Both of these values should only be read, not directly mutated.
+
+        // OK new theory: values.position can flip, target_position can flip, but not always at the same time.
+        //      The solution isn't to prevent them from flipping, but to prevent a flip from spiking the target_velocity or 'delta to target' calculations
+        // TODO: prevent target_position flip from spiking target_velocity -> Done
+        // TODO: prevent values.position flip from spiking delta to target calculation -> Done
+
+        // THIS WORKS?!?!?!? :OOOO, looks like those 2 checks fix the problem properly! No hacky workarounds required, much nicer
+
         self.update_previous_values();
 
         self.update_acceleration(delta_seconds, target_velocity);
@@ -156,8 +170,15 @@ impl QuaternionPdController {
     }
 
     fn calculate_target_velocity(&self, delta_seconds: f32) -> Vec3 {
-        (self.target_position * self.prev_target_position.inverse()).to_scaled_axis()
-            / delta_seconds
+        // This check prevents a spike in target_velocity when the target_position (player rotation) flips sign, without needing to mutate the player rotation itself.
+        // A 'flip in sign' refers to a quaternion that points to the same angle but takes a different route, so it's inner values are different. This would be seen as a very big delta in the calculation below even though the resulting rotation is the same.
+        // The acceleration calculation also needed this same check to prevent that one from spiking, these checks together should keep the quaternion pd controller stable.
+        let target_position = match self.prev_target_position.dot(self.target_position) > 0.0 {
+            true => self.target_position,
+            false => -self.target_position,
+        };
+
+        (target_position * self.prev_target_position.inverse()).to_scaled_axis() / delta_seconds
     }
 }
 

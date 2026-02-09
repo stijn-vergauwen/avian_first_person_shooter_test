@@ -16,9 +16,6 @@ use crate::{
     },
 };
 
-/// Angular acceleration values from the PD controller above this value will be ignored. This is to prevent spikes caused by some issue in the controller logic (not sure how to fix the underlying issue but this patches it).
-const IGNORE_ACCELERATION_ABOVE: f32 = 600.0;
-
 pub struct GrabbedObjectPlugin;
 
 impl Plugin for GrabbedObjectPlugin {
@@ -66,17 +63,32 @@ impl GrabbedObject {
 
 fn grab_object_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut grabbed_object: Single<(&mut GrabbedObject, &GlobalTransform)>,
     player_interaction_target: Res<PlayerInteractionTarget>,
-    grabbable_query: Query<&GrabbableObject>,
+    grabbable_query: Query<Option<&GrabOrientation>, With<GrabbableObject>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyE) {
-        grabbed_object.entity = None;
+        grabbed_object.0.entity = None;
 
         if let Some(target) = player_interaction_target.current_target()
             && grabbable_query.contains(target.entity)
         {
-            grabbed_object.entity = Some(target.entity);
+            grabbed_object.0.entity = Some(target.entity);
+
+            let global_transform = grabbed_object.1;
+            let grab_orientation = grabbable_query
+                .get(target.entity)
+                .unwrap_or(None)
+                .map_or(Quat::IDENTITY, |component| component.orientation);
+
+            grabbed_object
+                .0
+                .position_force_controller
+                .set_start_position(global_transform.translation());
+            grabbed_object
+                .0
+                .rotation_force_controller
+                .set_start_position(global_transform.rotation() * grab_orientation);
         }
     }
 }
@@ -138,17 +150,13 @@ fn update_grabbed_object_rotation(
         .get(target_item_entity)
         .map_or(Quat::IDENTITY, |component| component.orientation);
 
-    rotation_controller.set_shortest_target_position(player_rotation * grab_orientation);
+    rotation_controller.set_target_position(player_rotation * grab_orientation);
 
     let new_acceleration = rotation_controller.update_from_physics_sim(
         target_item.0.rotation(),
         target_item.1.angular_velocity(),
         time.delta_secs(),
     );
-
-    if new_acceleration.length() > IGNORE_ACCELERATION_ABOVE {
-        return;
-    }
 
     target_item.1.apply_angular_acceleration(new_acceleration);
 }
