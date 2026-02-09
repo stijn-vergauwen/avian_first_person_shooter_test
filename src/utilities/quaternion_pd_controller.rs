@@ -112,25 +112,6 @@ impl QuaternionPdController {
         self.set_velocity(velocity);
 
         let mut target_velocity = self.calculate_target_velocity(delta_seconds);
-
-        // Info for debugging acceleration spikes when crossing specific angle:
-        // - calling the normal set_target_position instead of set_shortes_target_position fixed target_velocity spikes, but acceleration spikes keep happening. So possible issue with flipping Quat when dot product < 0.0.
-        // - the acceleration spike happens 1 update before the target_velocity spike when using set_shortest_target_position.
-        // - sometimes the acceleration spike happens even when the target position didn't even change that update or past few updates. This makes me believe it might be inside the calculate_acceleration function.
-        // - setting initial_response to something else than 0.0 seems to amplify the problem but doesn't seem to be a cause.
-
-        // - Yep think I found it: the sign of an angle on 1 axis flips from positive to negative (in this case from 4.677 to -1.531, describing almost the same angle in radians but the other way around) when converting the result of the Quat calculation to a scaled axis.
-        // - Correction: The sign of angles don't only get flipped on 1 axis or only when converting to scaled axis. It happens in the Quat too and on all axes.
-        // - This happens for both the target_position as well as values.position, but can happen at different times (idk if it ever happens at the same time)
-        // - Since target_position comes from the player transform and values.position comes from the object's transform / physics sim. Both of these values should only be read, not directly mutated.
-
-        // OK new theory: values.position can flip, target_position can flip, but not always at the same time.
-        //      The solution isn't to prevent them from flipping, but to prevent a flip from spiking the target_velocity or 'delta to target' calculations
-        // TODO: prevent target_position flip from spiking target_velocity -> Done
-        // TODO: prevent values.position flip from spiking delta to target calculation -> Done
-
-        // THIS WORKS?!?!?!? :OOOO, looks like those 2 checks fix the problem properly! No hacky workarounds required, much nicer
-
         self.update_previous_values();
 
         self.update_acceleration(delta_seconds, target_velocity);
