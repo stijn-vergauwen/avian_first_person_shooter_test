@@ -10,6 +10,7 @@ use crate::{
         system_sets::{DataSystems, DisplaySystems, InputSystems},
     },
     world::{
+        character::Character,
         grabbable_object::{GrabOrientation, GrabbableObject},
         interaction_target::PlayerInteractionTarget,
         weapons::{ShootWeapon, Weapon},
@@ -23,7 +24,12 @@ impl Plugin for GrabbedObjectPlugin {
         app.add_systems(
             Update,
             (
-                (grab_object_on_keypress, shoot_held_weapon).in_set(InputSystems),
+                (
+                    grab_object_on_keypress,
+                    shoot_held_weapon,
+                    toggle_object_inspection_on_keypress,
+                )
+                    .in_set(InputSystems),
                 draw_grabbed_object_anchor_position.in_set(DisplaySystems),
             ),
         )
@@ -34,7 +40,8 @@ impl Plugin for GrabbedObjectPlugin {
                 update_grabbed_object_rotation,
             )
                 .in_set(DataSystems::UpdateEntities),
-        );
+        )
+        .add_observer(on_update_player_character_active);
     }
 }
 
@@ -44,6 +51,7 @@ pub struct GrabbedObject {
     pub entity: Option<Entity>,
     position_force_controller: PdController<Vec3>,
     rotation_force_controller: QuaternionPdController,
+    is_inspecting: bool,
 }
 
 impl GrabbedObject {
@@ -57,8 +65,26 @@ impl GrabbedObject {
             rotation_force_controller: QuaternionPdController::new(
                 rotation_force_controller_config,
             ),
+            is_inspecting: false,
         }
     }
+}
+
+#[derive(EntityEvent, Copy, Clone)]
+pub struct UpdatePlayerCharacterActive {
+    pub entity: Entity,
+}
+
+fn on_update_player_character_active(
+    update_player_character_active: On<UpdatePlayerCharacterActive>,
+    mut characters_query: Query<&mut Character>,
+    grabbed_object: Single<&GrabbedObject>,
+) {
+    let Ok(mut character) = characters_query.get_mut(update_player_character_active.entity) else {
+        return;
+    };
+
+    character.is_active = !grabbed_object.is_inspecting;
 }
 
 fn grab_object_on_keypress(
@@ -176,6 +202,27 @@ fn shoot_held_weapon(
         });
     };
 }
+
+// Object inspecting
+
+fn toggle_object_inspection_on_keypress(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut commands: Commands,
+    player_entity: Single<Entity, With<Player>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyT)
+        || grabbed_object.is_inspecting && keyboard_input.just_pressed(KeyCode::Escape)
+    {
+        grabbed_object.is_inspecting = !grabbed_object.is_inspecting;
+
+        commands.trigger(UpdatePlayerCharacterActive {
+            entity: *player_entity,
+        });
+    }
+}
+
+// Gizmos
 
 fn draw_grabbed_object_anchor_position(
     tool_anchor: Single<&GlobalTransform, (With<GrabbedObject>, With<DrawGizmos>)>,

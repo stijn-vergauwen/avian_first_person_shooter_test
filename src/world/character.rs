@@ -48,6 +48,7 @@ fn update_movement_force(
 ) {
     for (character, global_transform, desired_movement, mut force) in characters_query.iter_mut() {
         if !character.is_active {
+            force.0 = Vec3::ZERO;
             continue;
         }
 

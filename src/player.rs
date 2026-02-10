@@ -13,10 +13,13 @@ use crate::{
         spawner::PlayerSpawnerPlugin,
     },
     utilities::{
-        DrawGizmos, euler_angle::EulerAngle, fraction::Fraction, system_sets::{DisplaySystems, InputSystems}
+        DrawGizmos,
+        euler_angle::EulerAngle,
+        fraction::Fraction,
+        system_sets::{DisplaySystems, InputSystems},
     },
     world::{
-        character::jump::AttemptJump,
+        character::{Character, jump::AttemptJump},
         desired_movement::{DesiredMovement, SetDesiredMovement},
         desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
     },
@@ -119,12 +122,16 @@ fn handle_movement_input(
 
 fn handle_rotation_input(
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
-    player_entity: Single<Entity, With<Player>>,
+    player: Single<(Entity, &Character), With<Player>>,
     mut commands: Commands,
 ) {
+    if !player.1.is_active {
+        return;
+    }
+
     if let Some(desired_rotation) = calculate_desired_rotation(accumulated_mouse_motion.delta) {
         commands.trigger(SetDesiredRotation {
-            entity: *player_entity,
+            entity: player.0,
             desired_rotation,
         });
     }

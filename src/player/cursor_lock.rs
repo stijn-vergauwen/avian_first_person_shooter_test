@@ -8,6 +8,7 @@ impl Plugin for CursorLockPlugin {
         app.add_systems(Update, lock_mouse_cursor_on_window_focused);
     }
 }
+
 fn lock_mouse_cursor_on_window_focused(
     mut on_window_focused: MessageReader<WindowFocused>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,

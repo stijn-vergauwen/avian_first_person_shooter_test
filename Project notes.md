@@ -11,11 +11,10 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-
+- make events for grabbing and dropping objects
+- make events for entering and leaving 'inspector mode'
 
 ## Backlog
-- add 'weapon inspector' mode that you can switch to when pressing T
-- leave inspector mode on T or esc key
 - when inspecting, unlock & show the mouse cursor
 - when inspecting, disable player movement and rotation input
 - when inspecting, click on object and drag the mouse to rotate
