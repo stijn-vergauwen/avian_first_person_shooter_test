@@ -1,5 +1,9 @@
 use avian3d::prelude::{Forces, RigidBodyForces};
-use bevy::{color::palettes::tailwind::PURPLE_400, prelude::*};
+use bevy::{
+    color::palettes::tailwind::PURPLE_400,
+    prelude::*,
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
+};
 
 use crate::{
     player::Player,
@@ -208,6 +212,7 @@ fn shoot_held_weapon(
 fn toggle_object_inspection_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut grabbed_object: Single<&mut GrabbedObject>,
+    mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
     mut commands: Commands,
     player_entity: Single<Entity, With<Player>>,
 ) {
@@ -215,6 +220,13 @@ fn toggle_object_inspection_on_keypress(
         || grabbed_object.is_inspecting && keyboard_input.just_pressed(KeyCode::Escape)
     {
         grabbed_object.is_inspecting = !grabbed_object.is_inspecting;
+
+        cursor_options.visible = grabbed_object.is_inspecting;
+        cursor_options.grab_mode = if grabbed_object.is_inspecting {
+            CursorGrabMode::None
+        } else {
+            CursorGrabMode::Locked
+        };
 
         commands.trigger(UpdatePlayerCharacterActive {
             entity: *player_entity,

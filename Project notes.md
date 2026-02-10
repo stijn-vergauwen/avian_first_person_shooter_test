@@ -15,8 +15,6 @@ Info and documentation for development.
 - make events for entering and leaving 'inspector mode'
 
 ## Backlog
-- when inspecting, unlock & show the mouse cursor
-- when inspecting, disable player movement and rotation input
 - when inspecting, click on object and drag the mouse to rotate
     - rotation should happen on Y axis for horizontal movement, and on X axis for vertical movement
 - button to reset object to default orientation (value inside orientation component or quat::identity if component not added)
