@@ -86,6 +86,28 @@ impl Plugin for GrabbedObjectPlugin {
                     material.base_color = Color::from(GREEN_300);
                 }
             },
+        )
+        .add_observer(
+            |event: On<Pointer<Drag>>,
+             mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
+             grabbed_object: Single<&GrabbedObject>| {
+                if !grabbed_object.is_inspecting {
+                    return;
+                }
+
+                if let Ok(mut grab_orientation) = grab_orientations.get_mut(event.entity) {
+                    const PIXELS_PER_RADIAN: f32 = 200f32;
+
+                    let horizontal_rotation =
+                        Quat::from_axis_angle(Vec3::Y, event.delta.x / PIXELS_PER_RADIAN);
+                    let vertical_rotation =
+                        Quat::from_axis_angle(Vec3::X, event.delta.y / PIXELS_PER_RADIAN);
+
+                    grab_orientation.orientation =
+                        horizontal_rotation * grab_orientation.orientation;
+                    grab_orientation.orientation = vertical_rotation * grab_orientation.orientation;
+                }
+            },
         );
     }
 }
@@ -278,11 +300,11 @@ fn toggle_object_inspection_on_keypress(
 // Gizmos
 
 fn draw_grabbed_object_anchor_position(
-    tool_anchor: Single<&GlobalTransform, (With<GrabbedObject>, With<DrawGizmos>)>,
+    grabbed_object: Single<&GlobalTransform, (With<GrabbedObject>, With<DrawGizmos>)>,
     mut gizmos: Gizmos,
 ) {
     gizmos.sphere(
-        tool_anchor.compute_transform().to_isometry(),
+        grabbed_object.compute_transform().to_isometry(),
         0.2,
         PURPLE_400,
     );

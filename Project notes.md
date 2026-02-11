@@ -15,8 +15,8 @@ Info and documentation for development.
 - make events for entering and leaving 'inspector mode'
 
 ## Backlog
-- when inspecting, click on object and drag the mouse to rotate
-    - rotation should happen on Y axis for horizontal movement, and on X axis for vertical movement
+- move grabbed object to center of screen in front of player when in inspector mode
+- refactor all grabbed object observers to separate functions instead of inline callbacks
 - button to reset object to default orientation (value inside orientation component or quat::identity if component not added)
 - when leaving inspector, keep the relative rotation of the object to the player as it had in the inspector
 - Should now be able to pick up objects, inspect them, rotate them around, carry them in any orientation, and reset them to their default rotation anytime

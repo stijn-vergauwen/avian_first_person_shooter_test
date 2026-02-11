@@ -3,7 +3,7 @@ use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 
 use crate::{
     player::{GrabbedObject, MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera},
-    utilities::pd_controller::config::PdControllerConfig,
+    utilities::{DrawGizmos, pd_controller::config::PdControllerConfig},
     world::{
         character::{Character, CharacterHead, CharacterNeck},
         desired_rotation::DesiredRotation,
@@ -123,6 +123,7 @@ fn spawn_player(
         ),
         Transform::from_xyz(0.3, -0.3, -1.6),
         ChildOf(player_head_entity),
+        DrawGizmos,
     ));
 
     // Spawn PlayerInteractionTarget resource
