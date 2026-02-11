@@ -117,14 +117,16 @@ fn spawn_dynamic_entities(
 
     // Pile of grabbable cubes
     let cube_shape = Cuboid::from_length(0.3);
+    let cube_color = Color::from(PURPLE_700);
     let cube_mesh = meshes.add(cube_shape);
-    let cube_material = materials.add(StandardMaterial::from_color(PURPLE_700));
     let mut rng = rand::rng();
     let spawn_count = 40;
     let spawn_position = Vec3::new(0.0, 0.0, -6.0);
     let horizontal_spread = 0.3;
 
     for index in 0..spawn_count {
+        let cube_material = materials.add(cube_color);
+
         let vertical_offset = Vec3::Y * index as f32 * cube_shape.half_size.y;
         let horizontal_offset = Vec3::new(
             rng.random_range(-horizontal_spread..horizontal_spread),
@@ -135,7 +137,7 @@ fn spawn_dynamic_entities(
         commands.spawn((
             GrabbableObject,
             Mesh3d(cube_mesh.clone()),
-            MeshMaterial3d(cube_material.clone()),
+            MeshMaterial3d(cube_material),
             RigidBody::Dynamic,
             Collider::from(cube_shape),
             ColliderDensity(300.0),

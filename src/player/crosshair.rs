@@ -23,15 +23,18 @@ fn spawn_crosshair(mut commands: Commands) {
     const THICKNESS: f32 = 3.0;
 
     commands
-        .spawn((Node {
-            position_type: PositionType::Absolute,
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            display: Display::Flex,
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            ..default()
-        },))
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                display: Display::Flex,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            Pickable::IGNORE,
+        ))
         .with_children(|parent| {
             parent.spawn((
                 Crosshair,
@@ -44,6 +47,7 @@ fn spawn_crosshair(mut commands: Commands) {
                 BorderRadius::all(Val::Percent(50.0)),
                 BackgroundColor(Color::NONE),
                 BorderColor::all(NEUTRAL_400),
+                Pickable::IGNORE,
             ));
         });
 }
