@@ -1,6 +1,6 @@
 use avian3d::prelude::{Forces, RigidBodyForces};
 use bevy::{
-    color::palettes::tailwind::{GREEN_300, PURPLE_400},
+    color::palettes::tailwind::PURPLE_400,
     prelude::*,
     window::{CursorGrabMode, CursorIcon, CursorOptions, PrimaryWindow, SystemCursorIcon},
 };
@@ -48,42 +48,19 @@ impl Plugin for GrabbedObjectPlugin {
         .add_observer(on_update_player_character_active)
         .add_observer(
             |event: On<Pointer<Over>>,
-             grabbable_objects: Query<(), With<GrabbableObject>>,
              grabbed_object: Single<&GrabbedObject>,
              mut window_cursor: Single<&mut CursorIcon>| {
-                if grabbed_object.is_inspecting && grabbable_objects.contains(event.entity) {
+                if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
                     **window_cursor = CursorIcon::System(SystemCursorIcon::Pointer);
                 }
             },
         )
         .add_observer(
             |event: On<Pointer<Out>>,
-             grabbable_objects: Query<(), With<GrabbableObject>>,
              grabbed_object: Single<&GrabbedObject>,
              mut window_cursor: Single<&mut CursorIcon>| {
-                if grabbed_object.is_inspecting && grabbable_objects.contains(event.entity) {
+                if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
                     **window_cursor = CursorIcon::System(SystemCursorIcon::Default);
-                }
-            },
-        )
-        .add_observer(
-            |event: On<Pointer<Press>>,
-             mesh_materials: Query<&MeshMaterial3d<StandardMaterial>, With<GrabbableObject>>,
-             mut materials: ResMut<Assets<StandardMaterial>>,
-             grabbed_object: Single<&GrabbedObject>| {
-                println!("Press event received");
-
-                if !grabbed_object.is_inspecting {
-                    println!("Not inspecting, return.");
-                    return;
-                }
-
-                if let Ok(mesh_material) = mesh_materials.get(event.entity) {
-                    println!("Press event mesh material found");
-
-                    let material = materials.get_mut(mesh_material.clone()).unwrap();
-
-                    material.base_color = Color::from(GREEN_300);
                 }
             },
         )
@@ -91,7 +68,7 @@ impl Plugin for GrabbedObjectPlugin {
             |event: On<Pointer<Drag>>,
              mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
              grabbed_object: Single<&GrabbedObject>| {
-                if !grabbed_object.is_inspecting {
+                if !(grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity)) {
                     return;
                 }
 

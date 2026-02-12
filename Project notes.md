@@ -11,8 +11,16 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
+- rework grabbed_object logic to have multiple 'anchor positions' relative to the player and switch between those
+    - put GrabbedObject component on the player root entity
+    - have position offsets for 'in front of player', 'in front of player head', and 'in primary hand'
+    - calculate and store Isometry3D's for each position offset, each update
+    - store 'preffered grab position' in grabbable objects
+    - in inspector mode, move the object to 'in front of player head'
 - make events for grabbing and dropping objects
 - make events for entering and leaving 'inspector mode'
+- check if interaction_target module can be replaced with bevy_picker (not sure because interaction_target casts ray along entity rotation instead of mouse position)
+
 
 ## Backlog
 - move grabbed object to center of screen in front of player when in inspector mode
@@ -29,6 +37,3 @@ Info and documentation for development.
         - then multiple struct variants that implement this trait, a default one that copies what I already have, one for rotation that uses quaternion & scaled axis types, and one that leaves out initial response param so I can remove some of the calculations.
     - make generic components for controlling an entities position or rotation, both directly and through physics engine.
         - Idea is that you spawn in this controller component with it's parameters, and then you only have to interact with it to set the target, updating is handled within the plugin
-
-- Weapon anchor rework idea: it should be an interpolated position between an offset from the player body and an offset from the player head.
-    - A possible mismatch that I expect is that sometimes you hold an object that you want to keep holding 'in front of you', sometimes it should move up and down with you and sometimes it shouldn't. I think separating the anchor from being a child element and instead being 'target position offsets' would fix this, you can then interpolate between.
