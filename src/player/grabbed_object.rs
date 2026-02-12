@@ -14,7 +14,7 @@ use crate::{
         system_sets::{DataSystems, DisplaySystems, InputSystems},
     },
     world::{
-        character::Character,
+        character::{Character, CharacterHead},
         grabbable_object::{GrabOrientation, GrabbableObject},
         interaction_target::PlayerInteractionTarget,
         weapons::{ShootWeapon, Weapon},
@@ -166,12 +166,13 @@ fn grab_object_on_keypress(
 #[allow(clippy::type_complexity)]
 fn update_grabbed_object_position(
     mut grabbed_object: Single<(&mut GrabbedObject, &GlobalTransform)>,
-    mut player: Single<Forces, With<Player>>,
+    player_head: Single<&GlobalTransform, With<CharacterHead>>,
     mut target_item_query: Query<
         (&GlobalTransform, Forces),
         (Without<GrabbedObject>, Without<Player>),
     >,
     time: Res<Time>,
+    mut player: Single<Forces, With<Player>>,
 ) {
     let Some(target_item_entity) = grabbed_object.0.entity else {
         return;
@@ -181,13 +182,20 @@ fn update_grabbed_object_position(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
-    let target_position = grabbed_object.1.translation();
+    let target_position = if grabbed_object.0.is_inspecting {
+        player_head.translation() + player_head.rotation() * Vec3::new(0.0, 0.2, -1.5)
+    } else {
+        grabbed_object.1.translation()
+    };
+
     let position_controller = &mut grabbed_object.0.position_force_controller;
 
     position_controller.set_target_position(target_position);
-    position_controller.set_position(target_item.0.translation());
-    position_controller.set_velocity(target_item.1.linear_velocity());
-    position_controller.update(time.delta_secs());
+    position_controller.update_from_physics_sim(
+        target_item.0.translation(),
+        target_item.1.linear_velocity(),
+        time.delta_secs(),
+    );
 
     // Apply position force to grabbed object
     target_item

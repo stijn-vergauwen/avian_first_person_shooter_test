@@ -108,6 +108,19 @@ where
         self.update_position(delta_seconds);
     }
 
+    /// Updates the position & velocity values of this controller to the current physics simulation state and returns the new acceleration value.
+    pub fn update_from_physics_sim(&mut self, position: T, velocity: T, delta_seconds: f32) -> T {
+        self.set_position(position);
+        self.set_velocity(velocity);
+
+        let target_velocity = self.calculate_target_velocity(delta_seconds);
+        self.update_previous_values();
+
+        self.update_acceleration(delta_seconds, target_velocity);
+
+        self.values.acceleration
+    }
+
     /// Updates the prev_target_position field of this controller.
     pub fn update_previous_values(&mut self) {
         self.prev_target_position = self.target_position;

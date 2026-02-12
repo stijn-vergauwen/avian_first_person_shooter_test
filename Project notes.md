@@ -23,7 +23,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- move grabbed object to center of screen in front of player when in inspector mode
 - refactor all grabbed object observers to separate functions instead of inline callbacks
 - button to reset object to default orientation (value inside orientation component or quat::identity if component not added)
 - when leaving inspector, keep the relative rotation of the object to the player as it had in the inspector
