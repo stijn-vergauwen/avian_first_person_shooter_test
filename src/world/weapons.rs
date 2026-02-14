@@ -6,7 +6,7 @@ use bevy::{
 
 use crate::{
     utilities::{DrawGizmos, system_sets::DisplaySystems},
-    world::grabbable_object::GrabbableObject,
+    world::grabbable_object::{GrabOrientation, GrabbableObject},
 };
 
 const BULLET_HIT_FORCE: f32 = 6_000.0;
@@ -61,6 +61,7 @@ fn spawn_test_weapon(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Weapon,
         GrabbableObject,
+        GrabOrientation::default(),
         SceneRoot(weapon_model),
         Transform::from_xyz(0.0, 1.0, 0.0),
         RigidBody::Dynamic,

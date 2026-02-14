@@ -136,6 +136,7 @@ fn spawn_dynamic_entities(
 
         commands.spawn((
             GrabbableObject,
+            GrabOrientation::default(),
             Mesh3d(cube_mesh.clone()),
             MeshMaterial3d(cube_material),
             RigidBody::Dynamic,

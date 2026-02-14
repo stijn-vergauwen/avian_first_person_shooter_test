@@ -5,7 +5,7 @@ use bevy::prelude::*;
 pub struct GrabbableObject;
 
 /// Stores the orientation relative to the player that this object should have when grabbed.
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Default)]
 pub struct GrabOrientation {
     pub orientation: Quat,
 }
