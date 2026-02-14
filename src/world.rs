@@ -136,7 +136,7 @@ fn spawn_dynamic_entities(
 
         commands.spawn((
             GrabbableObject,
-            GrabOrientation::default(),
+            GrabOrientation::IDENTITY,
             Mesh3d(cube_mesh.clone()),
             MeshMaterial3d(cube_material),
             RigidBody::Dynamic,
@@ -155,7 +155,7 @@ fn spawn_radio(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn((
         GrabbableObject,
-        GrabOrientation::new(Quat::from_axis_angle(Vec3::Y, PI)),
+        GrabOrientation::with_default_orientation(Quat::from_axis_angle(Vec3::Y, PI)),
         SceneRoot(radio_model),
         Transform::from_xyz(-2.0, 1.0, -1.0),
         RigidBody::Dynamic,

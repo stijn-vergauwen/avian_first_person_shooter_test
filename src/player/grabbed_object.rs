@@ -1,6 +1,6 @@
 use avian3d::prelude::{Forces, RigidBodyForces};
 use bevy::{
-    color::palettes::tailwind::PURPLE_400,
+    color::palettes::tailwind::{PURPLE_400, SKY_600},
     prelude::*,
     window::{CursorGrabMode, CursorIcon, CursorOptions, PrimaryWindow, SystemCursorIcon},
 };
@@ -25,33 +25,34 @@ pub struct GrabbedObjectPlugin;
 
 impl Plugin for GrabbedObjectPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
+        app.add_systems(Startup, spawn_reset_to_default_orientation_button)
+            .add_systems(
+                Update,
                 (
-                    grab_object_on_keypress,
-                    shoot_held_weapon,
-                    toggle_object_inspection_on_keypress,
-                )
-                    .in_set(InputSystems),
-                draw_grabbed_object_anchor_position.in_set(DisplaySystems),
-            ),
-        )
-        .add_systems(
-            FixedUpdate,
-            (
-                update_anchor_positions.in_set(DataSystems::PrepareData),
+                    (
+                        grab_object_on_keypress,
+                        shoot_held_weapon,
+                        toggle_object_inspection_on_keypress,
+                    )
+                        .in_set(InputSystems),
+                    draw_grabbed_object_anchor_position.in_set(DisplaySystems),
+                ),
+            )
+            .add_systems(
+                FixedUpdate,
                 (
-                    update_grabbed_object_position,
-                    update_grabbed_object_rotation,
-                )
-                    .in_set(DataSystems::UpdateEntities),
-            ),
-        )
-        .add_observer(on_update_player_character_active)
-        .add_observer(show_pointer_when_over_grabbed_object)
-        .add_observer(reset_cursor_when_leaving_grabbed_object)
-        .add_observer(rotate_grabbed_object_on_drag);
+                    update_anchor_positions.in_set(DataSystems::PrepareData),
+                    (
+                        update_grabbed_object_position,
+                        update_grabbed_object_rotation,
+                    )
+                        .in_set(DataSystems::UpdateEntities),
+                ),
+            )
+            .add_observer(on_update_player_character_active)
+            .add_observer(show_pointer_when_over_grabbed_object)
+            .add_observer(reset_cursor_when_leaving_grabbed_object)
+            .add_observer(rotate_grabbed_object_on_drag);
     }
 }
 
@@ -258,6 +259,7 @@ fn toggle_object_inspection_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut grabbed_object: Single<&mut GrabbedObject>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
+    mut reset_orientation_button_visibility: Single<&mut Visibility, With<ResetOrientationButton>>,
     mut commands: Commands,
     player_entity: Single<Entity, With<Player>>,
 ) {
@@ -271,6 +273,12 @@ fn toggle_object_inspection_on_keypress(
             CursorGrabMode::None
         } else {
             CursorGrabMode::Locked
+        };
+
+        **reset_orientation_button_visibility = if grabbed_object.is_inspecting {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
         };
 
         commands.trigger(UpdatePlayerCharacterActive {
@@ -317,6 +325,40 @@ fn rotate_grabbed_object_on_drag(
         grab_orientation.orientation = horizontal_rotation * grab_orientation.orientation;
         grab_orientation.orientation = vertical_rotation * grab_orientation.orientation;
     }
+}
+
+// UI
+
+/// Marker component.
+#[derive(Component, Clone, Copy)]
+struct ResetOrientationButton;
+
+fn spawn_reset_to_default_orientation_button(mut commands: Commands) {
+    commands
+        .spawn((
+            ResetOrientationButton,
+            Button,
+            Visibility::Hidden,
+            Node {
+                position_type: PositionType::Absolute,
+                bottom: Val::Px(10.0),
+                right: Val::Px(10.0),
+                padding: UiRect::all(Val::Px(10.0)),
+                ..default()
+            },
+            BackgroundColor(Color::from(SKY_600)),
+        ))
+        .with_child(Text::new("Reset orientation"))
+        .observe(
+            |_: On<Pointer<Click>>,
+             mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
+             grabbed_object: Single<&GrabbedObject>| {
+                let mut grab_orientation = grab_orientations
+                    .get_mut(grabbed_object.entity.unwrap())
+                    .unwrap();
+                grab_orientation.orientation = grab_orientation.default_orientation;
+            },
+        );
 }
 
 // Gizmos
