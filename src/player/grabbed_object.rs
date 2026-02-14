@@ -6,7 +6,7 @@ use bevy::{
 };
 
 use crate::{
-    player::Player,
+    player::{Player, PlayerCamera},
     utilities::{
         DrawGizmos,
         pd_controller::{PdController, config::PdControllerConfig},
@@ -40,52 +40,18 @@ impl Plugin for GrabbedObjectPlugin {
         .add_systems(
             FixedUpdate,
             (
-                update_grabbed_object_position,
-                update_grabbed_object_rotation,
-            )
-                .in_set(DataSystems::UpdateEntities),
+                update_anchor_positions.in_set(DataSystems::PrepareData),
+                (
+                    update_grabbed_object_position,
+                    update_grabbed_object_rotation,
+                )
+                    .in_set(DataSystems::UpdateEntities),
+            ),
         )
         .add_observer(on_update_player_character_active)
-        .add_observer(
-            |event: On<Pointer<Over>>,
-             grabbed_object: Single<&GrabbedObject>,
-             mut window_cursor: Single<&mut CursorIcon>| {
-                if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
-                    **window_cursor = CursorIcon::System(SystemCursorIcon::Pointer);
-                }
-            },
-        )
-        .add_observer(
-            |event: On<Pointer<Out>>,
-             grabbed_object: Single<&GrabbedObject>,
-             mut window_cursor: Single<&mut CursorIcon>| {
-                if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
-                    **window_cursor = CursorIcon::System(SystemCursorIcon::Default);
-                }
-            },
-        )
-        .add_observer(
-            |event: On<Pointer<Drag>>,
-             mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
-             grabbed_object: Single<&GrabbedObject>| {
-                if !(grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity)) {
-                    return;
-                }
-
-                if let Ok(mut grab_orientation) = grab_orientations.get_mut(event.entity) {
-                    const PIXELS_PER_RADIAN: f32 = 200f32;
-
-                    let horizontal_rotation =
-                        Quat::from_axis_angle(Vec3::Y, event.delta.x / PIXELS_PER_RADIAN);
-                    let vertical_rotation =
-                        Quat::from_axis_angle(Vec3::X, event.delta.y / PIXELS_PER_RADIAN);
-
-                    grab_orientation.orientation =
-                        horizontal_rotation * grab_orientation.orientation;
-                    grab_orientation.orientation = vertical_rotation * grab_orientation.orientation;
-                }
-            },
-        );
+        .add_observer(show_pointer_when_over_grabbed_object)
+        .add_observer(reset_cursor_when_leaving_grabbed_object)
+        .add_observer(rotate_grabbed_object_on_drag);
     }
 }
 
@@ -96,12 +62,18 @@ pub struct GrabbedObject {
     position_force_controller: PdController<Vec3>,
     rotation_force_controller: QuaternionPdController,
     is_inspecting: bool,
+    offset_in_front_of_player_head: Vec3,
+    position_in_front_of_player_head: Isometry3d,
+    offset_in_right_hand: Vec3,
+    position_in_right_hand: Isometry3d,
 }
 
 impl GrabbedObject {
     pub fn new(
         position_force_controller_config: PdControllerConfig,
         rotation_force_controller_config: PdControllerConfig,
+        offset_in_front_of_player_head: Vec3,
+        offset_in_right_hand: Vec3,
     ) -> Self {
         Self {
             entity: None,
@@ -110,6 +82,10 @@ impl GrabbedObject {
                 rotation_force_controller_config,
             ),
             is_inspecting: false,
+            offset_in_front_of_player_head,
+            offset_in_right_hand,
+            position_in_front_of_player_head: Isometry3d::default(),
+            position_in_right_hand: Isometry3d::default(),
         }
     }
 }
@@ -117,6 +93,28 @@ impl GrabbedObject {
 #[derive(EntityEvent, Copy, Clone)]
 pub struct UpdatePlayerCharacterActive {
     pub entity: Entity,
+}
+
+fn update_anchor_positions(
+    mut grabbed_object: Single<&mut GrabbedObject>,
+    player_head: Single<&GlobalTransform, With<CharacterHead>>,
+    player_camera: Single<&GlobalTransform, With<PlayerCamera>>,
+) {
+    let player_head_rotation = player_head.rotation();
+    grabbed_object.position_in_right_hand = Isometry3d {
+        translation: (player_head.translation()
+            + player_head_rotation * grabbed_object.offset_in_right_hand)
+            .into(),
+        rotation: player_head_rotation,
+    };
+
+    let player_camera_rotation = player_camera.rotation();
+    grabbed_object.position_in_front_of_player_head = Isometry3d {
+        translation: (player_camera.translation()
+            + player_camera_rotation * grabbed_object.offset_in_front_of_player_head)
+            .into(),
+        rotation: player_camera_rotation,
+    };
 }
 
 fn on_update_player_character_active(
@@ -133,48 +131,41 @@ fn on_update_player_character_active(
 
 fn grab_object_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut grabbed_object: Single<(&mut GrabbedObject, &GlobalTransform)>,
+    mut grabbed_object: Single<&mut GrabbedObject>,
     player_interaction_target: Res<PlayerInteractionTarget>,
     grabbable_query: Query<Option<&GrabOrientation>, With<GrabbableObject>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyE) {
-        grabbed_object.0.entity = None;
+        grabbed_object.entity = None;
 
         if let Some(target) = player_interaction_target.current_target()
             && grabbable_query.contains(target.entity)
         {
-            grabbed_object.0.entity = Some(target.entity);
+            grabbed_object.entity = Some(target.entity);
 
-            let global_transform = grabbed_object.1;
             let grab_orientation = grabbable_query
                 .get(target.entity)
                 .unwrap_or(None)
                 .map_or(Quat::IDENTITY, |component| component.orientation);
 
+            let target_isometry = grabbed_object.position_in_right_hand;
             grabbed_object
-                .0
                 .position_force_controller
-                .set_start_position(global_transform.translation());
+                .set_start_position(target_isometry.translation.into());
             grabbed_object
-                .0
                 .rotation_force_controller
-                .set_start_position(global_transform.rotation() * grab_orientation);
+                .set_start_position(target_isometry.rotation * grab_orientation);
         }
     }
 }
 
-#[allow(clippy::type_complexity)]
 fn update_grabbed_object_position(
-    mut grabbed_object: Single<(&mut GrabbedObject, &GlobalTransform)>,
-    player_head: Single<&GlobalTransform, With<CharacterHead>>,
-    mut target_item_query: Query<
-        (&GlobalTransform, Forces),
-        (Without<GrabbedObject>, Without<Player>),
-    >,
+    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut target_item_query: Query<(&GlobalTransform, Forces), Without<Player>>,
     time: Res<Time>,
     mut player: Single<Forces, With<Player>>,
 ) {
-    let Some(target_item_entity) = grabbed_object.0.entity else {
+    let Some(target_item_entity) = grabbed_object.entity else {
         return;
     };
 
@@ -182,13 +173,16 @@ fn update_grabbed_object_position(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
-    let target_position = if grabbed_object.0.is_inspecting {
-        player_head.translation() + player_head.rotation() * Vec3::new(0.0, 0.2, -1.5)
+    let target_position = if grabbed_object.is_inspecting {
+        grabbed_object
+            .position_in_front_of_player_head
+            .translation
+            .to_vec3()
     } else {
-        grabbed_object.1.translation()
+        grabbed_object.position_in_right_hand.translation.to_vec3()
     };
 
-    let position_controller = &mut grabbed_object.0.position_force_controller;
+    let position_controller = &mut grabbed_object.position_force_controller;
 
     position_controller.set_target_position(target_position);
     position_controller.update_from_physics_sim(
@@ -206,37 +200,40 @@ fn update_grabbed_object_position(
     player.apply_force(-position_controller.acceleration());
 }
 
-#[allow(clippy::type_complexity)]
 fn update_grabbed_object_rotation(
-    mut grabbed_object: Single<(&mut GrabbedObject, &GlobalTransform)>,
-    mut target_item_query: Query<(&GlobalTransform, Forces), Without<GrabbedObject>>,
-    grab_orientation_query: Query<&GrabOrientation, With<GrabbableObject>>,
+    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut grabbable_object_query: Query<
+        (&GlobalTransform, Forces, Option<&GrabOrientation>),
+        With<GrabbableObject>,
+    >,
     time: Res<Time>,
 ) {
-    let Some(target_item_entity) = grabbed_object.0.entity else {
+    let Some(grabbed_entity) = grabbed_object.entity else {
         return;
     };
 
-    let mut target_item = target_item_query.get_mut(target_item_entity).expect(
+    let mut grabbable_object = grabbable_object_query.get_mut(grabbed_entity).expect(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
-    let player_rotation = grabbed_object.1.rotation();
-    let rotation_controller = &mut grabbed_object.0.rotation_force_controller;
+    let player_rotation = grabbed_object.position_in_right_hand.rotation;
+    let rotation_controller = &mut grabbed_object.rotation_force_controller;
 
-    let grab_orientation = grab_orientation_query
-        .get(target_item_entity)
+    let grab_orientation = grabbable_object
+        .2
         .map_or(Quat::IDENTITY, |component| component.orientation);
 
     rotation_controller.set_target_position(player_rotation * grab_orientation);
 
     let new_acceleration = rotation_controller.update_from_physics_sim(
-        target_item.0.rotation(),
-        target_item.1.angular_velocity(),
+        grabbable_object.0.rotation(),
+        grabbable_object.1.angular_velocity(),
         time.delta_secs(),
     );
 
-    target_item.1.apply_angular_acceleration(new_acceleration);
+    grabbable_object
+        .1
+        .apply_angular_acceleration(new_acceleration);
 }
 
 fn shoot_held_weapon(
@@ -279,6 +276,46 @@ fn toggle_object_inspection_on_keypress(
         commands.trigger(UpdatePlayerCharacterActive {
             entity: *player_entity,
         });
+    }
+}
+
+fn show_pointer_when_over_grabbed_object(
+    event: On<Pointer<Over>>,
+    grabbed_object: Single<&GrabbedObject>,
+    mut window_cursor: Single<&mut CursorIcon>,
+) {
+    if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
+        **window_cursor = CursorIcon::System(SystemCursorIcon::Pointer);
+    }
+}
+
+fn reset_cursor_when_leaving_grabbed_object(
+    event: On<Pointer<Out>>,
+    grabbed_object: Single<&GrabbedObject>,
+    mut window_cursor: Single<&mut CursorIcon>,
+) {
+    if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
+        **window_cursor = CursorIcon::System(SystemCursorIcon::Default);
+    }
+}
+
+fn rotate_grabbed_object_on_drag(
+    event: On<Pointer<Drag>>,
+    mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
+    grabbed_object: Single<&GrabbedObject>,
+) {
+    if !(grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity)) {
+        return;
+    }
+
+    if let Ok(mut grab_orientation) = grab_orientations.get_mut(event.entity) {
+        const PIXELS_PER_RADIAN: f32 = 150f32;
+
+        let horizontal_rotation = Quat::from_axis_angle(Vec3::Y, event.delta.x / PIXELS_PER_RADIAN);
+        let vertical_rotation = Quat::from_axis_angle(Vec3::X, event.delta.y / PIXELS_PER_RADIAN);
+
+        grab_orientation.orientation = horizontal_rotation * grab_orientation.orientation;
+        grab_orientation.orientation = vertical_rotation * grab_orientation.orientation;
     }
 }
 

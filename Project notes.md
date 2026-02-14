@@ -11,21 +11,13 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- rework grabbed_object logic to have multiple 'anchor positions' relative to the player and switch between those
-    - put GrabbedObject component on the player root entity
-    - have position offsets for 'in front of player', 'in front of player head', and 'in primary hand'
-    - calculate and store Isometry3D's for each position offset, each update
-    - store 'preffered grab position' in grabbable objects
-    - in inspector mode, move the object to 'in front of player head'
 - make events for grabbing and dropping objects
 - make events for entering and leaving 'inspector mode'
 - check if interaction_target module can be replaced with bevy_picker (not sure because interaction_target casts ray along entity rotation instead of mouse position)
 
 
 ## Backlog
-- refactor all grabbed object observers to separate functions instead of inline callbacks
 - button to reset object to default orientation (value inside orientation component or quat::identity if component not added)
-- when leaving inspector, keep the relative rotation of the object to the player as it had in the inspector
 - Should now be able to pick up objects, inspect them, rotate them around, carry them in any orientation, and reset them to their default rotation anytime
 
 

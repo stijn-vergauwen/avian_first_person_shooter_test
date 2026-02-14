@@ -3,7 +3,7 @@ use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 
 use crate::{
     player::{GrabbedObject, MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera},
-    utilities::{DrawGizmos, pd_controller::config::PdControllerConfig},
+    utilities::pd_controller::config::PdControllerConfig,
     world::{
         character::{Character, CharacterHead, CharacterNeck},
         desired_rotation::DesiredRotation,
@@ -35,6 +35,12 @@ fn spawn_player(
         .spawn((
             Player,
             Character { is_active: true },
+            GrabbedObject::new(
+                PdControllerConfig::from_parameters(5.0, 1.4, 1.0),
+                PdControllerConfig::from_parameters(2.5, 0.6, 0.6),
+                Vec3::new(0.0, 0.0, -1.5),
+                Vec3::new(0.3, -0.3, -1.6),
+            ),
             Visibility::Inherited,
             Transform::from_translation(start_position),
             RigidBody::Dynamic,
@@ -113,18 +119,6 @@ fn spawn_player(
             ChildOf(player_head_entity),
         ))
         .id();
-
-    // Spawn GrabbedObject
-
-    commands.spawn((
-        GrabbedObject::new(
-            PdControllerConfig::from_parameters(5.0, 1.4, 1.0),
-            PdControllerConfig::from_parameters(2.5, 0.6, 0.6),
-        ),
-        Transform::from_xyz(0.3, -0.3, -1.6),
-        ChildOf(player_head_entity),
-        DrawGizmos,
-    ));
 
     // Spawn PlayerInteractionTarget resource
 
