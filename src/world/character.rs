@@ -63,6 +63,8 @@ fn update_movement_force(
             None => Vec3::ZERO,
         };
 
+        // TODO: add code for corrective force from character controller project
+
         force.0 = desired_movement_force;
     }
 }

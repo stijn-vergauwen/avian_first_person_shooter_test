@@ -101,21 +101,13 @@ fn update_anchor_positions(
     player_head: Single<&GlobalTransform, With<CharacterHead>>,
     player_camera: Single<&GlobalTransform, With<PlayerCamera>>,
 ) {
-    let player_head_rotation = player_head.rotation();
-    grabbed_object.position_in_right_hand = Isometry3d {
-        translation: (player_head.translation()
-            + player_head_rotation * grabbed_object.offset_in_right_hand)
-            .into(),
-        rotation: player_head_rotation,
-    };
+    grabbed_object.position_in_right_hand =
+        calculate_anchor_position(&player_head, grabbed_object.offset_in_right_hand);
 
-    let player_camera_rotation = player_camera.rotation();
-    grabbed_object.position_in_front_of_player_head = Isometry3d {
-        translation: (player_camera.translation()
-            + player_camera_rotation * grabbed_object.offset_in_front_of_player_head)
-            .into(),
-        rotation: player_camera_rotation,
-    };
+    grabbed_object.position_in_front_of_player_head = calculate_anchor_position(
+        &player_camera,
+        grabbed_object.offset_in_front_of_player_head,
+    );
 }
 
 fn on_update_player_character_active(
@@ -130,6 +122,7 @@ fn on_update_player_character_active(
     character.is_active = !grabbed_object.is_inspecting;
 }
 
+// TODO: make GrabObject event & split fn
 fn grab_object_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut grabbed_object: Single<&mut GrabbedObject>,
@@ -183,22 +176,23 @@ fn update_grabbed_object_position(
         grabbed_object.position_in_right_hand.translation.to_vec3()
     };
 
-    let position_controller = &mut grabbed_object.position_force_controller;
+    grabbed_object
+        .position_force_controller
+        .set_target_position(target_position);
 
-    position_controller.set_target_position(target_position);
-    position_controller.update_from_physics_sim(
-        target_item.0.translation(),
-        target_item.1.linear_velocity(),
-        time.delta_secs(),
-    );
+    let new_acceleration = grabbed_object
+        .position_force_controller
+        .update_from_physics_sim(
+            target_item.0.translation(),
+            target_item.1.linear_velocity(),
+            time.delta_secs(),
+        );
 
     // Apply position force to grabbed object
-    target_item
-        .1
-        .apply_force(position_controller.acceleration());
+    target_item.1.apply_force(new_acceleration);
 
     // Apply opposite position force to player
-    player.apply_force(-position_controller.acceleration());
+    player.apply_force(-new_acceleration);
 }
 
 fn update_grabbed_object_rotation(
@@ -218,19 +212,21 @@ fn update_grabbed_object_rotation(
     );
 
     let player_rotation = grabbed_object.position_in_right_hand.rotation;
-    let rotation_controller = &mut grabbed_object.rotation_force_controller;
-
     let grab_orientation = grabbable_object
         .2
         .map_or(Quat::IDENTITY, |component| component.orientation);
 
-    rotation_controller.set_target_position(player_rotation * grab_orientation);
+    grabbed_object
+        .rotation_force_controller
+        .set_target_position(player_rotation * grab_orientation);
 
-    let new_acceleration = rotation_controller.update_from_physics_sim(
-        grabbable_object.0.rotation(),
-        grabbable_object.1.angular_velocity(),
-        time.delta_secs(),
-    );
+    let new_acceleration = grabbed_object
+        .rotation_force_controller
+        .update_from_physics_sim(
+            grabbable_object.0.rotation(),
+            grabbable_object.1.angular_velocity(),
+            time.delta_secs(),
+        );
 
     grabbable_object
         .1
@@ -253,8 +249,10 @@ fn shoot_held_weapon(
     };
 }
 
+// TODO: split to module
 // Object inspecting
 
+// TODO: make event for switching inspection mode
 fn toggle_object_inspection_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut grabbed_object: Single<&mut GrabbedObject>,
@@ -286,7 +284,7 @@ fn toggle_object_inspection_on_keypress(
         });
     }
 }
-
+// TODO: find how to handle 'pointer over' & 'pointer out' in 1 function
 fn show_pointer_when_over_grabbed_object(
     event: On<Pointer<Over>>,
     grabbed_object: Single<&GrabbedObject>,
@@ -349,6 +347,7 @@ fn spawn_reset_to_default_orientation_button(mut commands: Commands) {
             BackgroundColor(Color::from(SKY_600)),
         ))
         .with_child(Text::new("Reset orientation"))
+        // TODO: split to fn
         .observe(
             |_: On<Pointer<Click>>,
              mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
@@ -372,4 +371,18 @@ fn draw_grabbed_object_anchor_position(
         0.2,
         PURPLE_400,
     );
+}
+
+// Utilities
+
+fn calculate_anchor_position(
+    global_transform: &GlobalTransform,
+    grabbed_object_offset: Vec3,
+) -> Isometry3d {
+    Isometry3d {
+        translation: (global_transform.translation()
+            + global_transform.rotation() * grabbed_object_offset)
+            .into(),
+        rotation: global_transform.rotation(),
+    }
 }

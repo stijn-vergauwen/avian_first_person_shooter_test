@@ -17,6 +17,13 @@ Info and documentation for development.
 
 
 ## Backlog
+- add corrective movement force code from previous project to reduce floaty movement
+- reset cursor to center of screen when entering inspector mode
+- add weapon aim down sight
+- weapon recoil
+- muzzle flash effect
+- bullet impact decal
+- bullet impact particle effect
 
 
 ## Thoughts & Info For Future Projects
