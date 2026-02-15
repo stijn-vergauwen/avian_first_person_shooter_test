@@ -1,5 +1,3 @@
-use crate::utilities::fraction::Fraction;
-use bevy::math::Dir3;
 use bevy::prelude::*;
 
 pub struct DesiredMovementPlugin;
@@ -11,32 +9,24 @@ impl Plugin for DesiredMovementPlugin {
 }
 
 /// Describes a desired movement direction and strength.
-#[derive(Component, Copy, Clone, Debug, PartialEq)]
+#[derive(Component, Copy, Clone, Debug, PartialEq, Default)]
 pub struct DesiredMovement {
-    pub direction: Dir3,
-    pub fraction_of_max_strength: Fraction,
-}
-
-impl Default for DesiredMovement {
-    fn default() -> Self {
-        Self {
-            direction: Dir3::NEG_Z,
-            fraction_of_max_strength: Fraction::new(0.0),
-        }
-    }
+    pub velocity: Vec3,
 }
 
 #[derive(EntityEvent, Copy, Clone)]
 pub struct SetDesiredMovement {
     pub entity: Entity,
-    pub desired_movement: Option<DesiredMovement>,
+    pub desired_movement: DesiredMovement,
 }
 
-fn on_set_desired_movement(set_desired_movement: On<SetDesiredMovement>, mut commands: Commands) {
-    let mut entity_commands = commands.entity(set_desired_movement.entity);
+fn on_set_desired_movement(
+    set_desired_movement: On<SetDesiredMovement>,
+    mut desired_movement_query: Query<&mut DesiredMovement>,
+) {
+    let mut desired_movement = desired_movement_query
+        .get_mut(set_desired_movement.entity)
+        .expect("SetDesiredMovement should always point to existing entity with DesiredMovement component.");
 
-    match set_desired_movement.desired_movement {
-        Some(desired_movement) => entity_commands.insert(desired_movement),
-        None => entity_commands.remove::<DesiredMovement>(),
-    };
+    *desired_movement = set_desired_movement.desired_movement;
 }

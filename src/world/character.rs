@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-const MAX_MOVEMENT_STRENGTH: f32 = 1_500.0;
+const MOVEMENT_STRENGTH: f32 = 200.0;
 
 pub struct CharacterPlugin;
 
@@ -42,30 +42,26 @@ fn update_movement_force(
     mut characters_query: Query<(
         &Character,
         &GlobalTransform,
-        Option<&DesiredMovement>,
+        &DesiredMovement,
         &mut ConstantForce,
+        &LinearVelocity,
     )>,
 ) {
-    for (character, global_transform, desired_movement, mut force) in characters_query.iter_mut() {
+    for (character, global_transform, desired_movement, mut force, linear_velocity) in
+        characters_query.iter_mut()
+    {
         if !character.is_active {
             force.0 = Vec3::ZERO;
             continue;
         }
 
-        let desired_movement_force = match desired_movement {
-            Some(desired_movement) => {
-                let desired_movement_strength =
-                    MAX_MOVEMENT_STRENGTH * desired_movement.fraction_of_max_strength.value();
+        let movement_force = calculate_movement_force(
+            desired_movement.velocity,
+            **linear_velocity,
+            global_transform.rotation(),
+        );
 
-                global_transform.rotation()
-                    * (desired_movement.direction * desired_movement_strength)
-            }
-            None => Vec3::ZERO,
-        };
-
-        // TODO: add code for corrective force from character controller project
-
-        force.0 = desired_movement_force;
+        force.0 = movement_force;
     }
 }
 
@@ -94,4 +90,14 @@ fn update_rotation(
         Quat::from_axis_angle(Vec3::X, desired_rotation.rotation.x.radians() / 2.0);
     character_neck.rotation = half_vertical_rotation;
     character_head.rotation = half_vertical_rotation;
+}
+
+fn calculate_movement_force(
+    target_velocity: Vec3,
+    current_velocity: Vec3,
+    player_rotation: Quat,
+) -> Vec3 {
+    let delta = (player_rotation * target_velocity - current_velocity).with_y(0.0);
+
+    delta * MOVEMENT_STRENGTH
 }

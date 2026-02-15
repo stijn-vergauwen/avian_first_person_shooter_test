@@ -15,7 +15,6 @@ use crate::{
     utilities::{
         DrawGizmos,
         euler_angle::EulerAngle,
-        fraction::Fraction,
         system_sets::{DisplaySystems, InputSystems},
     },
     world::{
@@ -34,6 +33,10 @@ const MOVEMENT_KEYBINDS: MovementKeybinds = MovementKeybinds {
     run_key: KeyCode::ShiftLeft,
 };
 
+const WALKING_SPEED: f32 = 5.0;
+const RUNNING_SPEED: f32 = 10.0;
+const JUMP_FORCE: f32 = 20_000.0;
+
 /// Upper threshold for delta mouse motion in a single update, this is to ignore motion spikes caused by input through Parsec.
 const UPPER_MOUSE_MOTION_THRESHOLD: f32 = 1000.0;
 
@@ -42,8 +45,6 @@ const UPPER_MOUSE_MOTION_THRESHOLD: f32 = 1000.0;
 const PIXELS_PER_RADIAN: f32 = 600f32;
 
 const MAX_GRAB_DISTANCE: f32 = 2.5;
-
-const JUMP_FORCE: f32 = 25_000.0;
 
 pub struct PlayerPlugin;
 
@@ -95,20 +96,18 @@ pub struct MovementKeybinds {
 fn handle_movement_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     player_entity: Single<Entity, With<Player>>,
-    mut previous_input: Local<Option<DesiredMovement>>,
+    mut previous_input: Local<DesiredMovement>,
     mut commands: Commands,
 ) {
     let move_direction = move_direction_from_input(MOVEMENT_KEYBINDS, &keyboard_input);
-    let fraction_of_max_strength =
-        Fraction::new_unchecked(match keyboard_input.pressed(MOVEMENT_KEYBINDS.run_key) {
-            true => 1.0,
-            false => 0.5,
-        });
+    let move_speed = match keyboard_input.pressed(MOVEMENT_KEYBINDS.run_key) {
+        true => RUNNING_SPEED,
+        false => WALKING_SPEED,
+    };
 
-    let desired_movement = move_direction.map(|direction| DesiredMovement {
-        direction,
-        fraction_of_max_strength,
-    });
+    let desired_movement = DesiredMovement {
+        velocity: move_direction.map_or(Vec3::ZERO, |direction| direction * move_speed),
+    };
 
     if desired_movement != *previous_input {
         *previous_input = desired_movement;

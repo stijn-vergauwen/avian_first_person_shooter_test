@@ -1,7 +1,6 @@
 pub mod angle;
 mod app_state;
 pub mod euler_angle;
-pub mod fraction;
 pub mod pd_controller;
 pub mod quaternion_pd_controller;
 pub mod system_sets;

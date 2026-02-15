@@ -6,6 +6,7 @@ use crate::{
     utilities::pd_controller::config::PdControllerConfig,
     world::{
         character::{Character, CharacterHead, CharacterNeck},
+        desired_movement::DesiredMovement,
         desired_rotation::DesiredRotation,
         grounded::{Grounded, GroundedConfig},
         interaction_target::{
@@ -45,8 +46,10 @@ fn spawn_player(
             Transform::from_translation(start_position),
             RigidBody::Dynamic,
             Mass(70.0),
+            Friction::ZERO,
             LockedAxes::ROTATION_LOCKED,
             ConstantForce::default(),
+            DesiredMovement::default(),
             DesiredRotation::default(),
         ))
         .id();
