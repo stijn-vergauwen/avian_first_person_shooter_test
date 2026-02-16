@@ -20,64 +20,72 @@ impl Plugin for InspectorModePlugin {
         app.add_systems(Startup, spawn_reset_to_default_orientation_button)
             .add_systems(
                 Update,
-                toggle_object_inspection_on_keypress.in_set(InputSystems),
+                toggle_inspector_mode_on_keypress.in_set(InputSystems),
             )
-            .add_observer(show_pointer_when_over_grabbed_object)
-            .add_observer(reset_cursor_when_leaving_grabbed_object)
+            .add_observer(on_toggle_inspector_mode)
+            .add_observer(set_cursor_icon_on_pointer_event::<Over>(
+                SystemCursorIcon::Pointer,
+            ))
+            .add_observer(set_cursor_icon_on_pointer_event::<Out>(
+                SystemCursorIcon::Default,
+            ))
             .add_observer(rotate_grabbed_object_on_drag);
     }
 }
 
-// TODO: make event for switching inspection mode
-fn toggle_object_inspection_on_keypress(
+#[derive(Event, Clone, Copy)]
+struct ToggleInspectorMode {
+    set_inspecting: bool,
+}
+
+fn toggle_inspector_mode_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    grabbed_object: Single<&GrabbedObject>,
+    mut commands: Commands,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyT)
+        || grabbed_object.is_inspecting && keyboard_input.just_pressed(KeyCode::Escape)
+    {
+        commands.trigger(ToggleInspectorMode {
+            set_inspecting: !grabbed_object.is_inspecting,
+        });
+    }
+}
+
+fn on_toggle_inspector_mode(
+    event: On<ToggleInspectorMode>,
     mut grabbed_object: Single<&mut GrabbedObject>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
     mut reset_orientation_button_visibility: Single<&mut Visibility, With<ResetOrientationButton>>,
     mut commands: Commands,
     player_entity: Single<Entity, With<Player>>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::KeyT)
-        || grabbed_object.is_inspecting && keyboard_input.just_pressed(KeyCode::Escape)
-    {
-        grabbed_object.is_inspecting = !grabbed_object.is_inspecting;
+    let set_inspecting = event.set_inspecting;
+    grabbed_object.is_inspecting = set_inspecting;
 
-        cursor_options.visible = grabbed_object.is_inspecting;
-        cursor_options.grab_mode = if grabbed_object.is_inspecting {
-            CursorGrabMode::None
-        } else {
-            CursorGrabMode::Locked
-        };
+    cursor_options.visible = set_inspecting;
+    cursor_options.grab_mode = match set_inspecting {
+        true => CursorGrabMode::None,
+        false => CursorGrabMode::Locked,
+    };
 
-        **reset_orientation_button_visibility = if grabbed_object.is_inspecting {
-            Visibility::Visible
-        } else {
-            Visibility::Hidden
-        };
+    **reset_orientation_button_visibility = match set_inspecting {
+        true => Visibility::Visible,
+        false => Visibility::Hidden,
+    };
 
-        commands.trigger(UpdatePlayerCharacterActive {
-            entity: *player_entity,
-        });
-    }
-}
-// TODO: find how to handle 'pointer over' & 'pointer out' in 1 function
-fn show_pointer_when_over_grabbed_object(
-    event: On<Pointer<Over>>,
-    grabbed_object: Single<&GrabbedObject>,
-    mut window_cursor: Single<&mut CursorIcon>,
-) {
-    if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
-        **window_cursor = CursorIcon::System(SystemCursorIcon::Pointer);
-    }
+    commands.trigger(UpdatePlayerCharacterActive {
+        entity: *player_entity,
+    });
 }
 
-fn reset_cursor_when_leaving_grabbed_object(
-    event: On<Pointer<Out>>,
-    grabbed_object: Single<&GrabbedObject>,
-    mut window_cursor: Single<&mut CursorIcon>,
-) {
-    if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
-        **window_cursor = CursorIcon::System(SystemCursorIcon::Default);
+fn set_cursor_icon_on_pointer_event<E: Clone + Reflect + std::fmt::Debug>(
+    icon: SystemCursorIcon,
+) -> impl Fn(On<Pointer<E>>, Single<&GrabbedObject>, Single<&mut CursorIcon>) {
+    move |event, grabbed_object, mut window_cursor| {
+        if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
+            **window_cursor = CursorIcon::System(icon);
+        }
     }
 }
 
@@ -123,15 +131,17 @@ fn spawn_reset_to_default_orientation_button(mut commands: Commands) {
             BackgroundColor(Color::from(SKY_600)),
         ))
         .with_child(Text::new("Reset orientation"))
-        // TODO: split to fn
-        .observe(
-            |_: On<Pointer<Click>>,
-             mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
-             grabbed_object: Single<&GrabbedObject>| {
-                let mut grab_orientation = grab_orientations
-                    .get_mut(grabbed_object.entity.unwrap())
-                    .unwrap();
-                grab_orientation.orientation = grab_orientation.default_orientation;
-            },
-        );
+        .observe(on_default_orientation_button_click);
+}
+
+fn on_default_orientation_button_click(
+    _: On<Pointer<Click>>,
+    mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
+    grabbed_object: Single<&GrabbedObject>,
+) {
+    let mut grab_orientation = grab_orientations
+        .get_mut(grabbed_object.entity.unwrap())
+        .unwrap();
+
+    grab_orientation.orientation = grab_orientation.default_orientation;
 }

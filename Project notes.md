@@ -11,7 +11,6 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- make events for entering and leaving 'inspector mode'
 - check if interaction_target module can be replaced with bevy_picker (not sure because interaction_target casts ray along entity rotation instead of mouse position)
 
 
