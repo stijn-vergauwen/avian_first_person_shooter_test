@@ -11,13 +11,11 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- make events for grabbing and dropping objects
 - make events for entering and leaving 'inspector mode'
 - check if interaction_target module can be replaced with bevy_picker (not sure because interaction_target casts ray along entity rotation instead of mouse position)
 
 
 ## Backlog
-- reset cursor to center of screen when entering inspector mode
 - add weapon aim down sight
 - weapon recoil
 - muzzle flash effect

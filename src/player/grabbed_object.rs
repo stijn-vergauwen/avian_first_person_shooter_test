@@ -1,12 +1,10 @@
+mod inspector_mode;
+
 use avian3d::prelude::{Forces, RigidBodyForces};
-use bevy::{
-    color::palettes::tailwind::{PURPLE_400, SKY_600},
-    prelude::*,
-    window::{CursorGrabMode, CursorIcon, CursorOptions, PrimaryWindow, SystemCursorIcon},
-};
+use bevy::{color::palettes::tailwind::PURPLE_400, prelude::*};
 
 use crate::{
-    player::{Player, PlayerCamera},
+    player::{Player, PlayerCamera, grabbed_object::inspector_mode::InspectorModePlugin},
     utilities::{
         DrawGizmos,
         pd_controller::{PdController, config::PdControllerConfig},
@@ -25,16 +23,11 @@ pub struct GrabbedObjectPlugin;
 
 impl Plugin for GrabbedObjectPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_reset_to_default_orientation_button)
+        app.add_plugins(InspectorModePlugin)
             .add_systems(
                 Update,
                 (
-                    (
-                        grab_object_on_keypress,
-                        shoot_held_weapon,
-                        toggle_object_inspection_on_keypress,
-                    )
-                        .in_set(InputSystems),
+                    (grab_object_on_keypress, shoot_held_weapon).in_set(InputSystems),
                     draw_grabbed_object_anchor_position.in_set(DisplaySystems),
                 ),
             )
@@ -50,9 +43,8 @@ impl Plugin for GrabbedObjectPlugin {
                 ),
             )
             .add_observer(on_update_player_character_active)
-            .add_observer(show_pointer_when_over_grabbed_object)
-            .add_observer(reset_cursor_when_leaving_grabbed_object)
-            .add_observer(rotate_grabbed_object_on_drag);
+            .add_observer(on_grab_object)
+            .add_observer(on_drop_object);
     }
 }
 
@@ -91,6 +83,16 @@ impl GrabbedObject {
     }
 }
 
+#[derive(EntityEvent, Clone, Copy)]
+struct GrabObject {
+    entity: Entity,
+}
+
+#[derive(EntityEvent, Clone, Copy)]
+struct DropObject {
+    entity: Entity,
+}
+
 #[derive(EntityEvent, Copy, Clone)]
 pub struct UpdatePlayerCharacterActive {
     pub entity: Entity,
@@ -122,35 +124,51 @@ fn on_update_player_character_active(
     character.is_active = !grabbed_object.is_inspecting;
 }
 
-// TODO: make GrabObject event & split fn
 fn grab_object_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut grabbed_object: Single<&mut GrabbedObject>,
+    grabbed_object: Single<&GrabbedObject>,
     player_interaction_target: Res<PlayerInteractionTarget>,
-    grabbable_query: Query<Option<&GrabOrientation>, With<GrabbableObject>>,
+    mut commands: Commands,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyE) {
-        grabbed_object.entity = None;
+        if let Some(entity) = grabbed_object.entity {
+            commands.trigger(DropObject { entity });
+        }
 
-        if let Some(target) = player_interaction_target.current_target()
-            && grabbable_query.contains(target.entity)
-        {
-            grabbed_object.entity = Some(target.entity);
-
-            let grab_orientation = grabbable_query
-                .get(target.entity)
-                .unwrap_or(None)
-                .map_or(Quat::IDENTITY, |component| component.orientation);
-
-            let target_isometry = grabbed_object.position_in_right_hand;
-            grabbed_object
-                .position_force_controller
-                .set_start_position(target_isometry.translation.into());
-            grabbed_object
-                .rotation_force_controller
-                .set_start_position(target_isometry.rotation * grab_orientation);
+        if let Some(target) = player_interaction_target.current_target() {
+            commands.trigger(GrabObject {
+                entity: target.entity,
+            });
         }
     }
+}
+
+fn on_grab_object(
+    event: On<GrabObject>,
+    mut grabbed_object: Single<&mut GrabbedObject>,
+    grabbable_query: Query<&GrabOrientation, With<GrabbableObject>>,
+) {
+    if !grabbable_query.contains(event.entity) {
+        return;
+    }
+
+    grabbed_object.entity = Some(event.entity);
+
+    let grab_orientation = grabbable_query
+        .get(event.entity)
+        .map_or(Quat::IDENTITY, |component| component.orientation);
+
+    let target_isometry = grabbed_object.position_in_right_hand;
+    grabbed_object
+        .position_force_controller
+        .set_start_position(target_isometry.translation.into());
+    grabbed_object
+        .rotation_force_controller
+        .set_start_position(target_isometry.rotation * grab_orientation);
+}
+
+fn on_drop_object(_: On<DropObject>, mut grabbed_object: Single<&mut GrabbedObject>) {
+    grabbed_object.entity = None;
 }
 
 fn update_grabbed_object_position(
@@ -247,117 +265,6 @@ fn shoot_held_weapon(
             entity: grabbed_entity,
         });
     };
-}
-
-// TODO: split to module
-// Object inspecting
-
-// TODO: make event for switching inspection mode
-fn toggle_object_inspection_on_keypress(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut grabbed_object: Single<&mut GrabbedObject>,
-    mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-    mut reset_orientation_button_visibility: Single<&mut Visibility, With<ResetOrientationButton>>,
-    mut commands: Commands,
-    player_entity: Single<Entity, With<Player>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyT)
-        || grabbed_object.is_inspecting && keyboard_input.just_pressed(KeyCode::Escape)
-    {
-        grabbed_object.is_inspecting = !grabbed_object.is_inspecting;
-
-        cursor_options.visible = grabbed_object.is_inspecting;
-        cursor_options.grab_mode = if grabbed_object.is_inspecting {
-            CursorGrabMode::None
-        } else {
-            CursorGrabMode::Locked
-        };
-
-        **reset_orientation_button_visibility = if grabbed_object.is_inspecting {
-            Visibility::Visible
-        } else {
-            Visibility::Hidden
-        };
-
-        commands.trigger(UpdatePlayerCharacterActive {
-            entity: *player_entity,
-        });
-    }
-}
-// TODO: find how to handle 'pointer over' & 'pointer out' in 1 function
-fn show_pointer_when_over_grabbed_object(
-    event: On<Pointer<Over>>,
-    grabbed_object: Single<&GrabbedObject>,
-    mut window_cursor: Single<&mut CursorIcon>,
-) {
-    if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
-        **window_cursor = CursorIcon::System(SystemCursorIcon::Pointer);
-    }
-}
-
-fn reset_cursor_when_leaving_grabbed_object(
-    event: On<Pointer<Out>>,
-    grabbed_object: Single<&GrabbedObject>,
-    mut window_cursor: Single<&mut CursorIcon>,
-) {
-    if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
-        **window_cursor = CursorIcon::System(SystemCursorIcon::Default);
-    }
-}
-
-fn rotate_grabbed_object_on_drag(
-    event: On<Pointer<Drag>>,
-    mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
-    grabbed_object: Single<&GrabbedObject>,
-) {
-    if !(grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity)) {
-        return;
-    }
-
-    if let Ok(mut grab_orientation) = grab_orientations.get_mut(event.entity) {
-        const PIXELS_PER_RADIAN: f32 = 150f32;
-
-        let horizontal_rotation = Quat::from_axis_angle(Vec3::Y, event.delta.x / PIXELS_PER_RADIAN);
-        let vertical_rotation = Quat::from_axis_angle(Vec3::X, event.delta.y / PIXELS_PER_RADIAN);
-
-        grab_orientation.orientation = horizontal_rotation * grab_orientation.orientation;
-        grab_orientation.orientation = vertical_rotation * grab_orientation.orientation;
-    }
-}
-
-// UI
-
-/// Marker component.
-#[derive(Component, Clone, Copy)]
-struct ResetOrientationButton;
-
-fn spawn_reset_to_default_orientation_button(mut commands: Commands) {
-    commands
-        .spawn((
-            ResetOrientationButton,
-            Button,
-            Visibility::Hidden,
-            Node {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(10.0),
-                right: Val::Px(10.0),
-                padding: UiRect::all(Val::Px(10.0)),
-                ..default()
-            },
-            BackgroundColor(Color::from(SKY_600)),
-        ))
-        .with_child(Text::new("Reset orientation"))
-        // TODO: split to fn
-        .observe(
-            |_: On<Pointer<Click>>,
-             mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
-             grabbed_object: Single<&GrabbedObject>| {
-                let mut grab_orientation = grab_orientations
-                    .get_mut(grabbed_object.entity.unwrap())
-                    .unwrap();
-                grab_orientation.orientation = grab_orientation.default_orientation;
-            },
-        );
 }
 
 // Gizmos
