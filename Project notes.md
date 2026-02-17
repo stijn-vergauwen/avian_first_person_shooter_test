@@ -11,10 +11,13 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-
+- weapon should stay stable when aiming down sight and moving.
+    - maybe use separate pd controller parameters while in ads? Will probably still be some movement lag but that's probably fine
+    - maybe make it a child entity of the player while ads? I don't think this is a good solution, could cause problems with collisions or snapping, better to keep things in the physics sim
+- weapon collides with player head when aiming down sight. Could temporarily filter out collisions between weapon & head while ads?
 
 ## Backlog
-- add weapon aim down sight
+- implement todo's in grabbed_object module
 - weapon recoil
 - muzzle flash effect
 - bullet impact decal

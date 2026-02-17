@@ -15,7 +15,6 @@ use crate::{
         character::{Character, CharacterHead},
         grabbable_object::{GrabOrientation, GrabbableObject},
         interaction_target::PlayerInteractionTarget,
-        weapons::{ShootWeapon, Weapon},
     },
 };
 
@@ -27,7 +26,7 @@ impl Plugin for GrabbedObjectPlugin {
             .add_systems(
                 Update,
                 (
-                    (grab_object_on_keypress, shoot_held_weapon).in_set(InputSystems),
+                    grab_object_on_keypress.in_set(InputSystems),
                     draw_grabbed_object_anchor_position.in_set(DisplaySystems),
                 ),
             )
@@ -48,17 +47,23 @@ impl Plugin for GrabbedObjectPlugin {
     }
 }
 
+// TODO: store offsets in separate resource
+// TODO: add anchor_positions field that is a struct with all the anchor positions
+// TODO: add enum for each anchor position / offset
+// TODO: add field of enum type that stores the current anchor position being used
+
 /// Holds data on the object held by the player.
 #[derive(Component, Clone)]
 pub struct GrabbedObject {
     pub entity: Option<Entity>,
     position_force_controller: PdController<Vec3>,
     rotation_force_controller: QuaternionPdController,
-    is_inspecting: bool,
     offset_in_front_of_player_head: Vec3,
     position_in_front_of_player_head: Isometry3d,
     offset_in_right_hand: Vec3,
     position_in_right_hand: Isometry3d,
+    is_inspecting: bool,
+    pub is_aiming: bool,
 }
 
 impl GrabbedObject {
@@ -74,11 +79,12 @@ impl GrabbedObject {
             rotation_force_controller: QuaternionPdController::new(
                 rotation_force_controller_config,
             ),
-            is_inspecting: false,
             offset_in_front_of_player_head,
             offset_in_right_hand,
             position_in_front_of_player_head: Isometry3d::default(),
             position_in_right_hand: Isometry3d::default(),
+            is_inspecting: false,
+            is_aiming: false,
         }
     }
 }
@@ -190,6 +196,13 @@ fn update_grabbed_object_position(
             .position_in_front_of_player_head
             .translation
             .to_vec3()
+    } else if grabbed_object.is_aiming {
+        // TODO: replace this hardcoded thing with something more configurable
+        grabbed_object
+            .position_in_front_of_player_head
+            .translation
+            .to_vec3()
+            + grabbed_object.position_in_front_of_player_head.rotation * Vec3::new(0.03, -0.05, 0.9)
     } else {
         grabbed_object.position_in_right_hand.translation.to_vec3()
     };
@@ -249,22 +262,6 @@ fn update_grabbed_object_rotation(
     grabbable_object
         .1
         .apply_angular_acceleration(new_acceleration);
-}
-
-fn shoot_held_weapon(
-    mouse_input: Res<ButtonInput<MouseButton>>,
-    grabbed_object: Single<&GrabbedObject>,
-    weapons_query: Query<&Weapon>,
-    mut commands: Commands,
-) {
-    if mouse_input.just_pressed(MouseButton::Left)
-        && let Some(grabbed_entity) = grabbed_object.entity
-        && weapons_query.contains(grabbed_entity)
-    {
-        commands.trigger(ShootWeapon {
-            entity: grabbed_entity,
-        });
-    };
 }
 
 // Gizmos

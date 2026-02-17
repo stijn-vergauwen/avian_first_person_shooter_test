@@ -1,14 +1,14 @@
 mod crosshair;
 mod cursor_lock;
 mod grabbed_object;
+mod grabbed_weapon;
 mod movement_input;
 mod spawner;
 
 use bevy::prelude::*;
 
 use crate::player::{
-    crosshair::CrosshairPlugin, cursor_lock::CursorLockPlugin, grabbed_object::GrabbedObjectPlugin,
-    movement_input::PlayerMovementInputPlugin, spawner::PlayerSpawnerPlugin,
+    crosshair::CrosshairPlugin, cursor_lock::CursorLockPlugin, grabbed_object::GrabbedObjectPlugin, grabbed_weapon::GrabbedWeaponPlugin, movement_input::PlayerMovementInputPlugin, spawner::PlayerSpawnerPlugin
 };
 
 const MOVEMENT_KEYBINDS: MovementKeybinds = MovementKeybinds {
@@ -35,11 +35,12 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
-            CursorLockPlugin,
             PlayerSpawnerPlugin,
-            GrabbedObjectPlugin,
-            CrosshairPlugin,
             PlayerMovementInputPlugin,
+            CursorLockPlugin,
+            CrosshairPlugin,
+            GrabbedObjectPlugin,
+            GrabbedWeaponPlugin,
         ));
     }
 }
