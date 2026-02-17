@@ -9,6 +9,7 @@ use crate::{
     world::weapons::{ShootWeapon, Weapon},
 };
 
+const WEAPON_RECOIL: f32 = 2_000.0;
 const BULLET_HIT_FORCE: f32 = 6_000.0;
 
 pub struct WeaponShootingPlugin;
@@ -48,13 +49,15 @@ fn setup_bullet_hit_point_assets(
 
 fn on_shoot_weapon(
     shoot_weapon: On<ShootWeapon>,
-    weapons_query: Query<(Entity, &GlobalTransform), With<Weapon>>,
+    mut weapons_query: Query<(Entity, &GlobalTransform, Forces), With<Weapon>>,
     spatial_query: SpatialQuery,
     mut commands: Commands,
 ) {
-    let (weapon_entity, global_weapon_transform) = weapons_query
-        .get(shoot_weapon.entity)
+    let (weapon_entity, global_weapon_transform, mut weapon_forces) = weapons_query
+        .get_mut(shoot_weapon.entity)
         .expect("ShootWeapon should always point to weapon entity.");
+
+    weapon_forces.apply_force(global_weapon_transform.back() * WEAPON_RECOIL);
 
     let origin = global_weapon_transform.translation(); // TODO: start raycast in front of weapon instead of inside it.
     let direction = global_weapon_transform.forward();

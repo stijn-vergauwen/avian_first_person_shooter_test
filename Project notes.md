@@ -17,7 +17,6 @@ Info and documentation for development.
 - weapon collides with player head when aiming down sight. Could temporarily filter out collisions between weapon & head while ads?
 
 ## Backlog
-- weapon recoil
 - muzzle flash effect
 - bullet impact decal
 - bullet impact particle effect
