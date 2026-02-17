@@ -7,7 +7,7 @@ use bevy::{
 use crate::{
     player::{
         Player,
-        grabbed_object::{GrabbedObject, UpdatePlayerCharacterActive},
+        grabbed_object::{GrabbedObject, ObjectAnchor, UpdatePlayerCharacterActive},
     },
     utilities::system_sets::InputSystems,
     world::grabbable_object::{GrabOrientation, GrabbableObject},
@@ -44,10 +44,11 @@ fn toggle_inspector_mode_on_keypress(
     mut commands: Commands,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyT)
-        || grabbed_object.is_inspecting && keyboard_input.just_pressed(KeyCode::Escape)
+        || grabbed_object.current_object_anchor == ObjectAnchor::Inspecting
+            && keyboard_input.just_pressed(KeyCode::Escape)
     {
         commands.trigger(ToggleInspectorMode {
-            set_inspecting: !grabbed_object.is_inspecting,
+            set_inspecting: grabbed_object.current_object_anchor != ObjectAnchor::Inspecting,
         });
     }
 }
@@ -61,7 +62,14 @@ fn on_toggle_inspector_mode(
     player_entity: Single<Entity, With<Player>>,
 ) {
     let set_inspecting = event.set_inspecting;
-    grabbed_object.is_inspecting = set_inspecting;
+
+    grabbed_object.current_object_anchor =
+        match (grabbed_object.current_object_anchor, set_inspecting) {
+            (ObjectAnchor::Default, true) => ObjectAnchor::Inspecting,
+            (ObjectAnchor::Inspecting, false) => ObjectAnchor::Default,
+            (ObjectAnchor::AimDownSight, true) => ObjectAnchor::Inspecting,
+            _ => return,
+        };
 
     cursor_options.visible = set_inspecting;
     cursor_options.grab_mode = match set_inspecting {
@@ -83,7 +91,9 @@ fn set_cursor_icon_on_pointer_event<E: Clone + Reflect + std::fmt::Debug>(
     icon: SystemCursorIcon,
 ) -> impl Fn(On<Pointer<E>>, Single<&GrabbedObject>, Single<&mut CursorIcon>) {
     move |event, grabbed_object, mut window_cursor| {
-        if grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity) {
+        if grabbed_object.current_object_anchor == ObjectAnchor::Inspecting
+            && grabbed_object.entity == Some(event.entity)
+        {
             **window_cursor = CursorIcon::System(icon);
         }
     }
@@ -94,7 +104,9 @@ fn rotate_grabbed_object_on_drag(
     mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
     grabbed_object: Single<&GrabbedObject>,
 ) {
-    if !(grabbed_object.is_inspecting && grabbed_object.entity == Some(event.entity)) {
+    if !(grabbed_object.current_object_anchor == ObjectAnchor::Inspecting
+        && grabbed_object.entity == Some(event.entity))
+    {
         return;
     }
 

@@ -18,11 +18,18 @@ use crate::{
     },
 };
 
+const ANCHOR_OFFSETS: AnchorOffsets = AnchorOffsets {
+    inspecting: Vec3::new(0.0, 0.0, -1.2),
+    default: Vec3::new(0.3, -0.3, -1.0),
+    aim_down_sight: Vec3::new(0.03, -0.05, -0.3),
+};
+
 pub struct GrabbedObjectPlugin;
 
 impl Plugin for GrabbedObjectPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InspectorModePlugin)
+            .insert_resource(ANCHOR_OFFSETS)
             .add_systems(
                 Update,
                 (
@@ -47,31 +54,20 @@ impl Plugin for GrabbedObjectPlugin {
     }
 }
 
-// TODO: store offsets in separate resource
-// TODO: add anchor_positions field that is a struct with all the anchor positions
-// TODO: add enum for each anchor position / offset
-// TODO: add field of enum type that stores the current anchor position being used
-
 /// Holds data on the object held by the player.
 #[derive(Component, Clone)]
 pub struct GrabbedObject {
     pub entity: Option<Entity>,
     position_force_controller: PdController<Vec3>,
     rotation_force_controller: QuaternionPdController,
-    offset_in_front_of_player_head: Vec3,
-    position_in_front_of_player_head: Isometry3d,
-    offset_in_right_hand: Vec3,
-    position_in_right_hand: Isometry3d,
-    is_inspecting: bool,
-    pub is_aiming: bool,
+    anchor_values: CalculatedAnchorValues,
+    pub current_object_anchor: ObjectAnchor,
 }
 
 impl GrabbedObject {
     pub fn new(
         position_force_controller_config: PdControllerConfig,
         rotation_force_controller_config: PdControllerConfig,
-        offset_in_front_of_player_head: Vec3,
-        offset_in_right_hand: Vec3,
     ) -> Self {
         Self {
             entity: None,
@@ -79,12 +75,44 @@ impl GrabbedObject {
             rotation_force_controller: QuaternionPdController::new(
                 rotation_force_controller_config,
             ),
-            offset_in_front_of_player_head,
-            offset_in_right_hand,
-            position_in_front_of_player_head: Isometry3d::default(),
-            position_in_right_hand: Isometry3d::default(),
-            is_inspecting: false,
-            is_aiming: false,
+            anchor_values: CalculatedAnchorValues::default(),
+            current_object_anchor: ObjectAnchor::Default,
+        }
+    }
+
+    fn current_anchor_value(&self) -> Isometry3d {
+        self.anchor_values
+            .get_from_object_anchor(self.current_object_anchor)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ObjectAnchor {
+    Default,
+    Inspecting,
+    AimDownSight,
+}
+
+#[derive(Resource, Clone, Copy)]
+struct AnchorOffsets {
+    default: Vec3,
+    inspecting: Vec3,
+    aim_down_sight: Vec3,
+}
+
+#[derive(Clone, Copy, Default)]
+struct CalculatedAnchorValues {
+    default: Isometry3d,
+    inspecting: Isometry3d,
+    aim_down_sight: Isometry3d,
+}
+
+impl CalculatedAnchorValues {
+    fn get_from_object_anchor(&self, object_anchor: ObjectAnchor) -> Isometry3d {
+        match object_anchor {
+            ObjectAnchor::Default => self.default,
+            ObjectAnchor::Inspecting => self.inspecting,
+            ObjectAnchor::AimDownSight => self.aim_down_sight,
         }
     }
 }
@@ -106,16 +134,17 @@ pub struct UpdatePlayerCharacterActive {
 
 fn update_anchor_positions(
     mut grabbed_object: Single<&mut GrabbedObject>,
+    offsets: Res<AnchorOffsets>,
     player_head: Single<&GlobalTransform, With<CharacterHead>>,
     player_camera: Single<&GlobalTransform, With<PlayerCamera>>,
 ) {
-    grabbed_object.position_in_right_hand =
-        calculate_anchor_position(&player_head, grabbed_object.offset_in_right_hand);
+    grabbed_object.anchor_values.inspecting =
+        calculate_anchor_position(&player_camera, offsets.inspecting);
 
-    grabbed_object.position_in_front_of_player_head = calculate_anchor_position(
-        &player_camera,
-        grabbed_object.offset_in_front_of_player_head,
-    );
+    grabbed_object.anchor_values.default = calculate_anchor_position(&player_head, offsets.default);
+
+    grabbed_object.anchor_values.aim_down_sight =
+        calculate_anchor_position(&player_camera, offsets.aim_down_sight);
 }
 
 fn on_update_player_character_active(
@@ -127,7 +156,7 @@ fn on_update_player_character_active(
         return;
     };
 
-    character.is_active = !grabbed_object.is_inspecting;
+    character.is_active = grabbed_object.current_object_anchor != ObjectAnchor::Inspecting;
 }
 
 fn grab_object_on_keypress(
@@ -164,7 +193,7 @@ fn on_grab_object(
         .get(event.entity)
         .map_or(Quat::IDENTITY, |component| component.orientation);
 
-    let target_isometry = grabbed_object.position_in_right_hand;
+    let target_isometry = grabbed_object.anchor_values.default;
     grabbed_object
         .position_force_controller
         .set_start_position(target_isometry.translation.into());
@@ -191,21 +220,7 @@ fn update_grabbed_object_position(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
-    let target_position = if grabbed_object.is_inspecting {
-        grabbed_object
-            .position_in_front_of_player_head
-            .translation
-            .to_vec3()
-    } else if grabbed_object.is_aiming {
-        // TODO: replace this hardcoded thing with something more configurable
-        grabbed_object
-            .position_in_front_of_player_head
-            .translation
-            .to_vec3()
-            + grabbed_object.position_in_front_of_player_head.rotation * Vec3::new(0.03, -0.05, 0.9)
-    } else {
-        grabbed_object.position_in_right_hand.translation.to_vec3()
-    };
+    let target_position = grabbed_object.current_anchor_value().translation.to_vec3();
 
     grabbed_object
         .position_force_controller
@@ -242,7 +257,7 @@ fn update_grabbed_object_rotation(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
-    let player_rotation = grabbed_object.position_in_right_hand.rotation;
+    let player_rotation = grabbed_object.current_anchor_value().rotation;
     let grab_orientation = grabbable_object
         .2
         .map_or(Quat::IDENTITY, |component| component.orientation);

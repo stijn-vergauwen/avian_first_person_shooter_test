@@ -6,6 +6,8 @@ use crate::{
     world::weapons::{ShootWeapon, Weapon},
 };
 
+use super::grabbed_object::ObjectAnchor;
+
 pub struct GrabbedWeaponPlugin;
 
 impl Plugin for GrabbedWeaponPlugin {
@@ -38,10 +40,15 @@ fn aim_down_sight(
     mut grabbed_object: Single<&mut GrabbedObject>,
     weapons_query: Query<&Weapon>,
 ) {
-    let is_aiming = mouse_input.pressed(MouseButton::Right)
+    let set_is_aiming = mouse_input.pressed(MouseButton::Right)
         && grabbed_object
             .entity
             .is_some_and(|grabbed_entity| weapons_query.contains(grabbed_entity));
 
-    grabbed_object.is_aiming = is_aiming;
+    grabbed_object.current_object_anchor =
+        match (grabbed_object.current_object_anchor, set_is_aiming) {
+            (ObjectAnchor::Default, true) => ObjectAnchor::AimDownSight,
+            (ObjectAnchor::AimDownSight, false) => ObjectAnchor::Default,
+            _ => return,
+        };
 }
