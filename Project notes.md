@@ -17,8 +17,7 @@ Info and documentation for development.
 - weapon collides with player head when aiming down sight. Could temporarily filter out collisions between weapon & head while ads?
 
 ## Backlog
-- use muzzle flash module on gun
-- gun should now have muzzle flash animation on shoot
+- prevent gun shooting when inspecting
 - bullet impact decal
 - bullet impact particle effect
 

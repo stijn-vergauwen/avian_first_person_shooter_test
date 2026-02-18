@@ -1,18 +1,18 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
-use crate::utilities::system_sets::DisplaySystems;
-
+use crate::{
+    utilities::system_sets::DisplaySystems,
+    world::weapons::{ShootWeapon, Weapon},
+};
 
 pub struct MuzzleFlashPlugin;
 
 impl Plugin for MuzzleFlashPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            PreStartup,
-            setup_muzzle_flash_images,
-        )
-        .add_systems(Update, update_muzzle_flash_animation.in_set(DisplaySystems));
+        app.add_systems(PreStartup, setup_muzzle_flash_images)
+            .add_systems(Update, update_muzzle_flash_animation.in_set(DisplaySystems))
+            .add_observer(on_shoot_weapon);
     }
 }
 
@@ -25,7 +25,7 @@ impl MuzzleFlashImages {
     pub fn new(image_handles: Vec<Handle<Image>>) -> Self {
         Self { image_handles }
     }
-    
+
     pub fn image_count(&self) -> usize {
         self.image_handles.len()
     }
@@ -48,7 +48,7 @@ impl MuzzleFlashAnimation {
             animation_duration,
         }
     }
-    
+
     pub fn started_at(&self) -> Option<Duration> {
         self.started_at
     }
@@ -56,7 +56,7 @@ impl MuzzleFlashAnimation {
     pub fn animation_duration(&self) -> Duration {
         self.animation_duration
     }
-    
+
     pub fn start_animation(&mut self, time: &Time) {
         self.started_at = Some(time.elapsed());
     }
@@ -70,6 +70,23 @@ fn setup_muzzle_flash_images(mut commands: Commands, asset_server: Res<AssetServ
     ];
     let image_handles = sprite_paths.map(|path| asset_server.load(path)).to_vec();
     commands.insert_resource(MuzzleFlashImages { image_handles });
+}
+
+fn on_shoot_weapon(
+    shoot_weapon: On<ShootWeapon>,
+    weapons: Query<&Children, With<Weapon>>,
+    mut muzzle_flash_animations: Query<&mut MuzzleFlashAnimation>,
+    time: Res<Time>,
+) {
+    let weapon_children = weapons
+        .get(shoot_weapon.entity)
+        .expect("ShootWeapon should always point to weapon entity.");
+
+    for child in weapon_children.iter() {
+        if let Ok(mut animation) = muzzle_flash_animations.get_mut(child) {
+            animation.start_animation(&time);
+        }
+    }
 }
 
 fn update_muzzle_flash_animation(
