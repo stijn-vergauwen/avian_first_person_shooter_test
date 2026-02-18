@@ -1,12 +1,9 @@
-mod player;
-mod utilities;
-mod world;
-
+use avian_first_person_shooter_test::{
+    player::PlayerPlugin, utilities::UtilitiesPlugin, world::WorldPlugin,
+};
 use avian3d::prelude::*;
 #[allow(unused_imports)]
 use bevy::{prelude::*, window::WindowMode};
-
-use crate::{player::PlayerPlugin, utilities::UtilitiesPlugin, world::WorldPlugin};
 
 fn main() {
     App::new()

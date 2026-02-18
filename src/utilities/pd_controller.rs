@@ -69,7 +69,6 @@ where
     }
 
     /// Returns the controllers current 'position' value.
-    #[expect(unused)]
     pub fn position(&self) -> T {
         self.values.position
     }

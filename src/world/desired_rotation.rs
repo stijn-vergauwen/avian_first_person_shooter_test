@@ -31,7 +31,6 @@ pub struct SetDesiredRotation {
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum RotationType {
     /// Update the rotation value to the given rotation.
-    #[expect(unused)]
     AbsoluteRotation,
     /// Add the given rotation to the current rotation value.
     #[default]

@@ -1,3 +1,4 @@
+pub mod muzzle_flash;
 mod shooting;
 
 use avian3d::prelude::*;
@@ -7,7 +8,7 @@ use crate::{
     utilities::DrawGizmos,
     world::{
         grabbable_object::{GrabOrientation, GrabbableObject},
-        weapons::shooting::WeaponShootingPlugin,
+        weapons::{muzzle_flash::MuzzleFlashPlugin, shooting::WeaponShootingPlugin},
     },
 };
 
@@ -15,7 +16,7 @@ pub struct WeaponsPlugin;
 
 impl Plugin for WeaponsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(WeaponShootingPlugin)
+        app.add_plugins((WeaponShootingPlugin, MuzzleFlashPlugin))
             .add_systems(Startup, spawn_test_weapon);
     }
 }
