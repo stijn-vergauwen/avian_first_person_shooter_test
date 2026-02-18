@@ -9,7 +9,7 @@ pub mod weapons;
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::{camera::Viewport, color::palettes::tailwind::*, prelude::*};
+use bevy::{camera::Viewport, color::palettes::tailwind::*, light::NotShadowCaster, prelude::*};
 use rand::Rng;
 
 use crate::world::{
@@ -41,6 +41,7 @@ impl Plugin for WorldPlugin {
                 spawn_dynamic_entities,
                 spawn_radio,
                 spawn_external_cam,
+                spawn_test_texture,
             ),
         );
     }
@@ -180,4 +181,38 @@ fn spawn_external_cam(mut commands: Commands) {
         },
         Transform::from_translation(Vec3::new(6.0, 2.5, 10.0)).looking_at(Vec3::ZERO, Vec3::Y),
     ));
+}
+
+fn spawn_test_texture(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    let sprite_paths = [
+        "textures/Muzzle flash sprites test/Backside frame 1.png",
+        "textures/Muzzle flash sprites test/Backside frame 2.png",
+        "textures/Muzzle flash sprites test/Backside frame 3.png",
+    ];
+
+    let mesh_handle = meshes.add(Rectangle::from_length(1.0));
+
+    for (index, sprite_path) in sprite_paths.into_iter().enumerate() {
+        let texture_handle = asset_server.load(sprite_path);
+
+        let material_handle = materials.add(StandardMaterial {
+            base_color_texture: Some(texture_handle),
+            alpha_mode: AlphaMode::Blend,
+            unlit: true,
+            cull_mode: None,
+            ..default()
+        });
+
+        commands.spawn((
+            Mesh3d(mesh_handle.clone()),
+            MeshMaterial3d(material_handle),
+            Transform::from_xyz(-2.0, 1.0, -3.0 - index as f32),
+            NotShadowCaster,
+        ));
+    }
 }
