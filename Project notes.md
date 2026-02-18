@@ -17,7 +17,15 @@ Info and documentation for development.
 - weapon collides with player head when aiming down sight. Could temporarily filter out collisions between weapon & head while ads?
 
 ## Backlog
-- muzzle flash effect
+- make muzzle flash example
+    - make component to track animation timing (store started_at duration)
+    - start animation on click
+    - switch through texture images based on time difference since start
+    - display should now be hidden by default, show first image on click and quickly switch through the images, then get hidden again
+    - rotate muzzle flash display around with arrow keys
+- refactor muzzle flash logic to module
+- use muzzle flash module on gun
+- gun should now have muzzle flash animation on shoot
 - bullet impact decal
 - bullet impact particle effect
 
