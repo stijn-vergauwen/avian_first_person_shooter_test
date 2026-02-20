@@ -1,14 +1,16 @@
 mod crosshair;
 mod cursor_lock;
 mod grabbed_object;
-mod grabbed_weapon;
+pub mod grabbed_weapon;
 mod movement_input;
 mod spawner;
 
 use bevy::prelude::*;
 
 use crate::player::{
-    crosshair::CrosshairPlugin, cursor_lock::CursorLockPlugin, grabbed_object::GrabbedObjectPlugin, grabbed_weapon::GrabbedWeaponPlugin, movement_input::PlayerMovementInputPlugin, spawner::PlayerSpawnerPlugin
+    crosshair::CrosshairPlugin, cursor_lock::CursorLockPlugin, grabbed_object::GrabbedObjectPlugin,
+    grabbed_weapon::GrabbedWeaponPlugin, movement_input::PlayerMovementInputPlugin,
+    spawner::PlayerSpawnerPlugin,
 };
 
 const MOVEMENT_KEYBINDS: MovementKeybinds = MovementKeybinds {
@@ -56,6 +58,9 @@ pub struct PlayerBody;
 /// Marker component for the player camera.
 #[derive(Component, Clone, Copy)]
 struct PlayerCamera;
+
+#[derive(Component, Clone, Copy)]
+pub struct PlayerHeadMesh;
 
 #[derive(Copy, Clone)]
 struct MovementKeybinds {

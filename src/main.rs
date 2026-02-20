@@ -1,5 +1,7 @@
 use avian_first_person_shooter_test::{
-    player::PlayerPlugin, utilities::UtilitiesPlugin, world::WorldPlugin,
+    player::{PlayerPlugin, grabbed_weapon::PlayerWeaponCollisionHooks},
+    utilities::UtilitiesPlugin,
+    world::WorldPlugin,
 };
 use avian3d::prelude::*;
 #[allow(unused_imports)]
@@ -16,7 +18,7 @@ fn main() {
                 }),
                 ..default()
             }),
-            PhysicsPlugins::default(),
+            PhysicsPlugins::default().with_collision_hooks::<PlayerWeaponCollisionHooks>(),
             PhysicsPickingPlugin,
             WorldPlugin,
             UtilitiesPlugin,

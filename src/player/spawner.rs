@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 
 use crate::{
-    player::{MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera, grabbed_object::GrabbedObject},
+    player::{MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera, PlayerHeadMesh, grabbed_object::GrabbedObject},
     utilities::pd_controller::config::PdControllerConfig,
     world::{
         character::{Character, CharacterHead, CharacterNeck},
@@ -94,11 +94,13 @@ fn spawn_player(
 
     let player_head_mesh_entity = commands
         .spawn((
+            PlayerHeadMesh,
             Transform::from_xyz(0.0, head_shape.half_size.y, 0.0),
             Mesh3d(meshes.add(head_shape)),
             MeshMaterial3d(materials.add(StandardMaterial::from_color(CYAN_700))),
             Collider::from(head_shape),
             ChildOf(player_head_entity),
+            ActiveCollisionHooks::FILTER_PAIRS,
         ))
         .id();
 
