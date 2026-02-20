@@ -49,6 +49,7 @@ fn spawn_test_weapon(
 
     let muzzle_flash_mesh_handle = meshes.add(Rectangle::from_length(MUZZLE_FLASH_SIZE));
     let muzzle_flash_material_handle = materials.add(StandardMaterial {
+        base_color: Color::WHITE.with_alpha(0.5),
         base_color_texture: Some(muzzle_flash_images.get_image_at_index(0)),
         alpha_mode: AlphaMode::Blend,
         unlit: true,
