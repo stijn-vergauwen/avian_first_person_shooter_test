@@ -16,8 +16,8 @@ Info and documentation for development.
     - maybe make it a child entity of the player while ads? I don't think this is a good solution, could cause problems with collisions or snapping, better to keep things in the physics sim
 - weapon collides with player head when aiming down sight. Could temporarily filter out collisions between weapon & head while ads?
 
+
 ## Backlog
-- prevent gun shooting when inspecting
 - bullet impact decal
 - bullet impact particle effect
 

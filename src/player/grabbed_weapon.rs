@@ -26,6 +26,7 @@ fn shoot_held_weapon(
     mut commands: Commands,
 ) {
     if mouse_input.just_pressed(MouseButton::Left)
+        && grabbed_object.current_object_anchor != ObjectAnchor::Inspecting
         && let Some(grabbed_entity) = grabbed_object.entity
         && weapons_query.contains(grabbed_entity)
     {
