@@ -16,8 +16,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- add large mirror to wall above table. Camera that projects it's view on a texture
-- remove external test cam (in corner of screen)
 - make shooting target model (prob just out of primitive shapes)
 - add blocks and ramps to move around
 - add some low walls and corners to shoot from

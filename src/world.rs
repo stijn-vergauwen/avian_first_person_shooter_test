@@ -4,12 +4,13 @@ pub mod desired_rotation;
 pub mod grabbable_object;
 pub mod grounded;
 pub mod interaction_target;
+mod wall_mirror;
 pub mod weapons;
 
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::{camera::Viewport, color::palettes::tailwind::*, prelude::*};
+use bevy::{color::palettes::tailwind::*, prelude::*};
 use rand::Rng;
 
 use crate::world::{
@@ -19,6 +20,7 @@ use crate::world::{
     grabbable_object::{GrabOrientation, GrabbableObject},
     grounded::GroundedPlugin,
     interaction_target::InteractionTargetPlugin,
+    wall_mirror::WallMirrorPlugin,
     weapons::WeaponsPlugin,
 };
 
@@ -35,6 +37,7 @@ impl Plugin for WorldPlugin {
             WeaponsPlugin,
             InteractionTargetPlugin,
             GroundedPlugin,
+            WallMirrorPlugin,
         ))
         .add_systems(
             Startup,
@@ -42,11 +45,12 @@ impl Plugin for WorldPlugin {
                 spawn_static_entities,
                 spawn_dynamic_entities,
                 spawn_radio,
-                spawn_external_cam,
             ),
         );
     }
 }
+
+// TODO: reusable fn for spawning static object (takes in mesh & material assets, shape, color, transform)
 
 fn spawn_static_entities(
     mut commands: Commands,
@@ -184,21 +188,5 @@ fn spawn_radio(mut commands: Commands, asset_server: Res<AssetServer>) {
         Mass(5.0),
         SleepingDisabled,
         MaxAngularSpeed(40.0),
-    ));
-}
-
-fn spawn_external_cam(mut commands: Commands) {
-    commands.spawn((
-        Camera3d::default(),
-        Camera {
-            viewport: Some(Viewport {
-                physical_position: UVec2::ZERO,
-                physical_size: UVec2::new(360, 300),
-                ..default()
-            }),
-            order: 2,
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(6.0, 2.5, 10.0)).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
