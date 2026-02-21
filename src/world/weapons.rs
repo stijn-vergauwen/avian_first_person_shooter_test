@@ -9,6 +9,7 @@ use bevy::{light::NotShadowCaster, prelude::*};
 use crate::{
     utilities::DrawGizmos,
     world::{
+        TABLE_POSITION,
         grabbable_object::{GrabOrientation, GrabbableObject},
         weapons::{
             muzzle_flash::{MuzzleFlashAnimation, MuzzleFlashImages, MuzzleFlashPlugin},
@@ -63,7 +64,16 @@ fn spawn_test_weapon(
             GrabbableObject,
             GrabOrientation::IDENTITY,
             SceneRoot(weapon_model),
-            Transform::from_xyz(0.0, 1.0, 0.0),
+            Transform {
+                translation: TABLE_POSITION + Vec3::new(0.0, 0.5, 3.0),
+                rotation: Quat::from_euler(
+                    EulerRot::YXZ,
+                    10f32.to_radians(),
+                    0.0,
+                    90f32.to_radians(),
+                ),
+                ..default()
+            },
             RigidBody::Dynamic,
             Collider::cuboid(0.08, 0.16, 0.6),
             Mass(4.0),
