@@ -16,8 +16,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- double check (at home, less lag) that grabbed weapons now don't collide with player head and thus don't cause wonky movement when shooting ads, but other objects do still collide AND weapons do collide with player body, just not with the head.
-- adjust ads position since weapon now doesn't collide with head
 - add table / plank against wall where objects can be put on
 - spawn test gun & radio models on table
 - add large mirror to wall above table. Camera that projects it's view on a texture

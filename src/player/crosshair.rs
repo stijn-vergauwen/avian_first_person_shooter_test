@@ -1,6 +1,7 @@
 use bevy::{color::palettes::tailwind::*, prelude::*};
 
 use crate::{
+    player::grabbed_object::GrabbedObject,
     utilities::system_sets::DisplaySystems,
     world::{grabbable_object::GrabbableObject, interaction_target::PlayerInteractionTarget},
 };
@@ -55,10 +56,16 @@ fn spawn_crosshair(mut commands: Commands) {
 fn update_crosshair_color(
     player_interaction_target: Res<PlayerInteractionTarget>,
     grabbable_query: Query<&GrabbableObject>,
+    grabbed_object: Single<&GrabbedObject>,
     mut crosshair_color: Single<&mut BorderColor, With<Crosshair>>,
 ) {
     let new_color = match player_interaction_target.current_target() {
-        Some(target) if grabbable_query.contains(target.entity) => Color::Srgba(TEAL_400),
+        Some(target)
+            if grabbable_query.contains(target.entity)
+                && grabbed_object.entity != Some(target.entity) =>
+        {
+            Color::Srgba(TEAL_400)
+        }
         _ => Color::Srgba(NEUTRAL_400),
     };
 

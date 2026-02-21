@@ -72,14 +72,6 @@ impl CollisionHooks for PlayerWeaponCollisionHooks<'_, '_> {
             && let Some(grabbed_entity) = self.grabbed_object.entity
             && self.weapons_query.contains(grabbed_entity)
         {
-            println!("\nOne collider is player and player is currently holding weapon");
-
-            if colliders.contains(&grabbed_entity) {
-                println!("Colliders contain grabbed weapon, returning false");
-            } else {
-                println!("Colliders don't contain grabbed weapon, returning true");
-            }
-
             return !colliders.contains(&grabbed_entity);
         }
 

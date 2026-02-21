@@ -21,7 +21,7 @@ use crate::{
 const ANCHOR_OFFSETS: AnchorOffsets = AnchorOffsets {
     inspecting: Vec3::new(0.0, 0.0, -1.2),
     default: Vec3::new(0.3, -0.3, -1.0),
-    aim_down_sight: Vec3::new(0.03, -0.05, -0.4),
+    aim_down_sight: Vec3::new(0.01, -0.04, -0.25),
 };
 
 pub struct GrabbedObjectPlugin;
