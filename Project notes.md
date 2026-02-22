@@ -16,7 +16,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- make shooting target model (prob just out of primitive shapes)
 - add blocks and ramps to move around
 - add some low walls and corners to shoot from
 - bullet impact decal

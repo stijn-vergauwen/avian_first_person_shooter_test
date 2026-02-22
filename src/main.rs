@@ -19,6 +19,7 @@ fn main() {
                 ..default()
             }),
             PhysicsPlugins::default().with_collision_hooks::<PlayerWeaponCollisionHooks>(),
+            PhysicsDebugPlugin,
             PhysicsPickingPlugin,
             WorldPlugin,
             UtilitiesPlugin,
