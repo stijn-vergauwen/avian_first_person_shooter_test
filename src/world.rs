@@ -51,15 +51,13 @@ impl Plugin for WorldPlugin {
     }
 }
 
-// TODO: reusable fn for spawning static object (takes in mesh & material assets, shape, color, transform)
-
 fn spawn_static_entities(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Ground plane
-    let ground_shape = Cuboid::new(200.0, 1.0, 200.0);
+    let ground_shape = Cuboid::new(600.0, 1.0, 600.0);
 
     commands.spawn((
         Mesh3d(meshes.add(ground_shape)),
@@ -99,6 +97,48 @@ fn spawn_static_entities(
         },
     ));
 
+    // Shooting range walls
+    let wall_shape = Cuboid::new(0.5, 0.8, 40.0);
+    spawn_array_of_static_objects(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        ArrayOfObjects {
+            center_position: Vec3::new(40.0, wall_shape.half_size.y, -60.0),
+            count: 7,
+            distance_between: Vec3::new(10.0, 0.0, 0.0),
+            shape: wall_shape,
+            color: Color::from(STONE_600),
+        },
+    );
+
+    // Parkour area
+    let block_shape = Cuboid::from_length(4.0);
+    let mut array_of_objects = ArrayOfObjects {
+        center_position: Vec3::new(0.0, block_shape.half_size.y, 40.0),
+        count: 3,
+        distance_between: Vec3::new(-8.0, 0.0, 0.0),
+        shape: block_shape,
+        color: Color::from(NEUTRAL_400),
+    };
+
+    spawn_array_of_static_objects(&mut commands, &mut meshes, &mut materials, array_of_objects);
+    array_of_objects.center_position.z += 8.0;
+    spawn_array_of_static_objects(&mut commands, &mut meshes, &mut materials, array_of_objects);
+
+    let ramp_shape = Cuboid::new(2.0, 0.1, 14.0);
+    commands.spawn((
+        Mesh3d(meshes.add(ramp_shape)),
+        MeshMaterial3d(materials.add(Color::from(NEUTRAL_200))),
+        RigidBody::Static,
+        Collider::from(ramp_shape),
+        Transform {
+            translation: Vec3::new(11.0, 2.0, 35.0),
+            rotation: Quat::from_axis_angle(Vec3::X, -20f32.to_radians()),
+            ..default()
+        },
+    ));
+
     // Light
     commands.spawn((
         DirectionalLight {
@@ -122,8 +162,8 @@ fn spawn_dynamic_entities(
     let cube_shape = Cuboid::new(1.0, 1.0, 1.0);
     let cube_mesh = meshes.add(cube_shape);
     let cube_material = materials.add(Color::from(AMBER_400));
-    let spawn_count = 20;
-    let spawn_position = Vec3::new(5.0, 5.0, -10.0);
+    let spawn_count = 10;
+    let spawn_position = Vec3::new(10.0, 1.0, -10.0);
 
     for index in 0..spawn_count {
         commands.spawn((
@@ -142,8 +182,8 @@ fn spawn_dynamic_entities(
     let cube_color = Color::from(PURPLE_700);
     let cube_mesh = meshes.add(cube_shape);
     let mut rng = rand::rng();
-    let spawn_count = 40;
-    let spawn_position = Vec3::new(0.0, 0.0, -6.0);
+    let spawn_count = 100;
+    let spawn_position = Vec3::new(3.0, 0.0, -6.0);
     let horizontal_spread = 0.3;
 
     for index in 0..spawn_count {
@@ -227,4 +267,40 @@ fn spawn_test_targets(mut commands: Commands, asset_server: Res<AssetServer>) {
             ColliderConstructor::TrimeshFromMesh,
         ),
     ));
+}
+
+// Utility
+
+#[derive(Clone, Copy)]
+struct ArrayOfObjects<T: Into<Mesh> + IntoCollider<Collider> + Copy> {
+    center_position: Vec3,
+    count: usize,
+    distance_between: Vec3,
+    shape: T,
+    color: Color,
+}
+
+fn spawn_array_of_static_objects<T: Into<Mesh> + IntoCollider<Collider> + Copy>(
+    commands: &mut Commands,
+    meshes: &mut Assets<Mesh>,
+    materials: &mut Assets<StandardMaterial>,
+    array_of_objects: ArrayOfObjects<T>,
+) {
+    let start_position = array_of_objects.center_position
+        - array_of_objects.distance_between * (array_of_objects.count - 1) as f32 / 2.0;
+
+    let mesh_handle = meshes.add(array_of_objects.shape);
+    let material_handle = materials.add(array_of_objects.color);
+
+    for index in 0..array_of_objects.count {
+        let position = start_position + array_of_objects.distance_between * index as f32;
+
+        commands.spawn((
+            Mesh3d(mesh_handle.clone()),
+            MeshMaterial3d(material_handle.clone()),
+            RigidBody::Static,
+            Collider::from(array_of_objects.shape),
+            Transform::from_translation(position),
+        ));
+    }
 }
