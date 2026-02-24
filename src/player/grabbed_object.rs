@@ -1,6 +1,6 @@
 mod inspector_mode;
 
-use avian3d::prelude::{Forces, RigidBodyForces};
+use avian3d::prelude::{Forces, RigidBodyForces, TransformInterpolation};
 use bevy::{color::palettes::tailwind::PURPLE_400, prelude::*};
 
 use crate::{
@@ -182,6 +182,7 @@ fn on_grab_object(
     event: On<GrabObject>,
     mut grabbed_object: Single<&mut GrabbedObject>,
     grabbable_query: Query<&GrabOrientation, With<GrabbableObject>>,
+    mut commands: Commands,
 ) {
     if !grabbable_query.contains(event.entity) {
         return;
@@ -189,6 +190,10 @@ fn on_grab_object(
 
     grabbed_object.entity = Some(event.entity);
 
+    // Add interpolation
+    commands.entity(event.entity).insert(TransformInterpolation);
+
+    // Set force controllers to new start values
     let grab_orientation = grabbable_query
         .get(event.entity)
         .map_or(Quat::IDENTITY, |component| component.orientation);
@@ -202,8 +207,17 @@ fn on_grab_object(
         .set_start_position(target_isometry.rotation * grab_orientation);
 }
 
-fn on_drop_object(_: On<DropObject>, mut grabbed_object: Single<&mut GrabbedObject>) {
+fn on_drop_object(
+    event: On<DropObject>,
+    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut commands: Commands,
+) {
     grabbed_object.entity = None;
+
+    // Remove interpolation
+    commands
+        .entity(event.entity)
+        .remove::<TransformInterpolation>();
 }
 
 fn update_grabbed_object_position(

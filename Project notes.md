@@ -16,7 +16,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- interpolate camera position from FixedUpdate to Update
 - bullet impact decal
 - bullet impact particle effect
 

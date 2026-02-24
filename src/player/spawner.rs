@@ -49,6 +49,7 @@ fn spawn_player(
             ConstantForce::default(),
             DesiredMovement::default(),
             DesiredRotation::default(),
+            TranslationInterpolation,
         ))
         .id();
 
