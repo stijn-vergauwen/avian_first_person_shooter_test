@@ -75,7 +75,7 @@ fn spawn_test_weapon(
                 ..default()
             },
             RigidBody::Dynamic,
-            Collider::cuboid(0.08, 0.16, 0.6),
+            Collider::cuboid(0.08, 0.14, 0.6),
             Mass(4.0),
             DrawGizmos,
             MaxAngularSpeed(40.0),
