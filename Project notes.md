@@ -16,8 +16,32 @@ Info and documentation for development.
 
 
 ## Backlog
+- make standing target that freely turns horizontally
+- make standing target that falls when shot, able to reset itself on event (revolute joint for pivot point? separate timer component that fires reset event after duration)
+- add grid texture to world objects (already have sprites from Kenney)
+- add bullet visual, traveling bullet should move super fast but be slightly visible
+- remove firing direction gizmo
+- eject casing when shooting
 - bullet impact decal
 - bullet impact particle effect
+- setup saving & loading weapon config from ron file
+- on startup, loop through files in weapon folder, load the data and spawn a new gun entity + its model for each file
+- store weapon weight and recoil in config file
+- add UI to inspector to configure shot origin position (at barrel end)
+    - start shot raycast from origin
+    - start muzzle flash at origin
+    - apply shot recoil from origin
+- add UI to inspector to configure aim down sight position
+    - draw ray to visualize how player camera will be lined up
+    - align player camera to ads position on ads (different per gun, should replace 'aim_down_sight' AnchorOffset)
+- add UI to inspector to configure empty casing ejection position & direction
+    - add config for spin along each axis, and how randomized it should be
+    - eject casing according to config
+
+Extra:
+- make flying disc shooting area
+- add toggle to shoot discs every few seconds
+- shatter disc on hit
 
 
 ## Thoughts & Info For Future Projects
