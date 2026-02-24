@@ -25,5 +25,6 @@ fn main() {
             UtilitiesPlugin,
             PlayerPlugin,
         ))
+        .insert_resource(Time::from_hz(128_f64))
         .run();
 }

@@ -9,8 +9,8 @@ use crate::{
     world::weapons::{ShootWeapon, Weapon},
 };
 
-const WEAPON_RECOIL: f32 = 2_000.0;
-const BULLET_HIT_FORCE: f32 = 6_000.0;
+const WEAPON_RECOIL: f32 = 40.0;
+const BULLET_HIT_FORCE: f32 = 80.0;
 
 pub struct WeaponShootingPlugin;
 
@@ -51,13 +51,14 @@ fn on_shoot_weapon(
     shoot_weapon: On<ShootWeapon>,
     mut weapons_query: Query<(Entity, &GlobalTransform, Forces), With<Weapon>>,
     spatial_query: SpatialQuery,
+    time: Res<Time<Fixed>>,
     mut commands: Commands,
 ) {
     let (weapon_entity, global_weapon_transform, mut weapon_forces) = weapons_query
         .get_mut(shoot_weapon.entity)
         .expect("ShootWeapon should always point to weapon entity.");
 
-    weapon_forces.apply_force(global_weapon_transform.back() * WEAPON_RECOIL);
+    weapon_forces.apply_force(global_weapon_transform.back() * WEAPON_RECOIL / time.delta_secs());
 
     let origin = global_weapon_transform.translation(); // TODO: start raycast in front of weapon instead of inside it.
     let direction = global_weapon_transform.forward();
@@ -83,6 +84,7 @@ fn on_weapon_hit(
     weapon_hit: On<WeaponHit>,
     mut hit_object_query: Query<(&GlobalTransform, Option<Forces>)>,
     mut commands: Commands,
+    time: Res<Time<Fixed>>,
     bullet_hit_point_assets: Res<BulletHitPointAssets>,
 ) {
     let (global_transform, forces) = hit_object_query
@@ -93,7 +95,7 @@ fn on_weapon_hit(
         commands.queue(WakeBody(weapon_hit.hit_entity));
 
         forces.apply_force_at_point(
-            weapon_hit.bullet_direction.as_vec3() * BULLET_HIT_FORCE,
+            weapon_hit.bullet_direction.as_vec3() * BULLET_HIT_FORCE / time.delta_secs(),
             weapon_hit.hit_position,
         );
     }

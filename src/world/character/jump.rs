@@ -20,12 +20,13 @@ pub struct AttemptJump {
 fn on_attempt_jump(
     jump_attempt: On<AttemptJump>,
     mut character_force_query: Query<(&Grounded, Forces), With<Character>>,
+    time: Res<Time<Fixed>>,
 ) {
     let (grounded, mut character_force) = character_force_query
         .get_mut(jump_attempt.entity)
         .expect("AttemptJump should always point to existing entity with RigidBody component.");
 
     if grounded.is_grounded() {
-        character_force.apply_force(Vec3::Y * jump_attempt.jump_force);
+        character_force.apply_force(Vec3::Y * jump_attempt.jump_force / time.delta_secs());
     }
 }

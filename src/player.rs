@@ -24,7 +24,7 @@ const MOVEMENT_KEYBINDS: MovementKeybinds = MovementKeybinds {
 
 const WALKING_SPEED: f32 = 5.0;
 const RUNNING_SPEED: f32 = 10.0;
-const JUMP_FORCE: f32 = 20_000.0;
+const JUMP_FORCE: f32 = 300.0;
 
 /// Mouse sensitivity calculated as: how many pixels the mouse needs to move in a direction to rotate by 1 radian in that direction.
 /// - Higher value = less sensitive.
