@@ -16,7 +16,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- add some low walls and corners to shoot from
 - bullet impact decal
 - bullet impact particle effect
 
