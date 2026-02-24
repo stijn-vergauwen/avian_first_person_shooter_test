@@ -236,7 +236,6 @@ fn spawn_dynamic_entities(
             Collider::from(cube_shape),
             ColliderDensity(100.0),
             Transform::from_translation(spawn_position + Vec3::Y * index as f32 * 1.2),
-            SleepingDisabled,
         ));
     }
 
@@ -269,7 +268,6 @@ fn spawn_dynamic_entities(
             ColliderDensity(300.0),
             Restitution::new(0.8),
             Transform::from_translation(spawn_position + vertical_offset + horizontal_offset),
-            SleepingDisabled,
             MaxAngularSpeed(40.0),
         ));
     }
@@ -290,7 +288,6 @@ fn spawn_radio(mut commands: Commands, asset_server: Res<AssetServer>) {
         RigidBody::Dynamic,
         Collider::cuboid(0.4, 0.2, 0.15),
         Mass(5.0),
-        SleepingDisabled,
         MaxAngularSpeed(40.0),
     ));
 }

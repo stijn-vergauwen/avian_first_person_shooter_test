@@ -1,4 +1,4 @@
-use avian3d::prelude::{Forces, RigidBodyForces, SpatialQuery, SpatialQueryFilter};
+use avian3d::prelude::{Forces, RigidBodyForces, SpatialQuery, SpatialQueryFilter, WakeBody};
 use bevy::{
     color::palettes::tailwind::{RED_500, RED_900},
     prelude::*,
@@ -90,6 +90,8 @@ fn on_weapon_hit(
         .expect("WeaponHit hit_entity should always point to existing entity");
 
     if let Some(mut forces) = forces {
+        commands.queue(WakeBody(weapon_hit.hit_entity));
+
         forces.apply_force_at_point(
             weapon_hit.bullet_direction.as_vec3() * BULLET_HIT_FORCE,
             weapon_hit.hit_position,
