@@ -1,4 +1,6 @@
-use avian3d::prelude::{Forces, RigidBodyForces, SpatialQuery, SpatialQueryFilter, WakeBody};
+use avian3d::prelude::{
+    Forces, RigidBody, RigidBodyForces, SpatialQuery, SpatialQueryFilter, WakeBody,
+};
 use bevy::{
     color::palettes::tailwind::{RED_500, RED_900},
     prelude::*,
@@ -32,6 +34,8 @@ struct BulletHitPointAssets {
 #[derive(Event, Clone, Copy)]
 struct WeaponHit {
     pub hit_entity: Entity,
+    /// The entity of the first RigidBody in the hierarchy, either the hit entity itself or the RigidBody this entity is a child of.
+    pub rigid_body_entity: Entity,
     pub hit_position: Vec3,
     pub bullet_direction: Dir3,
 }
@@ -51,6 +55,8 @@ fn on_shoot_weapon(
     shoot_weapon: On<ShootWeapon>,
     mut weapons_query: Query<(Entity, &GlobalTransform, Forces), With<Weapon>>,
     spatial_query: SpatialQuery,
+    rigid_bodies: Query<&RigidBody>,
+    parents: Query<&ChildOf>,
     time: Res<Time<Fixed>>,
     mut commands: Commands,
 ) {
@@ -72,8 +78,19 @@ fn on_shoot_weapon(
     ) {
         let global_hit_point_position = origin + direction * hit_data.distance;
 
+        let rigid_body_entity = match rigid_bodies.contains(hit_data.entity) {
+            true => hit_data.entity,
+            false => parents
+                .iter_ancestors(hit_data.entity)
+                .find(|parent| rigid_bodies.contains(*parent))
+                .expect(
+                    "Weapon hit should always hit an entity that has a RigidBody in it's hierarchy",
+                ),
+        };
+
         commands.trigger(WeaponHit {
             hit_entity: hit_data.entity,
+            rigid_body_entity,
             hit_position: global_hit_point_position,
             bullet_direction: direction,
         });
@@ -82,23 +99,15 @@ fn on_shoot_weapon(
 
 fn on_weapon_hit(
     weapon_hit: On<WeaponHit>,
-    mut hit_object_query: Query<(&GlobalTransform, Option<Forces>)>,
+    global_transforms: Query<&GlobalTransform>,
+    mut forces_query: Query<Forces>,
     mut commands: Commands,
     time: Res<Time<Fixed>>,
     bullet_hit_point_assets: Res<BulletHitPointAssets>,
 ) {
-    let (global_transform, forces) = hit_object_query
-        .get_mut(weapon_hit.hit_entity)
-        .expect("WeaponHit hit_entity should always point to existing entity");
-
-    if let Some(mut forces) = forces {
-        commands.queue(WakeBody(weapon_hit.hit_entity));
-
-        forces.apply_force_at_point(
-            weapon_hit.bullet_direction.as_vec3() * BULLET_HIT_FORCE / time.delta_secs(),
-            weapon_hit.hit_position,
-        );
-    }
+    let global_transform = global_transforms
+        .get(weapon_hit.hit_entity)
+        .expect("WeaponHit hit_entity should always have GlobalTransform component");
 
     commands.spawn((
         Mesh3d(bullet_hit_point_assets.mesh.clone()),
@@ -109,6 +118,15 @@ fn on_weapon_hit(
         ),
         ChildOf(weapon_hit.hit_entity),
     ));
+
+    if let Ok(mut forces) = forces_query.get_mut(weapon_hit.rigid_body_entity) {
+        commands.queue(WakeBody(weapon_hit.rigid_body_entity));
+
+        forces.apply_force_at_point(
+            weapon_hit.bullet_direction.as_vec3() * BULLET_HIT_FORCE / time.delta_secs(),
+            weapon_hit.hit_position,
+        );
+    }
 }
 
 fn draw_weapon_fire_direction(
