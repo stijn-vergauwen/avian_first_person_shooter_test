@@ -3,7 +3,10 @@ pub mod desired_movement;
 pub mod desired_rotation;
 pub mod grabbable_object;
 pub mod grounded;
+mod gym_area;
+mod indoor_area;
 pub mod interaction_target;
+mod shooting_range_area;
 mod wall_mirror;
 pub mod weapons;
 
@@ -19,7 +22,10 @@ use crate::world::{
     desired_rotation::DesiredRotationPlugin,
     grabbable_object::{GrabOrientation, GrabbableObject},
     grounded::GroundedPlugin,
+    gym_area::GymAreaPlugin,
+    indoor_area::IndoorAreaPlugin,
     interaction_target::InteractionTargetPlugin,
+    shooting_range_area::ShootingRangeAreaPlugin,
     wall_mirror::WallMirrorPlugin,
     weapons::WeaponsPlugin,
 };
@@ -38,15 +44,13 @@ impl Plugin for WorldPlugin {
             InteractionTargetPlugin,
             GroundedPlugin,
             WallMirrorPlugin,
+            ShootingRangeAreaPlugin,
+            IndoorAreaPlugin,
+            GymAreaPlugin,
         ))
         .add_systems(
             Startup,
-            (
-                spawn_static_entities,
-                spawn_dynamic_entities,
-                spawn_radio,
-                spawn_test_targets,
-            ),
+            (spawn_static_entities, spawn_dynamic_entities, spawn_radio),
         );
     }
 }
@@ -93,111 +97,6 @@ fn spawn_static_entities(
         Transform {
             translation: TABLE_POSITION,
             rotation: Quat::from_axis_angle(Vec3::Y, 90f32.to_radians()),
-            ..default()
-        },
-    ));
-
-    // Shooting range walls
-    let wall_shape = Cuboid::new(0.5, 0.8, 40.0);
-    spawn_array_of_static_objects(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        ArrayOfObjects {
-            center_position: Vec3::new(40.0, wall_shape.half_size.y, -60.0),
-            count: 7,
-            distance_between: Vec3::new(10.0, 0.0, 0.0),
-            shape: wall_shape,
-            color: Color::from(STONE_600),
-        },
-    );
-
-    // Parkour area
-    let block_shape = Cuboid::from_length(4.0);
-    let mut array_of_objects = ArrayOfObjects {
-        center_position: Vec3::new(0.0, block_shape.half_size.y, 40.0),
-        count: 3,
-        distance_between: Vec3::new(-8.0, 0.0, 0.0),
-        shape: block_shape,
-        color: Color::from(NEUTRAL_400),
-    };
-
-    spawn_array_of_static_objects(&mut commands, &mut meshes, &mut materials, array_of_objects);
-    array_of_objects.center_position.z += 8.0;
-    spawn_array_of_static_objects(&mut commands, &mut meshes, &mut materials, array_of_objects);
-
-    let ramp_shape = Cuboid::new(2.0, 0.1, 14.0);
-    commands.spawn((
-        Mesh3d(meshes.add(ramp_shape)),
-        MeshMaterial3d(materials.add(Color::from(NEUTRAL_200))),
-        RigidBody::Static,
-        Collider::from(ramp_shape),
-        Transform {
-            translation: Vec3::new(11.0, 2.0, 35.0),
-            rotation: Quat::from_axis_angle(Vec3::X, -20f32.to_radians()),
-            ..default()
-        },
-    ));
-
-    // Indoor area
-    let quarter_turn: Quat = Quat::from_axis_angle(Vec3::Y, 90f32.to_radians());
-    let wall_shape = Cuboid::new(4.0, 2.5, 0.2);
-    let mesh_handle = meshes.add(wall_shape);
-    let material_handle = materials.add(Color::from(STONE_300));
-
-    commands.spawn((
-        Mesh3d(mesh_handle.clone()),
-        MeshMaterial3d(material_handle.clone()),
-        RigidBody::Static,
-        Collider::from(wall_shape),
-        Transform {
-            translation: Vec3::new(-12.0, wall_shape.half_size.y, 13.0),
-            rotation: quarter_turn,
-            ..default()
-        },
-    ));
-
-    commands.spawn((
-        Mesh3d(mesh_handle.clone()),
-        MeshMaterial3d(material_handle.clone()),
-        RigidBody::Static,
-        Collider::from(wall_shape),
-        Transform {
-            translation: Vec3::new(-14.0, wall_shape.half_size.y, 15.0),
-            ..default()
-        },
-    ));
-
-    commands.spawn((
-        Mesh3d(mesh_handle.clone()),
-        MeshMaterial3d(material_handle.clone()),
-        RigidBody::Static,
-        Collider::from(wall_shape),
-        Transform {
-            translation: Vec3::new(-20.0, wall_shape.half_size.y, 15.0),
-            ..default()
-        },
-    ));
-
-    commands.spawn((
-        Mesh3d(mesh_handle.clone()),
-        MeshMaterial3d(material_handle.clone()),
-        RigidBody::Static,
-        Collider::from(wall_shape),
-        Transform {
-            translation: Vec3::new(-22.0, wall_shape.half_size.y, 13.0),
-            rotation: quarter_turn,
-            ..default()
-        },
-    ));
-
-    commands.spawn((
-        Mesh3d(mesh_handle.clone()),
-        MeshMaterial3d(material_handle.clone()),
-        RigidBody::Static,
-        Collider::from(wall_shape),
-        Transform {
-            translation: Vec3::new(-24.0, wall_shape.half_size.y, 11.0),
             ..default()
         },
     ));
@@ -292,44 +191,7 @@ fn spawn_radio(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-fn spawn_test_targets(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let target_model = asset_server.load("models/Small shooting target.glb#Scene0");
-
-    commands
-        .spawn((
-            SceneRoot(target_model),
-            Transform {
-                translation: Vec3::new(0.0, 1.5, -2.0),
-                rotation: Quat::from_axis_angle(Vec3::Y, PI),
-                ..default()
-            },
-            RigidBody::Static,
-        ))
-        .with_child((
-            Collider::cylinder(0.2, 0.03),
-            Transform::from_rotation(Quat::from_axis_angle(Vec3::X, 90f32.to_radians())),
-            Visibility::default(),
-        ));
-
-    let target_model = asset_server.load("models/Shooting target.glb#Scene0");
-
-    commands.spawn((
-        SceneRoot(target_model),
-        Transform {
-            translation: Vec3::new(-2.0, 1.5, -2.0),
-            rotation: Quat::from_axis_angle(Vec3::Y, PI),
-            ..default()
-        },
-        RigidBody::Static,
-        ColliderConstructorHierarchy::default().with_constructor_for_name(
-            // 'name' parameter should refer to the full name of the entity you want to target. Because Bevy uses the format `MeshName.MaterialName`, this means you need to target the material name even when in this case the mesh will be used instead of the material.
-            "Cube.005.Shooting target base color",
-            ColliderConstructor::TrimeshFromMesh,
-        ),
-    ));
-}
-
-// Utility
+// Utilities
 
 #[derive(Clone, Copy)]
 struct ArrayOfObjects<T: Into<Mesh> + IntoCollider<Collider> + Copy> {
