@@ -95,24 +95,16 @@ fn spawn_standing_target(mut commands: Commands, asset_server: Res<AssetServer>)
             SceneRoot(target_model),
             Transform::from_translation(target_position),
             RigidBody::Dynamic,
-            ColliderConstructorHierarchy::default().with_constructor_for_name(
-                // 'name' parameter should refer to the full name of the entity you want to target. Because Bevy uses the format `MeshName.MaterialName`, this means you need to target the material name even when in this case the mesh will be used instead of the material.
-                "Cube.005.Shooting target base color",
-                ColliderConstructor::TrimeshFromMesh,
-            ),
-            // Collider::cuboid(0.6, 1.0, 0.1),
-            Mass(1.0),
-            NoAutoMass,
-            NoAutoCenterOfMass,
-            LinearDamping(5.0),
-            AngularDamping(5.0),
+            ColliderConstructorHierarchy::default()
+                .with_constructor_for_name(
+                    // 'name' parameter should refer to the full name of the entity you want to target. Because Bevy uses the format `MeshName.MaterialName`, this means you need to target the material name even when in this case the mesh will be used instead of the material.
+                    "Cube.005.Shooting target base color",
+                    ColliderConstructor::TrimeshFromMesh,
+                )
+                .with_default_density(ColliderDensity(5000.0)),
+            AngularDamping(0.4),
         ))
         .id();
 
-    commands.spawn(
-        RevoluteJoint::new(anchor, shooting_target)
-            .with_local_anchor2(Vec3::new(0.0, -0.5, 0.0))
-            .with_point_compliance(0.001)
-            .with_hinge_axis(Vec3::Y),
-    );
+    commands.spawn(RevoluteJoint::new(anchor, shooting_target).with_hinge_axis(Vec3::Y));
 }
