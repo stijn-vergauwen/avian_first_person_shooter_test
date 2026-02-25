@@ -2,7 +2,10 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
 
 use crate::{
-    player::{MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera, PlayerHeadMesh, grabbed_object::GrabbedObject},
+    player::{
+        MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera, PlayerHeadMesh,
+        grabbed_object::GrabbedObject,
+    },
     utilities::pd_controller::config::PdControllerConfig,
     world::{
         character::{Character, CharacterHead, CharacterNeck},

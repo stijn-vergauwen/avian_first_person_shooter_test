@@ -9,7 +9,14 @@ pub struct ShootingRangeAreaPlugin;
 
 impl Plugin for ShootingRangeAreaPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_static_entities, spawn_test_targets));
+        app.add_systems(
+            Startup,
+            (
+                spawn_static_entities,
+                spawn_test_targets,
+                spawn_standing_target,
+            ),
+        );
     }
 }
 
@@ -40,7 +47,7 @@ fn spawn_test_targets(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn((
             SceneRoot(target_model),
             Transform {
-                translation: Vec3::new(0.0, 1.5, -2.0),
+                translation: Vec3::new(0.0, 1.5, -14.0),
                 rotation: Quat::from_axis_angle(Vec3::Y, PI),
                 ..default()
             },
@@ -57,7 +64,7 @@ fn spawn_test_targets(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         SceneRoot(target_model),
         Transform {
-            translation: Vec3::new(-2.0, 1.5, -2.0),
+            translation: Vec3::new(-2.0, 1.5, -14.0),
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
@@ -68,4 +75,44 @@ fn spawn_test_targets(mut commands: Commands, asset_server: Res<AssetServer>) {
             ColliderConstructor::TrimeshFromMesh,
         ),
     ));
+}
+
+fn spawn_standing_target(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let target_model = asset_server.load("models/Shooting target.glb#Scene0");
+
+    let anchor_position = Vec3::new(0.0, 1.0, -2.0);
+    let target_position = Vec3::new(0.0, 2.5, -2.0);
+
+    let anchor = commands
+        .spawn((
+            Transform::from_translation(anchor_position),
+            RigidBody::Static,
+        ))
+        .id();
+
+    let shooting_target = commands
+        .spawn((
+            SceneRoot(target_model),
+            Transform::from_translation(target_position),
+            RigidBody::Dynamic,
+            ColliderConstructorHierarchy::default().with_constructor_for_name(
+                // 'name' parameter should refer to the full name of the entity you want to target. Because Bevy uses the format `MeshName.MaterialName`, this means you need to target the material name even when in this case the mesh will be used instead of the material.
+                "Cube.005.Shooting target base color",
+                ColliderConstructor::TrimeshFromMesh,
+            ),
+            // Collider::cuboid(0.6, 1.0, 0.1),
+            Mass(1.0),
+            NoAutoMass,
+            NoAutoCenterOfMass,
+            LinearDamping(5.0),
+            AngularDamping(5.0),
+        ))
+        .id();
+
+    commands.spawn(
+        RevoluteJoint::new(anchor, shooting_target)
+            .with_local_anchor2(Vec3::new(0.0, -0.5, 0.0))
+            .with_point_compliance(0.001)
+            .with_hinge_axis(Vec3::Y),
+    );
 }

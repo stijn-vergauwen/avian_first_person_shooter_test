@@ -1,5 +1,5 @@
-use bevy::{color::palettes::tailwind::STONE_300, prelude::*};
 use avian3d::prelude::*;
+use bevy::{color::palettes::tailwind::STONE_300, prelude::*};
 
 pub struct IndoorAreaPlugin;
 
@@ -12,9 +12,8 @@ impl Plugin for IndoorAreaPlugin {
 fn spawn_static_entities(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,) {
-        
-
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     // Indoor area
     let quarter_turn: Quat = Quat::from_axis_angle(Vec3::Y, 90f32.to_radians());
     let wall_shape = Cuboid::new(4.0, 2.5, 0.2);
@@ -77,5 +76,4 @@ fn spawn_static_entities(
             ..default()
         },
     ));
-
 }

@@ -17,6 +17,11 @@ Info and documentation for development.
 
 ## Backlog
 - make standing target that freely turns horizontally
+    - ran into multiple problems, make new todos for these:
+        - when 'compliance' on joints (in this case the 'align' & 'point' compliance on a RevoluteJoint) is kept at 0 (the default), it can create a positive feedback loop where the object jumps around so quickly it crashes the game.
+            - I think this only happened when generating the collider from its mesh? Don't think it happened with regular cuboid collider shape
+            - I also think this only happened when setting the one of the joint anchors to a different position than default
+        - My OnHit code in shooting module only applies a force to objects that themselves have a rigidbody, so colliders that are child entities of rigidbodies get skipped, add code to go through the hit objects parents and find the first rigidbody entity
 - make standing target that falls when shot, able to reset itself on event (revolute joint for pivot point? separate timer component that fires reset event after duration)
 - add grid texture to world objects (already have sprites from Kenney)
 - add bullet visual, traveling bullet should move super fast but be slightly visible

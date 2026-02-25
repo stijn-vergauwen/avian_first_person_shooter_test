@@ -1,14 +1,16 @@
 use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
 
 use crate::{
-    player::{JUMP_FORCE, MOVEMENT_KEYBINDS, MovementKeybinds, PIXELS_PER_RADIAN, Player, RUNNING_SPEED, WALKING_SPEED}, utilities::{
-        euler_angle::EulerAngle,
-        system_sets::InputSystems,
-    }, world::{
+    player::{
+        JUMP_FORCE, MOVEMENT_KEYBINDS, MovementKeybinds, PIXELS_PER_RADIAN, Player, RUNNING_SPEED,
+        WALKING_SPEED,
+    },
+    utilities::{euler_angle::EulerAngle, system_sets::InputSystems},
+    world::{
         character::{Character, jump::AttemptJump},
         desired_movement::{DesiredMovement, SetDesiredMovement},
         desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
-    }
+    },
 };
 
 /// Upper threshold for delta mouse motion in a single update, this is to ignore motion spikes caused by input through Parsec.

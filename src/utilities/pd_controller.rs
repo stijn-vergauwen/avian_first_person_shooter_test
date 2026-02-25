@@ -25,7 +25,7 @@ where
     prev_target_position: T,
 }
 
-    #[allow(unused)]
+#[allow(unused)]
 impl<T> PdController<T>
 where
     T: Copy
@@ -141,8 +141,7 @@ where
     pub fn update_velocity(&mut self, delta_seconds: f32) {
         validate_delta_seconds(delta_seconds);
 
-        self.values.velocity =
-            calculate_velocity(self.values, delta_seconds);
+        self.values.velocity = calculate_velocity(self.values, delta_seconds);
     }
 
     /// Updates the position value of this controller.
