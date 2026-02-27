@@ -1,7 +1,10 @@
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::{color::palettes::tailwind::STONE_600, prelude::*};
+use bevy::{
+    color::palettes::tailwind::{NEUTRAL_700, STONE_600},
+    prelude::*,
+};
 
 use crate::world::{ArrayOfObjects, spawn_array_of_static_objects};
 
@@ -9,15 +12,36 @@ pub struct ShootingRangeAreaPlugin;
 
 impl Plugin for ShootingRangeAreaPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Startup,
-            (
-                spawn_static_entities,
-                spawn_test_targets,
-                spawn_standing_target,
-            ),
-        );
+        app.add_systems(PreStartup, setup_assets)
+            .add_systems(Startup, (spawn_static_entities, spawn_test_targets));
     }
+}
+
+#[derive(Resource)]
+struct StandingTargetAssets {
+    stand_shape: Cuboid,
+    stand_mesh: Handle<Mesh>,
+    stand_material: Handle<StandardMaterial>,
+    target_model: Handle<Scene>,
+}
+
+fn setup_assets(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    let stand_shape = Cuboid::new(0.1, 0.8, 0.1);
+    let stand_mesh = meshes.add(stand_shape);
+    let stand_material = materials.add(Color::from(NEUTRAL_700));
+    let target_model = asset_server.load("models/Shooting target.glb#Scene0");
+
+    commands.insert_resource(StandingTargetAssets {
+        stand_shape,
+        stand_mesh,
+        stand_material,
+        target_model,
+    });
 }
 
 fn spawn_static_entities(
@@ -40,7 +64,12 @@ fn spawn_static_entities(
     );
 }
 
-fn spawn_test_targets(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_test_targets(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    standing_target_assets: Res<StandingTargetAssets>,
+) {
+    // Small test target
     let target_model = asset_server.load("models/Small shooting target.glb#Scene0");
 
     commands
@@ -59,6 +88,7 @@ fn spawn_test_targets(mut commands: Commands, asset_server: Res<AssetServer>) {
             Visibility::default(),
         ));
 
+    // Test target
     let target_model = asset_server.load("models/Shooting target.glb#Scene0");
 
     commands.spawn((
@@ -75,25 +105,44 @@ fn spawn_test_targets(mut commands: Commands, asset_server: Res<AssetServer>) {
             ColliderConstructor::TrimeshFromMesh,
         ),
     ));
+
+    // Standing target
+    spawn_rotating_standing_target(
+        &mut commands,
+        &standing_target_assets,
+        Vec3::new(5.0, 0.0, -20.0),
+    );
 }
 
-fn spawn_standing_target(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let target_model = asset_server.load("models/Shooting target.glb#Scene0");
-
-    let anchor_position = Vec3::new(0.0, 1.0, -2.0);
-    let target_position = Vec3::new(0.0, 2.5, -2.0);
-
-    let anchor = commands
+fn spawn_rotating_standing_target(
+    commands: &mut Commands,
+    assets: &StandingTargetAssets,
+    position: Vec3,
+) {
+    let stand = commands
         .spawn((
-            Transform::from_translation(anchor_position),
+            Mesh3d(assets.stand_mesh.clone()),
+            MeshMaterial3d(assets.stand_material.clone()),
             RigidBody::Static,
+            Collider::from(assets.stand_shape),
+            Transform {
+                translation: position + Vec3::Y * assets.stand_shape.half_size.y,
+                rotation: Quat::from_axis_angle(Vec3::Y, 45f32.to_radians()),
+                ..default()
+            },
         ))
         .id();
 
+    let target_position = position + Vec3::Y * (assets.stand_shape.size().y + 0.45);
+
     let shooting_target = commands
         .spawn((
-            SceneRoot(target_model),
-            Transform::from_translation(target_position),
+            SceneRoot(assets.target_model.clone()),
+            Transform {
+                translation: target_position,
+                rotation: Quat::from_axis_angle(Vec3::Y, PI),
+                ..default()
+            },
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::default()
                 .with_constructor_for_name(
@@ -101,10 +150,14 @@ fn spawn_standing_target(mut commands: Commands, asset_server: Res<AssetServer>)
                     "Cube.005.Shooting target base color",
                     ColliderConstructor::TrimeshFromMesh,
                 )
-                .with_default_density(ColliderDensity(5000.0)),
-            AngularDamping(0.4),
+                .with_default_density(ColliderDensity(1000.0)),
+            AngularDamping(0.3),
         ))
         .id();
 
-    commands.spawn(RevoluteJoint::new(anchor, shooting_target).with_hinge_axis(Vec3::Y));
+    commands.spawn(
+        RevoluteJoint::new(stand, shooting_target)
+            .with_anchor(position + Vec3::Y * assets.stand_shape.size().y)
+            .with_hinge_axis(Vec3::Y),
+    );
 }
