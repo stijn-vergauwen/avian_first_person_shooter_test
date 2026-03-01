@@ -16,7 +16,7 @@ Info and documentation for development.
 
 
 ## Backlog
-- make standing target that falls when shot, able to reset itself on event (revolute joint for pivot point? separate timer component that fires reset event after duration)
+- make component & event to reset standing target after duration
 - add grid texture to world objects (already have sprites from Kenney)
 - add bullet visual, traveling bullet should move super fast but be slightly visible
 - remove firing direction gizmo

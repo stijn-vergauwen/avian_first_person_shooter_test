@@ -110,14 +110,28 @@ fn spawn_test_targets(
     spawn_rotating_standing_target(
         &mut commands,
         &standing_target_assets,
-        Vec3::new(5.0, 0.0, -20.0),
+        Transform {
+            translation: Vec3::new(4.0, 0.0, -14.0),
+            rotation: Quat::from_axis_angle(Vec3::Y, PI),
+            ..default()
+        },
+    );
+
+    spawn_falling_standing_target(
+        &mut commands,
+        &standing_target_assets,
+        Transform {
+            translation: Vec3::new(2.0, 0.0, -14.0),
+            rotation: Quat::from_axis_angle(Vec3::Y, PI),
+            ..default()
+        },
     );
 }
 
 fn spawn_rotating_standing_target(
     commands: &mut Commands,
     assets: &StandingTargetAssets,
-    position: Vec3,
+    transform: Transform,
 ) {
     let stand = commands
         .spawn((
@@ -126,21 +140,21 @@ fn spawn_rotating_standing_target(
             RigidBody::Static,
             Collider::from(assets.stand_shape),
             Transform {
-                translation: position + Vec3::Y * assets.stand_shape.half_size.y,
-                rotation: Quat::from_axis_angle(Vec3::Y, 45f32.to_radians()),
+                translation: transform.translation + Vec3::Y * assets.stand_shape.half_size.y,
+                rotation: transform.rotation * Quat::from_axis_angle(Vec3::Y, 45f32.to_radians()),
                 ..default()
             },
         ))
         .id();
 
-    let target_position = position + Vec3::Y * (assets.stand_shape.size().y + 0.45);
+    let target_position = transform.translation + Vec3::Y * (assets.stand_shape.size().y + 0.45);
 
     let shooting_target = commands
         .spawn((
             SceneRoot(assets.target_model.clone()),
             Transform {
                 translation: target_position,
-                rotation: Quat::from_axis_angle(Vec3::Y, PI),
+                rotation: transform.rotation,
                 ..default()
             },
             RigidBody::Dynamic,
@@ -157,7 +171,47 @@ fn spawn_rotating_standing_target(
 
     commands.spawn(
         RevoluteJoint::new(stand, shooting_target)
-            .with_anchor(position + Vec3::Y * assets.stand_shape.size().y)
+            .with_anchor(transform.translation + Vec3::Y * assets.stand_shape.size().y)
             .with_hinge_axis(Vec3::Y),
     );
+}
+
+fn spawn_falling_standing_target(
+    commands: &mut Commands,
+    assets: &StandingTargetAssets,
+    transform: Transform,
+) {
+    let root = commands
+        .spawn((RigidBody::Dynamic, transform, Visibility::default()))
+        .id();
+    let pivot_point = commands.spawn((RigidBody::Static, transform)).id();
+
+    commands.spawn(RevoluteJoint::new(root, pivot_point).with_hinge_axis(Vec3::X));
+
+    commands.spawn((
+        Mesh3d(assets.stand_mesh.clone()),
+        MeshMaterial3d(assets.stand_material.clone()),
+        Collider::from(assets.stand_shape),
+        Transform {
+            translation: Vec3::Y * assets.stand_shape.half_size.y,
+            rotation: Quat::from_axis_angle(Vec3::Y, 45f32.to_radians()),
+            ..default()
+        },
+        ChildOf(root),
+    ));
+
+    let target_position = Vec3::Y * (assets.stand_shape.size().y + 0.45);
+
+    commands.spawn((
+        SceneRoot(assets.target_model.clone()),
+        Transform::from_translation(target_position),
+        ColliderConstructorHierarchy::default()
+            .with_constructor_for_name(
+                // 'name' parameter should refer to the full name of the entity you want to target. Because Bevy uses the format `MeshName.MaterialName`, this means you need to target the material name even when in this case the mesh will be used instead of the material.
+                "Cube.005.Shooting target base color",
+                ColliderConstructor::TrimeshFromMesh,
+            )
+            .with_default_density(ColliderDensity(1000.0)),
+        ChildOf(root),
+    ));
 }
