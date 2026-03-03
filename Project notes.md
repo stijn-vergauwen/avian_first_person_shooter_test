@@ -18,8 +18,6 @@ Info and documentation for development.
 ## Backlog
 - make component & event to reset standing target after duration
 - add grid texture to world objects (already have sprites from Kenney)
-- add bullet visual, traveling bullet should move super fast but be slightly visible
-- remove firing direction gizmo
 - eject casing when shooting
 - bullet impact decal
 - bullet impact particle effect

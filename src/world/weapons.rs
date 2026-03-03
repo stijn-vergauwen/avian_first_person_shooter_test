@@ -1,3 +1,4 @@
+mod bullet;
 pub mod muzzle_flash;
 mod shooting;
 
@@ -12,6 +13,7 @@ use crate::{
         TABLE_POSITION,
         grabbable_object::{GrabOrientation, GrabbableObject},
         weapons::{
+            bullet::BulletPlugin,
             muzzle_flash::{MuzzleFlashAnimation, MuzzleFlashImages, MuzzleFlashPlugin},
             shooting::WeaponShootingPlugin,
         },
@@ -25,7 +27,7 @@ pub struct WeaponsPlugin;
 
 impl Plugin for WeaponsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((WeaponShootingPlugin, MuzzleFlashPlugin))
+        app.add_plugins((WeaponShootingPlugin, MuzzleFlashPlugin, BulletPlugin))
             .add_systems(Startup, spawn_test_weapon);
     }
 }
