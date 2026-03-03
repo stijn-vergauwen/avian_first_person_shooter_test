@@ -16,14 +16,15 @@ Info and documentation for development.
 
 
 ## Backlog
+- add max lifetime to bullets
 - make component & event to reset standing target after duration
 - add grid texture to world objects (already have sprites from Kenney)
-- eject casing when shooting
 - bullet impact decal
 - bullet impact particle effect
 - setup saving & loading weapon config from ron file
 - on startup, loop through files in weapon folder, load the data and spawn a new gun entity + its model for each file
 - store weapon weight and recoil in config file
+- store bullet speed & impact force in weapon config file
 - add UI to inspector to configure shot origin position (at barrel end)
     - start shot raycast from origin
     - start muzzle flash at origin

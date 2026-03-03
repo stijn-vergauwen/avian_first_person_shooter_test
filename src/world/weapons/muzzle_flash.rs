@@ -12,7 +12,7 @@ impl Plugin for MuzzleFlashPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, setup_muzzle_flash_images)
             .add_systems(Update, update_muzzle_flash_animation.in_set(DisplaySystems))
-            .add_observer(on_shoot_weapon);
+            .add_observer(start_muzzle_flash_animation);
     }
 }
 
@@ -72,7 +72,7 @@ fn setup_muzzle_flash_images(mut commands: Commands, asset_server: Res<AssetServ
     commands.insert_resource(MuzzleFlashImages { image_handles });
 }
 
-fn on_shoot_weapon(
+fn start_muzzle_flash_animation(
     shoot_weapon: On<ShootWeapon>,
     weapons: Query<&Children, With<Weapon>>,
     mut muzzle_flash_animations: Query<&mut MuzzleFlashAnimation>,
