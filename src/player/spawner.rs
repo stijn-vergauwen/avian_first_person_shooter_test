@@ -31,7 +31,7 @@ fn spawn_player(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let start_position = Vec3::ZERO;
+    let start_position = Vec3::new(2.0, 0.0, -12.0);
 
     // Spawn root
 

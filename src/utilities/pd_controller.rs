@@ -57,6 +57,10 @@ where
         }
     }
 
+    pub fn target_position(&self) -> T {
+        self.target_position
+    }
+
     /// Sets a new target position for the controller to move towards
     pub fn set_target_position(&mut self, target_position: T) {
         self.target_position = target_position;
