@@ -64,6 +64,11 @@ impl QuaternionPdController {
         self.target_position
     }
 
+    /// Returns the angle between current position and target position.
+    pub fn distance_to_target(&self) -> f32 {
+        self.values.position.angle_between(self.target_position)
+    }
+
     /// Sets the controllers current 'position' value.
     ///
     /// Use this before each controller update call when the in-game 'position' value might deviate from what the controller calculated last update cycle.

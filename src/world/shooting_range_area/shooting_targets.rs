@@ -1,3 +1,5 @@
+use std::{f32::consts::PI, time::Duration};
+
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
@@ -16,7 +18,12 @@ impl Plugin for ShootingTargetsPlugin {
         app.add_systems(Update, enable_controllers_on_key.in_set(InputSystems))
             .add_systems(
                 FixedUpdate,
-                (update_controllers, disable_controllers_that_reached_target)
+                (
+                    update_controllers,
+                    disable_controllers_that_reached_target,
+                    update_reset_after_duration_components,
+                )
+                    .chain()
                     .in_set(DataSystems::UpdateEntities),
             );
     }
@@ -26,6 +33,21 @@ impl Plugin for ShootingTargetsPlugin {
 struct TargetResetController {
     controller: QuaternionPdController,
     is_enabled: bool,
+}
+
+#[derive(Component)]
+struct ResetAfterDuration {
+    outside_threshold_since: Option<Duration>,
+    reset_after: Duration,
+}
+
+impl ResetAfterDuration {
+    fn new(reset_after: Duration) -> Self {
+        Self {
+            outside_threshold_since: None,
+            reset_after,
+        }
+    }
 }
 
 pub fn spawn_rotating_standing_target(
@@ -87,21 +109,23 @@ pub fn spawn_falling_standing_target(
             transform,
             Visibility::default(),
             RigidBody::Dynamic,
-            ConstantLocalAngularAcceleration(Vec3::NEG_X * 50.0),
+            AngularDamping(0.5),
+            ConstantLocalAngularAcceleration(Vec3::NEG_X * 30.0),
             TargetResetController {
                 controller: QuaternionPdController::with_start_position(
-                    PdControllerConfig::from_parameters(5.0, 5.0, 0.0),
+                    PdControllerConfig::from_parameters(8.0, 6.0, 0.0),
                     transform.rotation,
                 ),
                 is_enabled: false,
             },
+            ResetAfterDuration::new(Duration::from_secs(2)),
         ))
         .id();
 
     commands.spawn(
         RevoluteJoint::new(root, pivot_point)
             .with_hinge_axis(Vec3::X)
-            .with_angle_limits(0.0, 90f32.to_radians()),
+            .with_angle_limits(0.0, PI),
     );
 
     commands.spawn((
@@ -127,7 +151,7 @@ pub fn spawn_falling_standing_target(
                 "Cube.005.Shooting target base color",
                 ColliderConstructor::TrimeshFromMesh,
             )
-            .with_default_density(ColliderDensity(1000.0)),
+            .with_default_density(ColliderDensity(1600.0)),
         ChildOf(pivot_point),
     ));
 }
@@ -147,33 +171,47 @@ fn update_controllers(
     mut controllers: Query<(&mut TargetResetController, &Transform, Forces)>,
     time: Res<Time>,
 ) {
-    for (mut controller, transform, mut forces) in controllers
-        .iter_mut()
-        .filter(|(controller, _, _)| controller.is_enabled)
-    {
+    for (mut controller, transform, mut forces) in controllers.iter_mut() {
         let acceleration = controller.controller.update_from_physics_sim(
             transform.rotation,
             forces.angular_velocity(),
             time.delta_secs(),
         );
 
-        forces.apply_angular_acceleration(acceleration);
+        if controller.is_enabled {
+            forces.apply_angular_acceleration(acceleration);
+        }
     }
 }
 
-fn disable_controllers_that_reached_target(
-    mut controllers: Query<(&mut TargetResetController, &Transform)>,
-) {
-    for (mut controller, transform) in controllers
+fn disable_controllers_that_reached_target(mut controllers: Query<&mut TargetResetController>) {
+    for mut controller in controllers
         .iter_mut()
-        .filter(|(controller, _)| controller.is_enabled)
+        .filter(|controller| controller.is_enabled)
     {
-        let distance_to_target = transform
-            .rotation
-            .angle_between(controller.controller.target_position());
-
-        if distance_to_target < 0.01 {
+        if controller.controller.distance_to_target() < 0.02 {
             controller.is_enabled = false;
+        }
+    }
+}
+
+fn update_reset_after_duration_components(
+    mut components: Query<(&mut ResetAfterDuration, &mut TargetResetController)>,
+    time: Res<Time>,
+) {
+    for (mut reset_after_duration, mut controller) in components.iter_mut() {
+        let is_outside_threshold = controller.controller.distance_to_target() >= 0.02;
+
+        if is_outside_threshold {
+            if let Some(since) = reset_after_duration.outside_threshold_since {
+                if since + reset_after_duration.reset_after < time.elapsed() {
+                    controller.is_enabled = true;
+                }
+            } else {
+                reset_after_duration.outside_threshold_since = Some(time.elapsed());
+            }
+        } else if reset_after_duration.outside_threshold_since.is_some() {
+            reset_after_duration.outside_threshold_since = None;
         }
     }
 }
