@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use avian3d::prelude::*;
 use bevy::{
     color::palettes::tailwind::{AMBER_200, RED_900},
@@ -7,6 +9,7 @@ use bevy::{
 use crate::utilities::system_sets::DataSystems;
 
 const BULLET_HIT_FORCE: f32 = 80.0;
+const BULLET_LIFETIME: Duration = Duration::from_secs(5);
 
 pub struct BulletPlugin;
 
@@ -15,7 +18,7 @@ impl Plugin for BulletPlugin {
         app.add_systems(Startup, setup_bullet_assets)
             .add_systems(
                 FixedUpdate,
-                update_bullets.in_set(DataSystems::UpdateEntities),
+                (update_bullets, despawn_bullets_past_lifetime).in_set(DataSystems::UpdateEntities),
             )
             .add_observer(on_bullet_hit)
             .add_observer(on_spawn_bullet);
@@ -23,15 +26,10 @@ impl Plugin for BulletPlugin {
 }
 
 #[derive(Component)]
-pub struct Bullet {
+struct Bullet {
     /// Bullet speed in the local Transform.forward() direction.
     travel_speed: f32,
-}
-
-impl Bullet {
-    pub fn new(travel_speed: f32) -> Self {
-        Self { travel_speed }
-    }
+    shot_at: Duration,
 }
 
 #[derive(Event)]
@@ -88,9 +86,13 @@ fn on_spawn_bullet(
     event: On<SpawnBullet>,
     mut commands: Commands,
     bullet_assets: Res<BulletAssets>,
+    time: Res<Time>,
 ) {
     commands.spawn((
-        Bullet::new(event.travel_speed),
+        Bullet {
+            travel_speed: event.travel_speed,
+            shot_at: time.elapsed(),
+        },
         Mesh3d(bullet_assets.mesh.clone()),
         MeshMaterial3d(bullet_assets.material.clone()),
         Transform::from_translation(event.origin).looking_to(event.direction, Dir3::Y),
@@ -158,6 +160,18 @@ fn on_bullet_hit(
     }
 
     commands.entity(bullet_hit.bullet_entity).despawn();
+}
+
+fn despawn_bullets_past_lifetime(
+    bullets: Query<(Entity, &Bullet)>,
+    time: Res<Time>,
+    mut commands: Commands,
+) {
+    for (bullet_entity, bullet) in bullets.iter() {
+        if bullet.shot_at + BULLET_LIFETIME < time.elapsed() {
+            commands.entity(bullet_entity).despawn();
+        }
+    }
 }
 
 // Utilities

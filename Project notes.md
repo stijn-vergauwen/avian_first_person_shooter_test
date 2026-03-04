@@ -16,7 +16,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- add max lifetime to bullets
 - make component & event to reset standing target after duration
 - add grid texture to world objects (already have sprites from Kenney)
 - bullet impact decal
