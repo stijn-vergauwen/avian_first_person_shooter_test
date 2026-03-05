@@ -13,11 +13,12 @@ Info and documentation for development.
 ## Code Refactoring & Improvements
 - weapon should stay stable when aiming down sight and moving.
     - maybe use separate pd controller parameters while in ads? Will probably still be some movement lag but that's probably fine
+- grabbableObjects is too messy
+    - DefaultOrientation should be optional, it should just work with IDENTITY orientation when component isn't added, this way GrabbableObject is the only component needed
+    - it seems like small / light objects get flung around way too much (shell casings), adjust strength based on object weight, maybe add a modifier to the acceleration output of pd controllers.
 
 
 ## Backlog
-- make component & event to reset standing target after duration
-    - split timer to separate component, when leaving out this component the target should not be reset automatically but the reset itself should still be triggerable by event (can be hooked to buttons etc)
 - replace 'apply_force' calls with 'linear_impulse' at places that don't apply a force continuously. Pretty sure this is all places where I divide by delta time
 - add grid texture to world objects (already have sprites from Kenney)
 - bullet impact decal

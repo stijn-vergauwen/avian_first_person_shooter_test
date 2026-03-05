@@ -11,6 +11,8 @@ use crate::utilities::{
 
 use super::StandingTargetAssets;
 
+const DISTANCE_TO_TARGET_THRESHOLD: f32 = 0.01;
+
 pub struct ShootingTargetsPlugin;
 
 impl Plugin for ShootingTargetsPlugin {
@@ -115,11 +117,10 @@ pub fn spawn_falling_standing_target(
             transform,
             Visibility::default(),
             RigidBody::Dynamic,
-            AngularDamping(0.5),
             ConstantLocalAngularAcceleration(Vec3::NEG_X * 30.0),
             TargetResetController {
                 controller: QuaternionPdController::with_start_position(
-                    PdControllerConfig::from_parameters(8.0, 6.0, 0.0),
+                    PdControllerConfig::from_parameters(1.2, 1.0, 0.0),
                     transform.rotation,
                 ),
                 is_enabled: false,
@@ -188,7 +189,7 @@ fn update_controllers(
         );
 
         if controller.is_enabled {
-            forces.apply_angular_acceleration(acceleration);
+            forces.apply_angular_acceleration(acceleration * 50.0);
         }
     }
 }
@@ -198,7 +199,7 @@ fn disable_controllers_that_reached_target(mut controllers: Query<&mut TargetRes
         .iter_mut()
         .filter(|controller| controller.is_enabled)
     {
-        if controller.controller.distance_to_target() < 0.02 {
+        if controller.controller.distance_to_target() < DISTANCE_TO_TARGET_THRESHOLD {
             controller.is_enabled = false;
         }
     }
@@ -210,7 +211,8 @@ fn update_reset_after_duration_components(
     mut commands: Commands,
 ) {
     for (controller_entity, mut reset_after_duration, controller) in components.iter_mut() {
-        let is_outside_threshold = controller.controller.distance_to_target() >= 0.02;
+        let is_outside_threshold =
+            controller.controller.distance_to_target() >= DISTANCE_TO_TARGET_THRESHOLD;
 
         if is_outside_threshold {
             if let Some(since) = reset_after_duration.outside_threshold_since {
