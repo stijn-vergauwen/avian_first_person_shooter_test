@@ -25,7 +25,8 @@ impl Plugin for ShootingTargetsPlugin {
                 )
                     .chain()
                     .in_set(DataSystems::UpdateEntities),
-            );
+            )
+            .add_observer(on_enable_reset_controller);
     }
 }
 
@@ -48,6 +49,11 @@ impl ResetAfterDuration {
             reset_after,
         }
     }
+}
+
+#[derive(EntityEvent)]
+struct EnableResetController {
+    entity: Entity,
 }
 
 pub fn spawn_rotating_standing_target(
@@ -158,11 +164,14 @@ pub fn spawn_falling_standing_target(
 
 fn enable_controllers_on_key(
     input: Res<ButtonInput<KeyCode>>,
-    mut controllers: Query<&mut TargetResetController>,
+    controllers: Query<Entity, With<TargetResetController>>,
+    mut commands: Commands,
 ) {
     if input.just_pressed(KeyCode::KeyR) {
-        for mut controller in controllers.iter_mut() {
-            controller.is_enabled = !controller.is_enabled;
+        for controller_entity in controllers.iter() {
+            commands.trigger(EnableResetController {
+                entity: controller_entity,
+            });
         }
     }
 }
@@ -196,16 +205,19 @@ fn disable_controllers_that_reached_target(mut controllers: Query<&mut TargetRes
 }
 
 fn update_reset_after_duration_components(
-    mut components: Query<(&mut ResetAfterDuration, &mut TargetResetController)>,
+    mut components: Query<(Entity, &mut ResetAfterDuration, &TargetResetController)>,
     time: Res<Time>,
+    mut commands: Commands,
 ) {
-    for (mut reset_after_duration, mut controller) in components.iter_mut() {
+    for (controller_entity, mut reset_after_duration, controller) in components.iter_mut() {
         let is_outside_threshold = controller.controller.distance_to_target() >= 0.02;
 
         if is_outside_threshold {
             if let Some(since) = reset_after_duration.outside_threshold_since {
                 if since + reset_after_duration.reset_after < time.elapsed() {
-                    controller.is_enabled = true;
+                    commands.trigger(EnableResetController {
+                        entity: controller_entity,
+                    });
                 }
             } else {
                 reset_after_duration.outside_threshold_since = Some(time.elapsed());
@@ -214,4 +226,14 @@ fn update_reset_after_duration_components(
             reset_after_duration.outside_threshold_since = None;
         }
     }
+}
+
+fn on_enable_reset_controller(
+    event: On<EnableResetController>,
+    mut controllers: Query<&mut TargetResetController>,
+) {
+    let mut controller = controllers
+        .get_mut(event.entity)
+        .expect("EntityEvent should always point to existing entity.");
+    controller.is_enabled = true;
 }

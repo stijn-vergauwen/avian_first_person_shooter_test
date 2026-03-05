@@ -17,7 +17,6 @@ Info and documentation for development.
 
 ## Backlog
 - make component & event to reset standing target after duration
-    - add event for enabling position reset controller, trigger this event with the timer instead of enabling directly
     - split timer to separate component, when leaving out this component the target should not be reset automatically but the reset itself should still be triggerable by event (can be hooked to buttons etc)
 - replace 'apply_force' calls with 'linear_impulse' at places that don't apply a force continuously. Pretty sure this is all places where I divide by delta time
 - add grid texture to world objects (already have sprites from Kenney)
