@@ -43,6 +43,10 @@ Visuals & polish:
 - remake indoors area, not quite sure what I want with this
 - bullet impact particle effect, dependent on hit angle & color of hit object
 - add view bobbing, move player camera, maybe small downwards force based on movement speed and smooth return using pd controller
+- add skybox
+- configure rendering stuff like MSAA (prob 4x), bloom, tone-mapping
+- check if ambient occlusion exists in Bevy?
+- setup lights to make world look more vibrant, try out base lighting with blue-ish tint and sunlight with warm tint, curious if this makes shadows look colder.
 
 Extra:
 - make flying disc shooting area
