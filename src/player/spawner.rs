@@ -40,8 +40,8 @@ fn spawn_player(
             Player,
             Character { is_active: true },
             GrabbedObject::new(
-                PdControllerConfig::from_parameters(3.0, 1.0, 1.0),
-                PdControllerConfig::from_parameters(2.5, 0.6, 0.6),
+                PdControllerConfig::from_parameters(2.5, 1.0, 1.5),
+                PdControllerConfig::from_parameters(2.0, 0.6, 1.0),
             ),
             Visibility::Inherited,
             Transform::from_translation(start_position),

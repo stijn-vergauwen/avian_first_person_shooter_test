@@ -84,7 +84,7 @@ fn eject_casing(
         casing_transform,
         RigidBody::Dynamic,
         Collider::from(bullet_casing_assets.shape),
-        Mass(0.2),
+        Mass(0.4),
         LinearVelocity(weapon_velocity.0 + casing_transform.right() * 2.0),
         LinearDamping(0.05),
     ));

@@ -11,8 +11,6 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- weapon should stay stable when aiming down sight and moving.
-    - maybe use separate pd controller parameters while in ads? Will probably still be some movement lag but that's probably fine
 
 
 ## Backlog

@@ -247,7 +247,7 @@ fn update_grabbed_object_position(
         );
 
     // Adjust strength based on mass of grabbed object, this prevents light objects from glitching out
-    let adjusted_acceleration = new_acceleration * (1.0 + target_item.2.value() * 0.4);
+    let adjusted_acceleration = new_acceleration * (0.5 + target_item.2.value() * 0.6);
 
     // Apply position force to grabbed object
     target_item.1.apply_force(adjusted_acceleration);
@@ -258,7 +258,7 @@ fn update_grabbed_object_position(
 
 fn update_grabbed_object_rotation(
     mut grabbed_object: Single<&mut GrabbedObject>,
-    mut grabbable_objects: Query<(&GlobalTransform, Forces, &GrabbableObject)>,
+    mut grabbable_objects: Query<(&GlobalTransform, Forces, &GrabbableObject, &ComputedMass)>,
     time: Res<Time>,
 ) {
     let Some(grabbed_entity) = grabbed_object.entity else {
@@ -284,9 +284,12 @@ fn update_grabbed_object_rotation(
             time.delta_secs(),
         );
 
+    // Adjust strength based on mass of grabbed object, this prevents light objects from glitching out
+    let adjusted_acceleration = new_acceleration * (0.5 + grabbable_object.3.value() * 0.6);
+
     grabbable_object
         .1
-        .apply_angular_acceleration(new_acceleration);
+        .apply_angular_acceleration(adjusted_acceleration);
 }
 
 // Gizmos
