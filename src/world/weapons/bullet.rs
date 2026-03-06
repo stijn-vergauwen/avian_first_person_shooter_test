@@ -133,7 +133,6 @@ fn on_bullet_hit(
     global_transforms: Query<&GlobalTransform>,
     mut forces_query: Query<Forces>,
     mut commands: Commands,
-    time: Res<Time<Fixed>>,
     bullet_hit_point_assets: Res<BulletHitPointAssets>,
 ) {
     let global_transform = global_transforms
@@ -153,8 +152,8 @@ fn on_bullet_hit(
     if let Ok(mut forces) = forces_query.get_mut(bullet_hit.rigid_body_entity) {
         commands.queue(WakeBody(bullet_hit.rigid_body_entity));
 
-        forces.apply_force_at_point(
-            bullet_hit.bullet_direction.as_vec3() * BULLET_HIT_FORCE / time.delta_secs(),
+        forces.apply_linear_impulse_at_point(
+            bullet_hit.bullet_direction.as_vec3() * BULLET_HIT_FORCE,
             bullet_hit.hit_position,
         );
     }

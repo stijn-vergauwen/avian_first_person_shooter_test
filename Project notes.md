@@ -19,10 +19,7 @@ Info and documentation for development.
 
 
 ## Backlog
-- replace 'apply_force' calls with 'linear_impulse' at places that don't apply a force continuously. Pretty sure this is all places where I divide by delta time
-- add grid texture to world objects (already have sprites from Kenney)
 - bullet impact decal
-- bullet impact particle effect
 - setup saving & loading weapon config from ron file
 - on startup, loop through files in weapon folder, load the data and spawn a new gun entity + its model for each file
 - store weapon weight and recoil in config file
@@ -37,6 +34,20 @@ Info and documentation for development.
 - add UI to inspector to configure empty casing ejection position & direction
     - add config for spin along each axis, and how randomized it should be
     - eject casing according to config
+
+Visuals & polish:
+- remake world area's in Blender, this way the models can be more detailed, have more interesting shapes and it's easier to add colors
+- use grid / prototype texture on objects, with consistent scale
+- remake shooting range area
+    - make static objects in Blender (walls and things like tables & screens at standing position)
+    - make button model in Blender, spawn this in & make interactive to reset targets
+- remake parkour area
+    - add blocks with their heights displayed to test jumping
+    - add ramps with their slope displayed to test movement on slopes
+    - add gaps of different widths to test how far the player can jump
+- remake indoors area, not quite sure what I want with this
+- bullet impact particle effect, dependent on hit angle & color of hit object
+- add view bobbing, move player camera, maybe small downwards force based on movement speed and smooth return using pd controller
 
 Extra:
 - make flying disc shooting area
