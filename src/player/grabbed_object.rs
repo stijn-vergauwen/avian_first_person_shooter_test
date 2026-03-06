@@ -1,6 +1,6 @@
 mod inspector_mode;
 
-use avian3d::prelude::{Forces, RigidBodyForces, TransformInterpolation};
+use avian3d::prelude::{ComputedMass, Forces, RigidBodyForces, TransformInterpolation};
 use bevy::{color::palettes::tailwind::PURPLE_400, prelude::*};
 
 use crate::{
@@ -220,7 +220,7 @@ fn on_drop_object(
 
 fn update_grabbed_object_position(
     mut grabbed_object: Single<&mut GrabbedObject>,
-    mut target_item_query: Query<(&GlobalTransform, Forces), Without<Player>>,
+    mut target_item_query: Query<(&GlobalTransform, Forces, &ComputedMass), Without<Player>>,
     time: Res<Time>,
     mut player: Single<Forces, With<Player>>,
 ) {
@@ -246,11 +246,14 @@ fn update_grabbed_object_position(
             time.delta_secs(),
         );
 
+    // Adjust strength based on mass of grabbed object, this prevents light objects from glitching out
+    let adjusted_acceleration = new_acceleration * (1.0 + target_item.2.value() * 0.4);
+
     // Apply position force to grabbed object
-    target_item.1.apply_force(new_acceleration);
+    target_item.1.apply_force(adjusted_acceleration);
 
     // Apply opposite position force to player
-    player.apply_force(-new_acceleration);
+    player.apply_force(-adjusted_acceleration);
 }
 
 fn update_grabbed_object_rotation(

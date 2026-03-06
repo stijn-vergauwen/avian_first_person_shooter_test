@@ -1,5 +1,7 @@
-use avian3d::prelude::{Collider, Forces, LinearVelocity, Mass, RigidBody, RigidBodyForces};
+use avian3d::prelude::{Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody, RigidBodyForces};
 use bevy::{color::palettes::tailwind::YELLOW_700, prelude::*};
+
+use crate::world::grabbable_object::GrabbableObject;
 
 use super::{ShootWeapon, Weapon, bullet::SpawnBullet};
 
@@ -76,6 +78,7 @@ fn eject_casing(
     };
 
     commands.spawn((
+        GrabbableObject::new(),
         Mesh3d(bullet_casing_assets.mesh.clone()),
         MeshMaterial3d(bullet_casing_assets.material.clone()),
         casing_transform,
@@ -83,5 +86,6 @@ fn eject_casing(
         Collider::from(bullet_casing_assets.shape),
         Mass(0.2),
         LinearVelocity(weapon_velocity.0 + casing_transform.right() * 2.0),
+        LinearDamping(0.05),
     ));
 }
