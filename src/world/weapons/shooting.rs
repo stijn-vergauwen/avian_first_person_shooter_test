@@ -1,11 +1,11 @@
 use avian3d::prelude::{
-    Collider, ColliderDensity, Forces, LinearVelocity, RigidBody, RigidBodyForces,
+    Collider, Forces, LinearVelocity, Mass, RigidBody, RigidBodyForces
 };
 use bevy::{color::palettes::tailwind::YELLOW_700, prelude::*};
 
 use super::{ShootWeapon, Weapon, bullet::SpawnBullet};
 
-const WEAPON_RECOIL: f32 = 40.0;
+const WEAPON_RECOIL: f32 = 30.0;
 
 pub struct WeaponShootingPlugin;
 
@@ -83,7 +83,7 @@ fn eject_casing(
         casing_transform,
         RigidBody::Dynamic,
         Collider::from(bullet_casing_assets.shape),
-        ColliderDensity(100.0),
+        Mass(0.2),
         LinearVelocity(weapon_velocity.0 + casing_transform.right() * 2.0),
     ));
 }

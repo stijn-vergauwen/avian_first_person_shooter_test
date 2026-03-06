@@ -8,7 +8,7 @@ use bevy::{
 
 use crate::utilities::system_sets::DataSystems;
 
-const BULLET_HIT_FORCE: f32 = 80.0;
+const BULLET_HIT_FORCE: f32 = 50.0;
 const BULLET_LIFETIME: Duration = Duration::from_secs(5);
 
 pub struct BulletPlugin;

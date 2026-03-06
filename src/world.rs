@@ -133,7 +133,7 @@ fn spawn_dynamic_entities(
             MeshMaterial3d(cube_material.clone()),
             RigidBody::Dynamic,
             Collider::from(cube_shape),
-            ColliderDensity(100.0),
+            ColliderDensity(80.0),
             Transform::from_translation(spawn_position + Vec3::Y * index as f32 * 1.2),
         ));
     }
@@ -164,7 +164,7 @@ fn spawn_dynamic_entities(
             MeshMaterial3d(cube_material),
             RigidBody::Dynamic,
             Collider::from(cube_shape),
-            ColliderDensity(300.0),
+            ColliderDensity(200.0),
             Restitution::new(0.8),
             Transform::from_translation(spawn_position + vertical_offset + horizontal_offset),
             MaxAngularSpeed(40.0),
