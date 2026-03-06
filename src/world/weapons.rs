@@ -11,7 +11,7 @@ use crate::{
     utilities::DrawGizmos,
     world::{
         TABLE_POSITION,
-        grabbable_object::{GrabOrientation, GrabbableObject},
+        grabbable_object::GrabbableObject,
         weapons::{
             bullet::BulletPlugin,
             muzzle_flash::{MuzzleFlashAnimation, MuzzleFlashImages, MuzzleFlashPlugin},
@@ -63,8 +63,7 @@ fn spawn_test_weapon(
     commands
         .spawn((
             Weapon,
-            GrabbableObject,
-            GrabOrientation::IDENTITY,
+            GrabbableObject::new(),
             SceneRoot(weapon_model),
             Transform {
                 translation: TABLE_POSITION + Vec3::new(0.0, 0.5, 3.0),

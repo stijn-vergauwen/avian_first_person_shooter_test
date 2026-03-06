@@ -13,7 +13,7 @@ use crate::{
     },
     world::{
         character::{Character, CharacterHead},
-        grabbable_object::{GrabOrientation, GrabbableObject},
+        grabbable_object::GrabbableObject,
         interaction_target::PlayerInteractionTarget,
     },
 };
@@ -181,12 +181,12 @@ fn grab_object_on_keypress(
 fn on_grab_object(
     event: On<GrabObject>,
     mut grabbed_object: Single<&mut GrabbedObject>,
-    grabbable_query: Query<&GrabOrientation, With<GrabbableObject>>,
+    grabbable_objects: Query<&GrabbableObject>,
     mut commands: Commands,
 ) {
-    if !grabbable_query.contains(event.entity) {
+    let Ok(grabbable_object) = grabbable_objects.get(event.entity) else {
         return;
-    }
+    };
 
     grabbed_object.entity = Some(event.entity);
 
@@ -194,9 +194,7 @@ fn on_grab_object(
     commands.entity(event.entity).insert(TransformInterpolation);
 
     // Set force controllers to new start values
-    let grab_orientation = grabbable_query
-        .get(event.entity)
-        .map_or(Quat::IDENTITY, |component| component.orientation);
+    let grab_orientation = grabbable_object.orientation;
 
     let target_isometry = grabbed_object.anchor_values.default;
     grabbed_object
@@ -257,24 +255,19 @@ fn update_grabbed_object_position(
 
 fn update_grabbed_object_rotation(
     mut grabbed_object: Single<&mut GrabbedObject>,
-    mut grabbable_object_query: Query<
-        (&GlobalTransform, Forces, Option<&GrabOrientation>),
-        With<GrabbableObject>,
-    >,
+    mut grabbable_objects: Query<(&GlobalTransform, Forces, &GrabbableObject)>,
     time: Res<Time>,
 ) {
     let Some(grabbed_entity) = grabbed_object.entity else {
         return;
     };
 
-    let mut grabbable_object = grabbable_object_query.get_mut(grabbed_entity).expect(
+    let mut grabbable_object = grabbable_objects.get_mut(grabbed_entity).expect(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
     let player_rotation = grabbed_object.current_anchor_value().rotation;
-    let grab_orientation = grabbable_object
-        .2
-        .map_or(Quat::IDENTITY, |component| component.orientation);
+    let grab_orientation = grabbable_object.2.orientation;
 
     grabbed_object
         .rotation_force_controller

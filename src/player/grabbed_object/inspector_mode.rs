@@ -10,7 +10,7 @@ use crate::{
         grabbed_object::{GrabbedObject, ObjectAnchor, UpdatePlayerCharacterActive},
     },
     utilities::system_sets::InputSystems,
-    world::grabbable_object::{GrabOrientation, GrabbableObject},
+    world::grabbable_object::{DefaultGrabOrientation, GrabbableObject},
 };
 
 pub struct InspectorModePlugin;
@@ -101,7 +101,7 @@ fn set_cursor_icon_on_pointer_event<E: Clone + Reflect + std::fmt::Debug>(
 
 fn rotate_grabbed_object_on_drag(
     event: On<Pointer<Drag>>,
-    mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
+    mut grabbable_objects: Query<&mut GrabbableObject>,
     grabbed_object: Single<&GrabbedObject>,
 ) {
     if !(grabbed_object.current_object_anchor == ObjectAnchor::Inspecting
@@ -110,14 +110,14 @@ fn rotate_grabbed_object_on_drag(
         return;
     }
 
-    if let Ok(mut grab_orientation) = grab_orientations.get_mut(event.entity) {
+    if let Ok(mut grabbable_object) = grabbable_objects.get_mut(event.entity) {
         const PIXELS_PER_RADIAN: f32 = 150f32;
 
         let horizontal_rotation = Quat::from_axis_angle(Vec3::Y, event.delta.x / PIXELS_PER_RADIAN);
         let vertical_rotation = Quat::from_axis_angle(Vec3::X, event.delta.y / PIXELS_PER_RADIAN);
 
-        grab_orientation.orientation = horizontal_rotation * grab_orientation.orientation;
-        grab_orientation.orientation = vertical_rotation * grab_orientation.orientation;
+        grabbable_object.orientation = horizontal_rotation * grabbable_object.orientation;
+        grabbable_object.orientation = vertical_rotation * grabbable_object.orientation;
     }
 }
 
@@ -148,12 +148,14 @@ fn spawn_reset_to_default_orientation_button(mut commands: Commands) {
 
 fn on_default_orientation_button_click(
     _: On<Pointer<Click>>,
-    mut grab_orientations: Query<&mut GrabOrientation, With<GrabbableObject>>,
+    mut grab_orientations: Query<(&mut GrabbableObject, Option<&DefaultGrabOrientation>)>,
     grabbed_object: Single<&GrabbedObject>,
 ) {
     let mut grab_orientation = grab_orientations
         .get_mut(grabbed_object.entity.unwrap())
         .unwrap();
 
-    grab_orientation.orientation = grab_orientation.default_orientation;
+    grab_orientation.0.orientation = grab_orientation
+        .1
+        .map_or(Quat::IDENTITY, |orientation| orientation.value());
 }

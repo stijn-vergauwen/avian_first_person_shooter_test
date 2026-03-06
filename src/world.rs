@@ -14,13 +14,14 @@ use std::f32::consts::PI;
 
 use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::*, prelude::*};
+use grabbable_object::GrabbableObjectPlugin;
 use rand::Rng;
 
 use crate::world::{
     character::CharacterPlugin,
     desired_movement::DesiredMovementPlugin,
     desired_rotation::DesiredRotationPlugin,
-    grabbable_object::{GrabOrientation, GrabbableObject},
+    grabbable_object::{DefaultGrabOrientation, GrabbableObject},
     grounded::GroundedPlugin,
     gym_area::GymAreaPlugin,
     indoor_area::IndoorAreaPlugin,
@@ -41,6 +42,7 @@ impl Plugin for WorldPlugin {
             DesiredMovementPlugin,
             DesiredRotationPlugin,
             WeaponsPlugin,
+            GrabbableObjectPlugin,
             InteractionTargetPlugin,
             GroundedPlugin,
             WallMirrorPlugin,
@@ -158,8 +160,7 @@ fn spawn_dynamic_entities(
         );
 
         commands.spawn((
-            GrabbableObject,
-            GrabOrientation::IDENTITY,
+            GrabbableObject::new(),
             Mesh3d(cube_mesh.clone()),
             MeshMaterial3d(cube_material),
             RigidBody::Dynamic,
@@ -176,8 +177,8 @@ fn spawn_radio(mut commands: Commands, asset_server: Res<AssetServer>) {
     let radio_model = asset_server.load("models/Radio.glb#Scene0");
 
     commands.spawn((
-        GrabbableObject,
-        GrabOrientation::with_default_orientation(Quat::from_axis_angle(Vec3::Y, PI)),
+        GrabbableObject::new(),
+        DefaultGrabOrientation(Quat::from_axis_angle(Vec3::Y, PI)),
         SceneRoot(radio_model),
         Transform {
             translation: TABLE_POSITION + Vec3::new(0.0, 0.5, 4.0),

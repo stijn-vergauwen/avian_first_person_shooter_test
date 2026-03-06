@@ -1,28 +1,44 @@
 use bevy::prelude::*;
 
-/// Marker component for objects the player can grab.
-#[derive(Component, Clone, Copy)]
-pub struct GrabbableObject;
+pub struct GrabbableObjectPlugin;
 
-/// Stores the orientation relative to the player that this object should have when grabbed.
-#[derive(Component, Clone, Copy)]
-pub struct GrabOrientation {
-    /// The current orientation.
-    pub orientation: Quat,
-    /// The default orientation to reset to.
-    pub default_orientation: Quat,
+impl Plugin for GrabbableObjectPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_observer(set_orientation_when_default_grab_orientation_inserted);
+    }
 }
 
-impl GrabOrientation {
-    pub const IDENTITY: Self = Self {
-        orientation: Quat::IDENTITY,
-        default_orientation: Quat::IDENTITY,
-    };
+/// Marker component for objects the player can grab.
+#[derive(Component, Default, Clone, Copy)]
+pub struct GrabbableObject {
+    /// Relative orientation of object when grabbed.
+    pub orientation: Quat,
+}
 
-    pub fn with_default_orientation(default_orientation: Quat) -> Self {
-        Self {
-            orientation: default_orientation,
-            default_orientation,
-        }
+impl GrabbableObject {
+    pub fn new() -> Self {
+        Self::default()
     }
+}
+
+/// Stores the default orientation relative to the player that this object should have when grabbed.
+#[derive(Component, Clone, Copy)]
+#[require(GrabbableObject)]
+pub struct DefaultGrabOrientation(pub Quat);
+
+impl DefaultGrabOrientation {
+    pub fn value(&self) -> Quat {
+        self.0
+    }
+}
+
+fn set_orientation_when_default_grab_orientation_inserted(
+    event: On<Insert, DefaultGrabOrientation>,
+    mut grabbable_objects: Query<(&mut GrabbableObject, &DefaultGrabOrientation)>,
+) {
+    let (mut grabbable_object, grab_orientation) = grabbable_objects
+    .get_mut(event.entity)
+    .expect("Entities with DefaultGrabOrientation component should always have GrabbableObject component.");
+
+    grabbable_object.orientation = grab_orientation.0;
 }

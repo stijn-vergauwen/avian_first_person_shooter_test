@@ -1,6 +1,4 @@
-use avian3d::prelude::{
-    Collider, Forces, LinearVelocity, Mass, RigidBody, RigidBodyForces
-};
+use avian3d::prelude::{Collider, Forces, LinearVelocity, Mass, RigidBody, RigidBodyForces};
 use bevy::{color::palettes::tailwind::YELLOW_700, prelude::*};
 
 use super::{ShootWeapon, Weapon, bullet::SpawnBullet};

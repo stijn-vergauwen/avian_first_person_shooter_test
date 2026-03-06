@@ -14,7 +14,6 @@ Info and documentation for development.
 - weapon should stay stable when aiming down sight and moving.
     - maybe use separate pd controller parameters while in ads? Will probably still be some movement lag but that's probably fine
 - grabbableObjects is too messy
-    - DefaultOrientation should be optional, it should just work with IDENTITY orientation when component isn't added, this way GrabbableObject is the only component needed
     - it seems like small / light objects get flung around way too much (shell casings), adjust strength based on object weight, maybe add a modifier to the acceleration output of pd controllers.
 
 
