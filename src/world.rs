@@ -13,11 +13,7 @@ pub mod weapons;
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::{
-    color::palettes::tailwind::*,
-    pbr::decal::{ForwardDecal, ForwardDecalMaterial, ForwardDecalMaterialExt},
-    prelude::*,
-};
+use bevy::{color::palettes::tailwind::*, prelude::*};
 use grabbable_object::GrabbableObjectPlugin;
 use rand::Rng;
 
@@ -65,8 +61,6 @@ fn spawn_static_entities(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut decal_materials: ResMut<Assets<ForwardDecalMaterial<StandardMaterial>>>,
-    asset_server: Res<AssetServer>,
 ) {
     // Ground plane
     let ground_shape = Cuboid::new(600.0, 1.0, 600.0);
@@ -92,22 +86,6 @@ fn spawn_static_entities(
             rotation: Quat::from_axis_angle(Vec3::Y, 90f32.to_radians()),
             ..default()
         },
-    ));
-
-    // Bullet impact decal for testing
-    commands.spawn((
-        ForwardDecal,
-        MeshMaterial3d(decal_materials.add(ForwardDecalMaterial {
-            base: StandardMaterial {
-                base_color_texture: Some(asset_server.load("textures/Bullet impact decal.png")),
-                alpha_mode: AlphaMode::Mask(0.2),
-                ..default()
-            },
-            extension: ForwardDecalMaterialExt {
-                depth_fade_factor: 1.0,
-            },
-        })),
-        Transform::from_xyz(-9.8, 1.6, -4.5).looking_to(Dir3::Y, Dir3::X),
     ));
 
     // Table

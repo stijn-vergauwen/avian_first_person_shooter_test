@@ -2,7 +2,8 @@ use std::time::Duration;
 
 use avian3d::prelude::*;
 use bevy::{
-    color::palettes::tailwind::{AMBER_200, RED_900},
+    color::palettes::tailwind::AMBER_200,
+    pbr::decal::{ForwardDecal, ForwardDecalMaterial, ForwardDecalMaterialExt},
     prelude::*,
 };
 
@@ -48,6 +49,7 @@ struct BulletHit {
     rigid_body_entity: Entity,
     hit_position: Vec3,
     bullet_direction: Dir3,
+    surface_normal: Dir3,
 }
 
 #[derive(Resource)]
@@ -57,15 +59,16 @@ struct BulletAssets {
 }
 
 #[derive(Resource)]
-struct BulletHitPointAssets {
-    mesh: Handle<Mesh>,
-    material: Handle<StandardMaterial>,
+struct BulletImpactAssets {
+    material: Handle<ForwardDecalMaterial<StandardMaterial>>,
 }
 
 fn setup_bullet_assets(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut decal_materials: ResMut<Assets<ForwardDecalMaterial<StandardMaterial>>>,
+    asset_server: Res<AssetServer>,
 ) {
     commands.insert_resource(BulletAssets {
         mesh: meshes.add(Cuboid::new(0.02, 0.02, 0.2)),
@@ -76,9 +79,17 @@ fn setup_bullet_assets(
         }),
     });
 
-    commands.insert_resource(BulletHitPointAssets {
-        mesh: meshes.add(Sphere::new(0.03)),
-        material: materials.add(StandardMaterial::from_color(RED_900)),
+    commands.insert_resource(BulletImpactAssets {
+        material: decal_materials.add(ForwardDecalMaterial {
+            base: StandardMaterial {
+                base_color_texture: Some(asset_server.load("textures/Bullet impact decal.png")),
+                alpha_mode: AlphaMode::Mask(0.2),
+                ..default()
+            },
+            extension: ForwardDecalMaterialExt {
+                depth_fade_factor: 0.01,
+            },
+        }),
     });
 }
 
@@ -130,22 +141,36 @@ fn update_bullets(
 
 fn on_bullet_hit(
     bullet_hit: On<BulletHit>,
-    global_transforms: Query<&GlobalTransform>,
+    objects: Query<(&Position, &Rotation)>,
     mut forces_query: Query<Forces>,
     mut commands: Commands,
-    bullet_hit_point_assets: Res<BulletHitPointAssets>,
+    bullet_impact_assets: Res<BulletImpactAssets>,
 ) {
-    let global_transform = global_transforms
+    let (global_position, global_rotation) = objects
         .get(bullet_hit.hit_entity)
-        .expect("BulletHit hit_entity should always have GlobalTransform component");
+        .expect("BulletHit hit_entity should always have position & rotation components");
+
+    // This Transform calculation is quite confusing, this has to do with the decal needing the be positioned relative to the hit entity (because it gets parented),
+    //      as well as the ForwardDecal creating a quad that faces towards Y instead of NEG_Z (which would be 'forward').
+    //      All that makes it quite a mess to get the correct Transform, would be nice if I found ways to simplify.
+    let impact_decal_position =
+        global_rotation.0.inverse() * (bullet_hit.hit_position - global_position.0);
+
+    let mut transform = Transform {
+        translation: impact_decal_position,
+        scale: Vec3::splat(0.05),
+        ..default()
+    }
+    .looking_to(
+        global_rotation.0.inverse() * -bullet_hit.surface_normal,
+        Dir3::Y,
+    );
+    transform.rotate_local_x(90f32.to_radians());
 
     commands.spawn((
-        Mesh3d(bullet_hit_point_assets.mesh.clone()),
-        MeshMaterial3d(bullet_hit_point_assets.material.clone()),
-        Transform::from_translation(
-            global_transform.rotation().inverse()
-                * (bullet_hit.hit_position - global_transform.translation()),
-        ),
+        ForwardDecal,
+        MeshMaterial3d(bullet_impact_assets.material.clone()),
+        transform,
         ChildOf(bullet_hit.hit_entity),
     ));
 
@@ -195,6 +220,7 @@ fn calculate_bullet_raycast(
     let global_hit_point_position = origin + direction * hit_data.distance;
 
     let rigid_body_entity = find_closest_rigid_body_entity(rigid_bodies, parents, hit_data.entity);
+    let surface_normal = Dir3::new_unchecked(hit_data.normal);
 
     Some(BulletHit {
         bullet_entity,
@@ -202,6 +228,7 @@ fn calculate_bullet_raycast(
         rigid_body_entity,
         hit_position: global_hit_point_position,
         bullet_direction: direction,
+        surface_normal,
     })
 }
 

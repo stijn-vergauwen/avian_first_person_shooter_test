@@ -14,7 +14,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- bullet impact decal
 - setup saving & loading weapon config from ron file
 - on startup, loop through files in weapon folder, load the data and spawn a new gun entity + its model for each file
 - store weapon weight and recoil in config file
