@@ -1,7 +1,5 @@
 use bevy::{
-    camera::{ImageRenderTarget, RenderTarget},
-    prelude::*,
-    render::render_resource::{Face, TextureFormat},
+    camera::{ImageRenderTarget, RenderTarget}, core_pipeline::prepass::DepthPrepass, prelude::*, render::render_resource::{Face, TextureFormat}
 };
 
 use crate::world::TABLE_POSITION;
@@ -51,6 +49,7 @@ fn spawn_wall_mirror(
             target: RenderTarget::Image(ImageRenderTarget::from(mirror_image)),
             ..default()
         },
+        DepthPrepass,
         Transform {
             translation: position,
             rotation: Quat::from_axis_angle(Vec3::Y, -90f32.to_radians()),

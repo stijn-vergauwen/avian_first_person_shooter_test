@@ -1,5 +1,5 @@
 use avian3d::prelude::*;
-use bevy::{color::palettes::tailwind::CYAN_700, prelude::*};
+use bevy::{color::palettes::tailwind::CYAN_700, core_pipeline::prepass::DepthPrepass, prelude::*};
 
 use crate::{
     player::{
@@ -119,6 +119,7 @@ fn spawn_player(
                 ..default()
             }),
             IsDefaultUiCamera,
+            DepthPrepass,
             CurrentInteractionTarget::from_config(InteractionTargetConfig {
                 max_distance: MAX_GRAB_DISTANCE,
                 query_filter: SpatialQueryFilter::from_excluded_entities(vec![

@@ -66,3 +66,6 @@ Extra:
     - To spawn an observer that only reacts to specific entities, add the observer in a system using Commands. Either create an Observer component and add entities to it, or use the `observe` function on EntityCommands. This observer will only react to events of the given event type when the target entity is one of the entities stored in the list of that observer.
     - Global observers can also be manually spawned by spawning the Observer component without any antities added to it. But usually this will be done with the `.add_observer` function in a Plugin, since that is shorthand for spawning the component.
     - See the 'reset to default orientation' button logic, that's the first time I made an observer for a specific entity.
+- Transparent textures being displayed as dark areas:
+    - I had this issue with the bullet impact decal
+    - Reason is likely because 'AphaMode' value in StandardMaterial defaults to 'Opaque' which ignores alpha values, I set it to 'Mask' to fix it in this case.
