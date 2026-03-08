@@ -1,11 +1,17 @@
 mod bullet;
 pub mod muzzle_flash;
 mod shooting;
+mod weapon_config;
+mod weapon_config_loader;
+mod weapon_config_saver;
 
 use std::time::Duration;
 
 use avian3d::prelude::*;
-use bevy::{light::NotShadowCaster, prelude::*};
+use bevy::{asset::{AssetPath, saver::AssetSaver}, light::NotShadowCaster, prelude::*};
+use weapon_config::WeaponConfig;
+use weapon_config_loader::WeaponConfigLoader;
+use weapon_config_saver::WeaponConfigSaver;
 
 use crate::{
     utilities::DrawGizmos,
@@ -28,7 +34,9 @@ pub struct WeaponsPlugin;
 impl Plugin for WeaponsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((WeaponShootingPlugin, MuzzleFlashPlugin, BulletPlugin))
-            .add_systems(Startup, spawn_test_weapon);
+            .init_asset::<WeaponConfig>()
+            .init_asset_loader::<WeaponConfigLoader>()
+            .add_systems(Startup, (spawn_test_weapon, save_test_weapon_config));
     }
 }
 
@@ -89,4 +97,21 @@ fn spawn_test_weapon(
             Visibility::Hidden,
             NotShadowCaster,
         ));
+}
+
+fn save_test_weapon_config(
+    mut weapon_configs: ResMut<Assets<WeaponConfig>>,
+    asset_server: Res<AssetServer>,
+) {
+    // Code from Grok, doesn't work, it tried to use an 'AssetIo' resource which doesn't exist
+    // let path = "assets/my_weapon.ron";  // Relative to your asset folder
+    // let weapon_config = weapon_configs.add(WeaponConfig {path_to_model: String::from("models/Blocky assault rifle.glb#Scene0")});
+
+
+
+    // let mut writer = futures_lite::future::block_on(asset_io.create_writer(path)).unwrap();  // Async, but block for simplicity in sync system
+    // let saver = WeaponConfigSaver::default();
+    // let saved_asset = SavedAsset::from(weapon_config);  // For simple assets without sub-handles
+
+    // futures_lite::future::block_on(saver.save(&mut writer, saved_asset, &())).unwrap();  // Block on async save
 }
