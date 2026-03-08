@@ -63,7 +63,7 @@ fn spawn_test_weapon(
     commands
         .spawn((
             Weapon,
-            GrabbableObject::new(),
+            GrabbableObject,
             SceneRoot(weapon_model),
             Transform {
                 translation: TABLE_POSITION + Vec3::new(0.0, 0.5, 3.0),

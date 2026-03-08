@@ -13,7 +13,7 @@ use crate::{
     },
     world::{
         character::{Character, CharacterHead},
-        grabbable_object::GrabbableObject,
+        grabbable_object::GrabOrientation,
         interaction_target::PlayerInteractionTarget,
     },
 };
@@ -181,10 +181,10 @@ fn grab_object_on_keypress(
 fn on_grab_object(
     event: On<GrabObject>,
     mut grabbed_object: Single<&mut GrabbedObject>,
-    grabbable_objects: Query<&GrabbableObject>,
+    grab_orientations: Query<&GrabOrientation>,
     mut commands: Commands,
 ) {
-    let Ok(grabbable_object) = grabbable_objects.get(event.entity) else {
+    let Ok(grab_orientation) = grab_orientations.get(event.entity) else {
         return;
     };
 
@@ -194,15 +194,13 @@ fn on_grab_object(
     commands.entity(event.entity).insert(TransformInterpolation);
 
     // Set force controllers to new start values
-    let grab_orientation = grabbable_object.orientation;
-
     let target_isometry = grabbed_object.anchor_values.default;
     grabbed_object
         .position_force_controller
         .set_start_position(target_isometry.translation.into());
     grabbed_object
         .rotation_force_controller
-        .set_start_position(target_isometry.rotation * grab_orientation);
+        .set_start_position(target_isometry.rotation * grab_orientation.value());
 }
 
 fn on_drop_object(
@@ -220,15 +218,15 @@ fn on_drop_object(
 
 fn update_grabbed_object_position(
     mut grabbed_object: Single<&mut GrabbedObject>,
-    mut target_item_query: Query<(&GlobalTransform, Forces, &ComputedMass), Without<Player>>,
-    time: Res<Time>,
+    mut grabbable_objects: Query<(&GlobalTransform, Forces, &ComputedMass), Without<Player>>,
     mut player: Single<Forces, With<Player>>,
+    time: Res<Time>,
 ) {
-    let Some(target_item_entity) = grabbed_object.entity else {
+    let Some(grabbed_entity) = grabbed_object.entity else {
         return;
     };
 
-    let mut target_item = target_item_query.get_mut(target_item_entity).expect(
+    let (global_transform, mut forces, computed_mass) = grabbable_objects.get_mut(grabbed_entity).expect(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
@@ -241,16 +239,16 @@ fn update_grabbed_object_position(
     let new_acceleration = grabbed_object
         .position_force_controller
         .update_from_physics_sim(
-            target_item.0.translation(),
-            target_item.1.linear_velocity(),
+            global_transform.translation(),
+            forces.linear_velocity(),
             time.delta_secs(),
         );
 
     // Adjust strength based on mass of grabbed object, this prevents light objects from glitching out
-    let adjusted_acceleration = new_acceleration * (0.5 + target_item.2.value() * 0.6);
+    let adjusted_acceleration = new_acceleration * (0.5 + computed_mass.value() * 0.6);
 
     // Apply position force to grabbed object
-    target_item.1.apply_force(adjusted_acceleration);
+    forces.apply_force(adjusted_acceleration);
 
     // Apply opposite position force to player
     player.apply_force(-adjusted_acceleration);
@@ -258,38 +256,35 @@ fn update_grabbed_object_position(
 
 fn update_grabbed_object_rotation(
     mut grabbed_object: Single<&mut GrabbedObject>,
-    mut grabbable_objects: Query<(&GlobalTransform, Forces, &GrabbableObject, &ComputedMass)>,
+    mut grabbable_objects: Query<(&GlobalTransform, Forces, &GrabOrientation, &ComputedMass)>,
     time: Res<Time>,
 ) {
     let Some(grabbed_entity) = grabbed_object.entity else {
         return;
     };
 
-    let mut grabbable_object = grabbable_objects.get_mut(grabbed_entity).expect(
+    let (grobal_transform, mut forces, grab_orientation, computed_mass) = grabbable_objects.get_mut(grabbed_entity).expect(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
     let player_rotation = grabbed_object.current_anchor_value().rotation;
-    let grab_orientation = grabbable_object.2.orientation;
 
     grabbed_object
         .rotation_force_controller
-        .set_target_position(player_rotation * grab_orientation);
+        .set_target_position(player_rotation * grab_orientation.value());
 
     let new_acceleration = grabbed_object
         .rotation_force_controller
         .update_from_physics_sim(
-            grabbable_object.0.rotation(),
-            grabbable_object.1.angular_velocity(),
+            grobal_transform.rotation(),
+            forces.angular_velocity(),
             time.delta_secs(),
         );
 
     // Adjust strength based on mass of grabbed object, this prevents light objects from glitching out
-    let adjusted_acceleration = new_acceleration * (0.5 + grabbable_object.3.value() * 0.6);
+    let adjusted_acceleration = new_acceleration * (0.5 + computed_mass.value() * 0.6);
 
-    grabbable_object
-        .1
-        .apply_angular_acceleration(adjusted_acceleration);
+    forces.apply_angular_acceleration(adjusted_acceleration);
 }
 
 // Gizmos

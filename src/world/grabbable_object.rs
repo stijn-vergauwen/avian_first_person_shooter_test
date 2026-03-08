@@ -10,20 +10,22 @@ impl Plugin for GrabbableObjectPlugin {
 
 /// Marker component for objects the player can grab.
 #[derive(Component, Default, Clone, Copy)]
-pub struct GrabbableObject {
-    /// Relative orientation of object when grabbed.
-    pub orientation: Quat,
-}
+#[require(GrabOrientation)]
+pub struct GrabbableObject;
 
-impl GrabbableObject {
-    pub fn new() -> Self {
-        Self::default()
+/// Stores the orientation relative to the player that this object should have when grabbed.
+#[derive(Component, Default, Clone, Copy)]
+pub struct GrabOrientation(pub Quat);
+
+impl GrabOrientation {
+    pub fn value(&self) -> Quat {
+        self.0
     }
 }
 
-/// Stores the default orientation relative to the player that this object should have when grabbed.
+/// Stores the default grab orientation that this object should reset to.
 #[derive(Component, Clone, Copy)]
-#[require(GrabbableObject)]
+#[require(GrabbableObject, GrabOrientation)]
 pub struct DefaultGrabOrientation(pub Quat);
 
 impl DefaultGrabOrientation {
@@ -34,11 +36,11 @@ impl DefaultGrabOrientation {
 
 fn set_orientation_when_default_grab_orientation_inserted(
     event: On<Insert, DefaultGrabOrientation>,
-    mut grabbable_objects: Query<(&mut GrabbableObject, &DefaultGrabOrientation)>,
+    mut grab_orientations: Query<(&mut GrabOrientation, &DefaultGrabOrientation)>,
 ) {
-    let (mut grabbable_object, grab_orientation) = grabbable_objects
+    let (mut orientation, default) = grab_orientations
     .get_mut(event.entity)
     .expect("Entities with DefaultGrabOrientation component should always have GrabbableObject component.");
 
-    grabbable_object.orientation = grab_orientation.0;
+    orientation.0 = default.0;
 }

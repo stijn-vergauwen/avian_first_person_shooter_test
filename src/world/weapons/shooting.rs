@@ -78,7 +78,7 @@ fn eject_casing(
     };
 
     commands.spawn((
-        GrabbableObject::new(),
+        GrabbableObject,
         Mesh3d(bullet_casing_assets.mesh.clone()),
         MeshMaterial3d(bullet_casing_assets.material.clone()),
         casing_transform,
