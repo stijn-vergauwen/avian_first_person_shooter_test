@@ -14,7 +14,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- on startup, loop through files in weapon folder, load the data and spawn a new gun entity + its model for each file
 - store weapon weight and recoil in config file
 - store bullet speed & impact force in weapon config file
 - update dependencies

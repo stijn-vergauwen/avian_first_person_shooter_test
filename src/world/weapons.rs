@@ -5,7 +5,7 @@ mod weapon_config;
 mod weapon_config_loader;
 mod weapon_config_save;
 
-use std::time::Duration;
+use std::{fs, time::Duration};
 
 use avian3d::prelude::*;
 use bevy::{light::NotShadowCaster, prelude::*};
@@ -68,10 +68,26 @@ struct SpawnWeapon {
 }
 
 fn load_weapon_configs(asset_server: Res<AssetServer>, mut commands: Commands) {
-    let weapon_config_handle = asset_server.load::<WeaponConfig>("weapons/test.ron");
+    let mut weapon_config_handles = Vec::new();
+
+    if let Ok(read_dir) = fs::read_dir("assets/weapons") {
+        for entry in read_dir.filter_map(|entry| entry.ok()) {
+            let file_name = entry
+                .file_name()
+                .into_string()
+                .expect("OsString of file name should always be convertable to String.");
+
+            println!("Now loading: {}", file_name);
+
+            let path = format!("weapons/{}", file_name);
+            let weapon_config_handle = asset_server.load::<WeaponConfig>(path);
+
+            weapon_config_handles.push(weapon_config_handle);
+        }
+    }
 
     commands.insert_resource(WeaponsToSpawn {
-        weapon_config_handles: vec![weapon_config_handle],
+        weapon_config_handles,
     });
 }
 
@@ -97,10 +113,12 @@ fn spawn_weapon_when_config_loaded(
         let config_handle = weapons_to_spawn.weapon_config_handles.swap_remove(index);
         let weapon_config = weapon_configs.get(&config_handle).unwrap();
 
+        let position_offset = Vec3::NEG_Z * weapons_to_spawn.weapon_config_handles.len() as f32;
+
         commands.trigger(SpawnWeapon {
             weapon_config: weapon_config.clone(),
             transform: Transform {
-                translation: TABLE_POSITION + Vec3::new(0.0, 0.5, 1.0),
+                translation: TABLE_POSITION + Vec3::new(0.0, 0.5, 3.0) + position_offset,
                 rotation: Quat::from_euler(
                     EulerRot::YXZ,
                     20f32.to_radians(),
@@ -161,5 +179,8 @@ fn save_test_weapon_config(mut commands: Commands) {
         path_to_model: String::from("models/Blocky assault rifle.glb#Scene0"),
     };
 
-    commands.trigger(SaveWeaponConfig { weapon_config, file_name: String::from("test2") });
+    commands.trigger(SaveWeaponConfig {
+        weapon_config,
+        file_name: String::from("test2"),
+    });
 }
