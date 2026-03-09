@@ -1,19 +1,57 @@
+use std::time::Duration;
+
 use avian3d::prelude::{
     Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody, RigidBodyForces,
 };
 use bevy::{color::palettes::tailwind::YELLOW_700, prelude::*};
 
-use crate::world::grabbable_object::GrabbableObject;
+use crate::{utilities::system_sets::DataSystems, world::grabbable_object::GrabbableObject};
 
-use super::{ShootWeapon, Weapon, bullet::SpawnBullet, weapon_config::WeaponConfig};
+use super::{Weapon, bullet::SpawnBullet, weapon_config::WeaponConfig};
 
 pub struct WeaponShootingPlugin;
 
 impl Plugin for WeaponShootingPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_bullet_casing_assets)
+            .add_systems(
+                FixedUpdate,
+                update_automatic_fire.in_set(DataSystems::UpdateEntities),
+            )
+            .add_observer(on_pull_trigger)
+            .add_observer(on_release_trigger)
             .add_observer(on_shoot_weapon)
             .add_observer(eject_casing);
+    }
+}
+
+#[derive(EntityEvent, Clone, Copy)]
+pub struct PullTrigger {
+    pub entity: Entity,
+}
+
+#[derive(EntityEvent, Clone, Copy)]
+pub struct ReleaseTrigger {
+    pub entity: Entity,
+}
+
+#[derive(EntityEvent, Clone, Copy)]
+pub struct ShootWeapon {
+    pub entity: Entity,
+}
+
+#[derive(Component, Clone, Copy)]
+pub struct AutomaticFire {
+    last_shot_at: Option<Duration>,
+    time_between_shots: Duration,
+}
+
+impl AutomaticFire {
+    pub fn new(time_between_shots: Duration) -> Self {
+        Self {
+            last_shot_at: None,
+            time_between_shots,
+        }
     }
 }
 
@@ -38,6 +76,52 @@ fn setup_bullet_casing_assets(
     });
 }
 
+fn on_pull_trigger(
+    event: On<PullTrigger>,
+    mut weapons: Query<(&mut Weapon, Option<&AutomaticFire>)>,
+    mut commands: Commands,
+) {
+    let (mut weapon, automatic_fire) = weapons
+        .get_mut(event.entity)
+        .expect("PullTrigger should always point to weapon.");
+    weapon.trigger_is_pulled = true;
+
+    if automatic_fire.is_none() {
+        commands.trigger(ShootWeapon {
+            entity: event.entity,
+        });
+    }
+}
+
+fn on_release_trigger(event: On<ReleaseTrigger>, mut weapons: Query<&mut Weapon>) {
+    let mut weapon = weapons
+        .get_mut(event.entity)
+        .expect("PullTrigger should always point to weapon.");
+    weapon.trigger_is_pulled = false;
+}
+
+fn update_automatic_fire(
+    mut weapons: Query<(Entity, &mut AutomaticFire, &Weapon)>,
+    time: Res<Time>,
+    mut commands: Commands,
+) {
+    for (weapon_entity, mut automatic_fire, weapon) in weapons.iter_mut() {
+        if !weapon.trigger_is_pulled {
+            continue;
+        }
+
+        if automatic_fire.last_shot_at.is_none_or(|last_shot_at| {
+            last_shot_at + automatic_fire.time_between_shots < time.elapsed()
+        }) {
+            commands.trigger(ShootWeapon {
+                entity: weapon_entity,
+            });
+
+            automatic_fire.last_shot_at = Some(time.elapsed());
+        }
+    }
+}
+
 fn on_shoot_weapon(
     shoot_weapon: On<ShootWeapon>,
     mut weapons_query: Query<(Entity, &GlobalTransform, Forces, &Weapon)>,
@@ -55,7 +139,7 @@ fn on_shoot_weapon(
     let direction = global_weapon_transform.forward();
 
     commands.trigger(SpawnBullet {
-        shot_by: weapon_entity, 
+        shot_by: weapon_entity,
         origin,
         direction,
         travel_speed: weapon_config.bullet_speed,

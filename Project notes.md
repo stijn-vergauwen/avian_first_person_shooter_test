@@ -15,7 +15,6 @@ Info and documentation for development.
 
 ## Backlog
 - add auto-fire
-    - track time since last shot
     - add firing type to weapon config
 - enable asset hot-reloading, update weapon values when asset modified
     - recoil, bullet speed & impact force should all automatically update, because the data is read from the asset each time

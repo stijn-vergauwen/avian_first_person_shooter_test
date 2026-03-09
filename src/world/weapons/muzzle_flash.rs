@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
-use crate::{
-    utilities::system_sets::DisplaySystems,
-    world::weapons::{ShootWeapon, Weapon},
-};
+use crate::{utilities::system_sets::DisplaySystems, world::weapons::Weapon};
+
+use super::shooting::ShootWeapon;
 
 pub struct MuzzleFlashPlugin;
 

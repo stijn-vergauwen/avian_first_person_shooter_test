@@ -4,7 +4,10 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 use crate::{
     player::{PlayerHeadMesh, grabbed_object::GrabbedObject},
     utilities::system_sets::InputSystems,
-    world::weapons::{ShootWeapon, Weapon},
+    world::weapons::{
+        Weapon,
+        shooting::{PullTrigger, ReleaseTrigger},
+    },
 };
 
 use super::grabbed_object::ObjectAnchor;
@@ -15,26 +18,33 @@ impl Plugin for GrabbedWeaponPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (shoot_held_weapon, aim_down_sight).in_set(InputSystems),
+            (toggle_weapon_trigger, aim_down_sight).in_set(InputSystems),
         );
     }
 }
 
-fn shoot_held_weapon(
+fn toggle_weapon_trigger(
     mouse_input: Res<ButtonInput<MouseButton>>,
     grabbed_object: Single<&GrabbedObject>,
     weapons_query: Query<&Weapon>,
     mut commands: Commands,
 ) {
-    if mouse_input.just_pressed(MouseButton::Left)
-        && grabbed_object.current_object_anchor != ObjectAnchor::Inspecting
+    if grabbed_object.current_object_anchor != ObjectAnchor::Inspecting
         && let Some(grabbed_entity) = grabbed_object.entity
         && weapons_query.contains(grabbed_entity)
     {
-        commands.trigger(ShootWeapon {
-            entity: grabbed_entity,
-        });
-    };
+        if mouse_input.just_pressed(MouseButton::Left) {
+            commands.trigger(PullTrigger {
+                entity: grabbed_entity,
+            });
+        };
+
+        if mouse_input.just_released(MouseButton::Left) {
+            commands.trigger(ReleaseTrigger {
+                entity: grabbed_entity,
+            });
+        };
+    }
 }
 
 fn aim_down_sight(

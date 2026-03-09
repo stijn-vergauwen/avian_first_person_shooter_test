@@ -1,6 +1,6 @@
 mod bullet;
 pub mod muzzle_flash;
-mod shooting;
+pub mod shooting;
 mod weapon_config;
 mod weapon_config_loader;
 mod weapon_config_save;
@@ -9,6 +9,7 @@ use std::{fs, time::Duration};
 
 use avian3d::prelude::*;
 use bevy::{light::NotShadowCaster, prelude::*};
+use shooting::AutomaticFire;
 use weapon_config::WeaponConfig;
 use weapon_config_loader::WeaponConfigLoader;
 use weapon_config_save::{SaveWeaponConfig, WeaponConfigSavePlugin};
@@ -48,11 +49,16 @@ impl Plugin for WeaponsPlugin {
 #[derive(Component, Clone)]
 pub struct Weapon {
     config: Handle<WeaponConfig>,
+    trigger_is_pulled: bool,
 }
 
-#[derive(EntityEvent, Clone, Copy)]
-pub struct ShootWeapon {
-    pub entity: Entity,
+impl Weapon {
+    pub fn new(config: Handle<WeaponConfig>) -> Self {
+        Self {
+            config,
+            trigger_is_pulled: false,
+        }
+    }
 }
 
 #[derive(Resource)]
@@ -152,9 +158,8 @@ fn on_spawn_weapon(
 
     commands
         .spawn((
-            Weapon {
-                config: event.config.clone(),
-            },
+            Weapon::new(event.config.clone()),
+            AutomaticFire::new(Duration::from_millis(200)),
             GrabbableObject,
             SceneRoot(weapon_model),
             event.transform,
