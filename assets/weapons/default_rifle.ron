@@ -1,5 +1,6 @@
 WeaponConfig(
     path_to_model: "models/Blocky assault rifle.glb#Scene0",
+    collider_size: Vec3(0.08, 0.14, 0.6),
     weight: 4.0,
     recoil: 30.0,
     bullet_speed: 300.0,

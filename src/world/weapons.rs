@@ -138,6 +138,7 @@ fn on_spawn_weapon(
 ) {
     let weapon_config = weapon_configs.get(&event.config).unwrap();
     let weapon_model = asset_server.load(&weapon_config.path_to_model);
+    let collider_shape = Cuboid::from_size(weapon_config.collider_size);
 
     let muzzle_flash_mesh_handle = meshes.add(Rectangle::from_length(MUZZLE_FLASH_SIZE));
     let muzzle_flash_material_handle = materials.add(StandardMaterial {
@@ -158,7 +159,7 @@ fn on_spawn_weapon(
             SceneRoot(weapon_model),
             event.transform,
             RigidBody::Dynamic,
-            Collider::cuboid(0.08, 0.14, 0.6),
+            Collider::from(collider_shape),
             Mass(weapon_config.weight),
             MaxAngularSpeed(40.0),
         ))
@@ -176,6 +177,7 @@ fn on_spawn_weapon(
 fn save_test_weapon_config(mut commands: Commands) {
     let weapon_config = WeaponConfig {
         path_to_model: String::from("models/Blocky assault rifle.glb#Scene0"),
+        collider_size: Vec3::new(0.08, 0.14, 0.6),
         weight: 4.0,
         recoil: 30.0,
         bullet_speed: 300.0,
@@ -184,6 +186,6 @@ fn save_test_weapon_config(mut commands: Commands) {
 
     commands.trigger(SaveWeaponConfig {
         weapon_config,
-        file_name: String::from("test1"),
+        file_name: String::from("test_weapon"),
     });
 }

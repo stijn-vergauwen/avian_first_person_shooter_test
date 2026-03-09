@@ -15,7 +15,6 @@ Info and documentation for development.
     - this would fix the issue where bullets shouldn't spawn inside the collider of the weapon, but spawning bullets too far in front causes them to go through objects that are too close to the weapon.
 
 ## Backlog
-- store collider size in weapon config file
 - update dependencies
 - add auto-fire
     - track time since last shot
