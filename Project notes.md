@@ -14,10 +14,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- setup saving & loading weapon config from ron file
-    - replace WeaponConfigSaver with manual 'save to file' logic
-    - save test weapon data to file
-    - test out WeaponConfigLoader on test file
 - on startup, loop through files in weapon folder, load the data and spawn a new gun entity + its model for each file
 - store weapon weight and recoil in config file
 - store bullet speed & impact force in weapon config file
