@@ -11,8 +11,7 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-- exclude weapon collider from raycast queries of it's own bullets.
-    - this would fix the issue where bullets shouldn't spawn inside the collider of the weapon, but spawning bullets too far in front causes them to go through objects that are too close to the weapon.
+
 
 ## Backlog
 - add auto-fire

@@ -40,21 +40,22 @@ fn setup_bullet_casing_assets(
 
 fn on_shoot_weapon(
     shoot_weapon: On<ShootWeapon>,
-    mut weapons_query: Query<(&GlobalTransform, Forces, &Weapon)>,
+    mut weapons_query: Query<(Entity, &GlobalTransform, Forces, &Weapon)>,
     weapon_configs: Res<Assets<WeaponConfig>>,
     mut commands: Commands,
 ) {
-    let (global_weapon_transform, mut weapon_forces, weapon) = weapons_query
+    let (weapon_entity, global_weapon_transform, mut weapon_forces, weapon) = weapons_query
         .get_mut(shoot_weapon.entity)
         .expect("ShootWeapon should always point to weapon entity.");
     let weapon_config = weapon_configs.get(&weapon.config).unwrap();
 
     weapon_forces.apply_linear_impulse(global_weapon_transform.back() * weapon_config.recoil);
 
-    let origin = global_weapon_transform.translation() + global_weapon_transform.forward() * 0.4;
+    let origin = global_weapon_transform.translation() + global_weapon_transform.forward() * 0.2;
     let direction = global_weapon_transform.forward();
 
     commands.trigger(SpawnBullet {
+        shot_by: weapon_entity, 
         origin,
         direction,
         travel_speed: weapon_config.bullet_speed,

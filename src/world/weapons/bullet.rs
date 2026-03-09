@@ -27,14 +27,17 @@ impl Plugin for BulletPlugin {
 
 #[derive(Component)]
 struct Bullet {
+    shot_by: Entity,
+    shot_at: Duration,
     /// Bullet speed in the local Transform.forward() direction.
     travel_speed: f32,
     impact_force: f32,
-    shot_at: Duration,
 }
 
 #[derive(Event)]
 pub struct SpawnBullet {
+    /// The weapon that shot this bullet.
+    pub shot_by: Entity,
     pub origin: Vec3,
     pub direction: Dir3,
     pub travel_speed: f32,
@@ -103,9 +106,10 @@ fn on_spawn_bullet(
 ) {
     commands.spawn((
         Bullet {
+            shot_by: event.shot_by,
+            shot_at: time.elapsed(),
             travel_speed: event.travel_speed,
             impact_force: event.impact_force,
-            shot_at: time.elapsed(),
         },
         Mesh3d(bullet_assets.mesh.clone()),
         MeshMaterial3d(bullet_assets.material.clone()),
@@ -122,19 +126,20 @@ fn update_bullets(
     mut commands: Commands,
 ) {
     for (bullet_entity, bullet, mut transform) in bullets.iter_mut() {
-        let origin = transform.translation;
         let direction = transform.forward();
         let step_distance = bullet.travel_speed * time.delta_secs();
 
-        if let Some(bullet_hit) = calculate_bullet_raycast(
-            &spatial_query,
-            rigid_bodies,
-            parents,
+        let bullet_raycast = BulletRaycast {
             bullet_entity,
-            origin,
+            shot_by: bullet.shot_by,
+            position: transform.translation,
             direction,
             step_distance,
-        ) {
+        };
+
+        if let Some(bullet_hit) =
+            calculate_bullet_raycast(bullet_raycast, &spatial_query, rigid_bodies, parents)
+        {
             commands.trigger(bullet_hit);
         }
 
@@ -206,21 +211,30 @@ fn despawn_bullets_past_lifetime(
 
 // Utilities
 
+#[derive(Clone, Copy)]
+struct BulletRaycast {
+    bullet_entity: Entity,
+    shot_by: Entity,
+    position: Vec3,
+    direction: Dir3,
+    step_distance: f32,
+}
+
 fn calculate_bullet_raycast(
+    bullet_raycast: BulletRaycast,
     spatial_query: &SpatialQuery,
     rigid_bodies: Query<&RigidBody>,
     parents: Query<&ChildOf>,
-    bullet_entity: Entity,
-    origin: Vec3,
-    direction: Dir3,
-    step_distance: f32,
 ) -> Option<BulletHit> {
+    let origin = bullet_raycast.position;
+    let direction = bullet_raycast.direction;
+
     let hit_data = spatial_query.cast_ray(
         origin,
         direction,
-        step_distance,
+        bullet_raycast.step_distance,
         true,
-        &SpatialQueryFilter::default(),
+        &SpatialQueryFilter::from_excluded_entities(vec![bullet_raycast.shot_by]),
     )?;
 
     let global_hit_point_position = origin + direction * hit_data.distance;
@@ -229,7 +243,7 @@ fn calculate_bullet_raycast(
     let surface_normal = Dir3::new(hit_data.normal).unwrap_or(direction);
 
     Some(BulletHit {
-        bullet_entity,
+        bullet_entity: bullet_raycast.bullet_entity,
         hit_entity: hit_data.entity,
         rigid_body_entity,
         hit_position: global_hit_point_position,
