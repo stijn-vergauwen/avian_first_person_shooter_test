@@ -85,6 +85,7 @@ fn setup_bullet_assets(
             base: StandardMaterial {
                 base_color_texture: Some(asset_server.load("textures/Bullet impact decal.png")),
                 alpha_mode: AlphaMode::Mask(0.2),
+                perceptual_roughness: 1.0,
                 ..default()
             },
             extension: ForwardDecalMaterialExt {
