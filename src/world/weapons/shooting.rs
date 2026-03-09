@@ -51,7 +51,7 @@ fn on_shoot_weapon(
 
     weapon_forces.apply_linear_impulse(global_weapon_transform.back() * weapon_config.recoil);
 
-    let origin = global_weapon_transform.translation() + global_weapon_transform.forward() * 0.45;
+    let origin = global_weapon_transform.translation() + global_weapon_transform.forward() * 0.4;
     let direction = global_weapon_transform.forward();
 
     commands.trigger(SpawnBullet {

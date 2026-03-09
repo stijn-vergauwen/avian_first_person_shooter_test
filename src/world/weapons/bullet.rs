@@ -226,7 +226,7 @@ fn calculate_bullet_raycast(
     let global_hit_point_position = origin + direction * hit_data.distance;
 
     let rigid_body_entity = find_closest_rigid_body_entity(rigid_bodies, parents, hit_data.entity);
-    let surface_normal = Dir3::new_unchecked(hit_data.normal);
+    let surface_normal = Dir3::new(hit_data.normal).unwrap_or(direction);
 
     Some(BulletHit {
         bullet_entity,
