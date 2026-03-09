@@ -1,9 +1,9 @@
-use bevy::asset::AssetLoader;
+use bevy::{asset::AssetLoader, reflect::TypePath};
 use thiserror::Error;
 
 use super::weapon_config::WeaponConfig;
 
-#[derive(Default)]
+#[derive(Default, TypePath)]
 pub struct WeaponConfigLoader;
 
 #[non_exhaustive]

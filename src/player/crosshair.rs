@@ -43,9 +43,9 @@ fn spawn_crosshair(mut commands: Commands) {
                     width: Val::Px(RADIUS),
                     height: Val::Px(RADIUS),
                     border: UiRect::all(Val::Px(THICKNESS)),
+                    border_radius: BorderRadius::all(Val::Percent(50.0)),
                     ..default()
                 },
-                BorderRadius::all(Val::Percent(50.0)),
                 BackgroundColor(Color::NONE),
                 BorderColor::all(NEUTRAL_400),
                 Pickable::IGNORE,

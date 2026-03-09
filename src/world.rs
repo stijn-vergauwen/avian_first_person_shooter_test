@@ -15,7 +15,7 @@ use std::f32::consts::PI;
 use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::*, prelude::*};
 use grabbable_object::GrabbableObjectPlugin;
-use rand::Rng;
+use rand::RngExt;
 
 use crate::world::{
     character::CharacterPlugin,
