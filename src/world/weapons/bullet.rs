@@ -9,7 +9,6 @@ use bevy::{
 
 use crate::utilities::system_sets::DataSystems;
 
-const BULLET_HIT_FORCE: f32 = 50.0;
 const BULLET_LIFETIME: Duration = Duration::from_secs(5);
 
 pub struct BulletPlugin;
@@ -30,6 +29,7 @@ impl Plugin for BulletPlugin {
 struct Bullet {
     /// Bullet speed in the local Transform.forward() direction.
     travel_speed: f32,
+    impact_force: f32,
     shot_at: Duration,
 }
 
@@ -38,6 +38,7 @@ pub struct SpawnBullet {
     pub origin: Vec3,
     pub direction: Dir3,
     pub travel_speed: f32,
+    pub impact_force: f32,
 }
 
 #[derive(EntityEvent, Clone, Copy)]
@@ -102,6 +103,7 @@ fn on_spawn_bullet(
     commands.spawn((
         Bullet {
             travel_speed: event.travel_speed,
+            impact_force: event.impact_force,
             shot_at: time.elapsed(),
         },
         Mesh3d(bullet_assets.mesh.clone()),
@@ -141,6 +143,7 @@ fn update_bullets(
 
 fn on_bullet_hit(
     bullet_hit: On<BulletHit>,
+    bullets: Query<&Bullet>,
     objects: Query<(&Position, &Rotation)>,
     mut forces_query: Query<Forces>,
     mut commands: Commands,
@@ -175,10 +178,12 @@ fn on_bullet_hit(
     ));
 
     if let Ok(mut forces) = forces_query.get_mut(bullet_hit.rigid_body_entity) {
+        let impact_force = bullets.get(bullet_hit.bullet_entity).unwrap().impact_force;
+
         commands.queue(WakeBody(bullet_hit.rigid_body_entity));
 
         forces.apply_linear_impulse_at_point(
-            bullet_hit.bullet_direction.as_vec3() * BULLET_HIT_FORCE,
+            bullet_hit.bullet_direction.as_vec3() * impact_force,
             bullet_hit.hit_position,
         );
     }

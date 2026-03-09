@@ -1,3 +1,7 @@
 WeaponConfig(
     path_to_model: "models/Blocky assault rifle.glb#Scene0",
+    weight: 14.0,
+    recoil: 150.0,
+    bullet_speed: 400.0,
+    bullet_impact_force: 250.0,
 )

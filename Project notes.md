@@ -11,12 +11,18 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-
+- exclude weapon collider from raycast queries of it's own bullets.
+    - this would fix the issue where bullets shouldn't spawn inside the collider of the weapon, but spawning bullets too far in front causes them to go through objects that are too close to the weapon.
 
 ## Backlog
-- store weapon weight and recoil in config file
-- store bullet speed & impact force in weapon config file
+- store collider size in weapon config file
 - update dependencies
+- add auto-fire
+    - track time since last shot
+    - add firing type to weapon config
+- enable asset hot-reloading, update weapon values when asset modified
+    - recoil, bullet speed & impact force should all automatically update, because the data is read from the asset each time
+    - update weapon mass manually, because it doesn't reference back to the asset data
 - add UI to inspector to configure shot origin position (at barrel end)
     - start bullet from origin
     - start muzzle flash at origin

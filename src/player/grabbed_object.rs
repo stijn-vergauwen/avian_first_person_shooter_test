@@ -245,7 +245,7 @@ fn update_grabbed_object_position(
         );
 
     // Adjust strength based on mass of grabbed object, this prevents light objects from glitching out
-    let adjusted_acceleration = new_acceleration * (0.5 + computed_mass.value() * 0.6);
+    let adjusted_acceleration = new_acceleration * (0.5 + computed_mass.value() * 0.6).min(5.0);
 
     // Apply position force to grabbed object
     forces.apply_force(adjusted_acceleration);
@@ -282,7 +282,7 @@ fn update_grabbed_object_rotation(
         );
 
     // Adjust strength based on mass of grabbed object, this prevents light objects from glitching out
-    let adjusted_acceleration = new_acceleration * (0.5 + computed_mass.value() * 0.6);
+    let adjusted_acceleration = new_acceleration * (0.5 + computed_mass.value() * 0.6).min(3.0);
 
     forces.apply_angular_acceleration(adjusted_acceleration);
 }

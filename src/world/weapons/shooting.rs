@@ -1,11 +1,11 @@
-use avian3d::prelude::{Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody, RigidBodyForces};
+use avian3d::prelude::{
+    Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody, RigidBodyForces,
+};
 use bevy::{color::palettes::tailwind::YELLOW_700, prelude::*};
 
 use crate::world::grabbable_object::GrabbableObject;
 
-use super::{ShootWeapon, Weapon, bullet::SpawnBullet};
-
-const WEAPON_RECOIL: f32 = 30.0;
+use super::{ShootWeapon, Weapon, bullet::SpawnBullet, weapon_config::WeaponConfig};
 
 pub struct WeaponShootingPlugin;
 
@@ -40,22 +40,25 @@ fn setup_bullet_casing_assets(
 
 fn on_shoot_weapon(
     shoot_weapon: On<ShootWeapon>,
-    mut weapons_query: Query<(&GlobalTransform, Forces), With<Weapon>>,
+    mut weapons_query: Query<(&GlobalTransform, Forces, &Weapon)>,
+    weapon_configs: Res<Assets<WeaponConfig>>,
     mut commands: Commands,
 ) {
-    let (global_weapon_transform, mut weapon_forces) = weapons_query
+    let (global_weapon_transform, mut weapon_forces, weapon) = weapons_query
         .get_mut(shoot_weapon.entity)
         .expect("ShootWeapon should always point to weapon entity.");
+    let weapon_config = weapon_configs.get(&weapon.config).unwrap();
 
-    weapon_forces.apply_linear_impulse(global_weapon_transform.back() * WEAPON_RECOIL);
+    weapon_forces.apply_linear_impulse(global_weapon_transform.back() * weapon_config.recoil);
 
-    let origin = global_weapon_transform.translation() + global_weapon_transform.forward() * 0.35;
+    let origin = global_weapon_transform.translation() + global_weapon_transform.forward() * 0.45;
     let direction = global_weapon_transform.forward();
 
     commands.trigger(SpawnBullet {
         origin,
         direction,
-        travel_speed: 300.0,
+        travel_speed: weapon_config.bullet_speed,
+        impact_force: weapon_config.bullet_impact_force,
     });
 }
 

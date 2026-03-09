@@ -13,16 +13,13 @@ use weapon_config::WeaponConfig;
 use weapon_config_loader::WeaponConfigLoader;
 use weapon_config_save::{SaveWeaponConfig, WeaponConfigSavePlugin};
 
-use crate::{
-    utilities::DrawGizmos,
-    world::{
-        TABLE_POSITION,
-        grabbable_object::GrabbableObject,
-        weapons::{
-            bullet::BulletPlugin,
-            muzzle_flash::{MuzzleFlashAnimation, MuzzleFlashImages, MuzzleFlashPlugin},
-            shooting::WeaponShootingPlugin,
-        },
+use crate::world::{
+    TABLE_POSITION,
+    grabbable_object::GrabbableObject,
+    weapons::{
+        bullet::BulletPlugin,
+        muzzle_flash::{MuzzleFlashAnimation, MuzzleFlashImages, MuzzleFlashPlugin},
+        shooting::WeaponShootingPlugin,
     },
 };
 
@@ -48,8 +45,10 @@ impl Plugin for WeaponsPlugin {
 }
 
 /// Base component for weapons.
-#[derive(Component, Clone, Copy)]
-pub struct Weapon;
+#[derive(Component, Clone)]
+pub struct Weapon {
+    config: Handle<WeaponConfig>,
+}
 
 #[derive(EntityEvent, Clone, Copy)]
 pub struct ShootWeapon {
@@ -63,7 +62,7 @@ struct WeaponsToSpawn {
 
 #[derive(Event)]
 struct SpawnWeapon {
-    weapon_config: WeaponConfig,
+    config: Handle<WeaponConfig>,
     transform: Transform,
 }
 
@@ -94,7 +93,6 @@ fn load_weapon_configs(asset_server: Res<AssetServer>, mut commands: Commands) {
 fn spawn_weapon_when_config_loaded(
     mut reader: MessageReader<AssetEvent<WeaponConfig>>,
     mut weapons_to_spawn: ResMut<WeaponsToSpawn>,
-    weapon_configs: Res<Assets<WeaponConfig>>,
     mut commands: Commands,
 ) {
     for message in reader.read() {
@@ -111,12 +109,10 @@ fn spawn_weapon_when_config_loaded(
         };
 
         let config_handle = weapons_to_spawn.weapon_config_handles.swap_remove(index);
-        let weapon_config = weapon_configs.get(&config_handle).unwrap();
-
         let position_offset = Vec3::NEG_Z * weapons_to_spawn.weapon_config_handles.len() as f32;
 
         commands.trigger(SpawnWeapon {
-            weapon_config: weapon_config.clone(),
+            config: config_handle,
             transform: Transform {
                 translation: TABLE_POSITION + Vec3::new(0.0, 0.5, 3.0) + position_offset,
                 rotation: Quat::from_euler(
@@ -135,11 +131,13 @@ fn on_spawn_weapon(
     event: On<SpawnWeapon>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    weapon_configs: Res<Assets<WeaponConfig>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     muzzle_flash_images: Res<MuzzleFlashImages>,
 ) {
-    let weapon_model = asset_server.load(&event.weapon_config.path_to_model);
+    let weapon_config = weapon_configs.get(&event.config).unwrap();
+    let weapon_model = asset_server.load(&weapon_config.path_to_model);
 
     let muzzle_flash_mesh_handle = meshes.add(Rectangle::from_length(MUZZLE_FLASH_SIZE));
     let muzzle_flash_material_handle = materials.add(StandardMaterial {
@@ -153,14 +151,15 @@ fn on_spawn_weapon(
 
     commands
         .spawn((
-            Weapon,
+            Weapon {
+                config: event.config.clone(),
+            },
             GrabbableObject,
             SceneRoot(weapon_model),
             event.transform,
             RigidBody::Dynamic,
             Collider::cuboid(0.08, 0.14, 0.6),
-            Mass(4.0),
-            DrawGizmos,
+            Mass(weapon_config.weight),
             MaxAngularSpeed(40.0),
         ))
         .with_child((
@@ -177,10 +176,14 @@ fn on_spawn_weapon(
 fn save_test_weapon_config(mut commands: Commands) {
     let weapon_config = WeaponConfig {
         path_to_model: String::from("models/Blocky assault rifle.glb#Scene0"),
+        weight: 4.0,
+        recoil: 30.0,
+        bullet_speed: 300.0,
+        bullet_impact_force: 50.0,
     };
 
     commands.trigger(SaveWeaponConfig {
         weapon_config,
-        file_name: String::from("test2"),
+        file_name: String::from("test1"),
     });
 }
