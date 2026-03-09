@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{asset::Asset, math::Vec3, reflect::Reflect};
 use serde::{Deserialize, Serialize};
 
@@ -9,4 +11,20 @@ pub struct WeaponConfig {
     pub recoil: f32,
     pub bullet_speed: f32,
     pub bullet_impact_force: f32,
+    pub firing_type: FiringType,
+}
+
+#[derive(Reflect, Debug, Deserialize, Serialize, Clone, Copy)]
+pub enum FiringType {
+    SemiAutomatic,
+    Automatic(SecondsBetweenShots),
+}
+
+#[derive(Reflect, Debug, Deserialize, Serialize, Clone, Copy)]
+pub struct SecondsBetweenShots(pub f32);
+
+impl SecondsBetweenShots {
+    pub fn as_duration(&self) -> Duration {
+        Duration::from_secs_f32(self.0)
+    }
 }

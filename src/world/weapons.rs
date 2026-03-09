@@ -10,7 +10,7 @@ use std::{fs, time::Duration};
 use avian3d::prelude::*;
 use bevy::{light::NotShadowCaster, prelude::*};
 use shooting::AutomaticFire;
-use weapon_config::WeaponConfig;
+use weapon_config::{FiringType, SecondsBetweenShots, WeaponConfig};
 use weapon_config_loader::WeaponConfigLoader;
 use weapon_config_save::{SaveWeaponConfig, WeaponConfigSavePlugin};
 
@@ -156,26 +156,29 @@ fn on_spawn_weapon(
         ..default()
     });
 
-    commands
-        .spawn((
-            Weapon::new(event.config.clone()),
-            AutomaticFire::new(Duration::from_millis(200)),
-            GrabbableObject,
-            SceneRoot(weapon_model),
-            event.transform,
-            RigidBody::Dynamic,
-            Collider::from(collider_shape),
-            Mass(weapon_config.weight),
-            MaxAngularSpeed(40.0),
-        ))
-        .with_child((
-            MuzzleFlashAnimation::new(MUZZLE_FLASH_DURATION),
-            Mesh3d(muzzle_flash_mesh_handle.clone()),
-            MeshMaterial3d(muzzle_flash_material_handle),
-            Transform::from_xyz(0.0, 0.0, -0.6),
-            Visibility::Hidden,
-            NotShadowCaster,
-        ));
+    let mut weapon_commands = commands.spawn((
+        Weapon::new(event.config.clone()),
+        GrabbableObject,
+        SceneRoot(weapon_model),
+        event.transform,
+        RigidBody::Dynamic,
+        Collider::from(collider_shape),
+        Mass(weapon_config.weight),
+        MaxAngularSpeed(40.0),
+    ));
+
+    weapon_commands.with_child((
+        MuzzleFlashAnimation::new(MUZZLE_FLASH_DURATION),
+        Mesh3d(muzzle_flash_mesh_handle.clone()),
+        MeshMaterial3d(muzzle_flash_material_handle),
+        Transform::from_xyz(0.0, 0.0, -0.6),
+        Visibility::Hidden,
+        NotShadowCaster,
+    ));
+
+    if let FiringType::Automatic(seconds_between_shots) = weapon_config.firing_type {
+        weapon_commands.insert(AutomaticFire::new(seconds_between_shots.as_duration()));
+    }
 }
 
 #[allow(unused)]
@@ -187,6 +190,7 @@ fn save_test_weapon_config(mut commands: Commands) {
         recoil: 30.0,
         bullet_speed: 300.0,
         bullet_impact_force: 50.0,
+        firing_type: FiringType::Automatic(SecondsBetweenShots(0.15)),
     };
 
     commands.trigger(SaveWeaponConfig {

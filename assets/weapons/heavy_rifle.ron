@@ -5,4 +5,5 @@ WeaponConfig(
     recoil: 150.0,
     bullet_speed: 400.0,
     bullet_impact_force: 250.0,
+    firing_type: SemiAutomatic,
 )
