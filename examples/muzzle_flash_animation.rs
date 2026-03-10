@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use avian_first_person_shooter_test::{
     utilities::{UtilitiesPlugin, system_sets::InputSystems},
-    world::weapons::muzzle_flash::{MuzzleFlashAnimation, MuzzleFlashImages, MuzzleFlashPlugin},
+    world::weapons::muzzle_flash::{MuzzleFlashAnimation, MuzzleFlashPlugin},
 };
 use bevy::{color::palettes::css::GREY, prelude::*};
 
@@ -32,12 +32,9 @@ fn spawn_muzzle_flash_image(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    muzzle_flash_images: Res<MuzzleFlashImages>,
 ) {
     let mesh_handle = meshes.add(Rectangle::from_length(IMAGE_SIZE));
-
     let material_handle = materials.add(StandardMaterial {
-        base_color_texture: Some(muzzle_flash_images.get_image_at_index(0)),
         alpha_mode: AlphaMode::Blend,
         unlit: true,
         cull_mode: None,
@@ -48,8 +45,6 @@ fn spawn_muzzle_flash_image(
         MuzzleFlashAnimation::new(ANIMATION_DURATION),
         Mesh3d(mesh_handle.clone()),
         MeshMaterial3d(material_handle),
-        Transform::default(),
-        Visibility::Hidden,
     ));
 }
 

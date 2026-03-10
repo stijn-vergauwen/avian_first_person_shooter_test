@@ -95,9 +95,9 @@ fn update_rotation(
 fn calculate_movement_force(
     target_velocity: Vec3,
     current_velocity: Vec3,
-    player_rotation: Quat,
+    character_rotation: Quat,
 ) -> Vec3 {
-    let delta = (player_rotation * target_velocity - current_velocity).with_y(0.0);
+    let delta = (character_rotation * target_velocity - current_velocity).with_y(0.0);
 
     delta * MOVEMENT_STRENGTH
 }

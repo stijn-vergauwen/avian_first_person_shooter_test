@@ -1,9 +1,11 @@
-use bevy::prelude::*;
+use bevy::{light::NotShadowCaster, prelude::*};
 use std::time::Duration;
 
 use crate::{utilities::system_sets::DisplaySystems, world::weapons::Weapon};
 
 use super::shooting::ShootWeapon;
+
+const MUZZLE_FLASH_SIZE: f32 = 0.8;
 
 pub struct MuzzleFlashPlugin;
 
@@ -16,15 +18,13 @@ impl Plugin for MuzzleFlashPlugin {
 }
 
 #[derive(Resource)]
-pub struct MuzzleFlashImages {
-    image_handles: Vec<Handle<Image>>,
+pub struct MuzzleFlashAssets {
+    pub image_handles: Vec<Handle<Image>>,
+    pub mesh: Handle<Mesh>,
+    pub material: Handle<StandardMaterial>,
 }
 
-impl MuzzleFlashImages {
-    pub fn new(image_handles: Vec<Handle<Image>>) -> Self {
-        Self { image_handles }
-    }
-
+impl MuzzleFlashAssets {
     pub fn image_count(&self) -> usize {
         self.image_handles.len()
     }
@@ -35,6 +35,7 @@ impl MuzzleFlashImages {
 }
 
 #[derive(Component)]
+#[require(NotShadowCaster, Visibility::Hidden)]
 pub struct MuzzleFlashAnimation {
     started_at: Option<Duration>,
     animation_duration: Duration,
@@ -61,14 +62,33 @@ impl MuzzleFlashAnimation {
     }
 }
 
-fn setup_muzzle_flash_images(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_muzzle_flash_images(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     let sprite_paths = [
         "textures/Muzzle flash sprites test/Backside frame 1.png",
         "textures/Muzzle flash sprites test/Backside frame 2.png",
         "textures/Muzzle flash sprites test/Backside frame 3.png",
     ];
     let image_handles = sprite_paths.map(|path| asset_server.load(path)).to_vec();
-    commands.insert_resource(MuzzleFlashImages { image_handles });
+
+    let mesh = meshes.add(Rectangle::from_length(MUZZLE_FLASH_SIZE));
+    let material = materials.add(StandardMaterial {
+        base_color: Color::WHITE.with_alpha(0.5),
+        alpha_mode: AlphaMode::Blend,
+        unlit: true,
+        cull_mode: None,
+        ..default()
+    });
+
+    commands.insert_resource(MuzzleFlashAssets {
+        image_handles,
+        mesh,
+        material,
+    });
 }
 
 fn start_muzzle_flash_animation(
@@ -95,7 +115,7 @@ fn update_muzzle_flash_animation(
         &MeshMaterial3d<StandardMaterial>,
     )>,
     time: Res<Time>,
-    muzzle_flash_images: Res<MuzzleFlashImages>,
+    muzzle_flash_images: Res<MuzzleFlashAssets>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (mut muzzle_flash_animation, mut visibility, mesh_material) in

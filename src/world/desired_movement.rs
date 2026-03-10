@@ -8,7 +8,7 @@ impl Plugin for DesiredMovementPlugin {
     }
 }
 
-/// Describes a desired movement direction and strength.
+/// Describes a desired movement velocity.
 #[derive(Component, Copy, Clone, Debug, PartialEq, Default)]
 pub struct DesiredMovement {
     pub velocity: Vec3,
