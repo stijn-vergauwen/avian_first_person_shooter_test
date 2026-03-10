@@ -1,8 +1,10 @@
+mod inspector_mode_ui;
+
 use bevy::{
-    color::palettes::tailwind::SKY_600,
     prelude::*,
     window::{CursorGrabMode, CursorIcon, CursorOptions, PrimaryWindow, SystemCursorIcon},
 };
+use inspector_mode_ui::InspectorModeUiPlugin;
 
 use crate::{
     player::{
@@ -10,14 +12,14 @@ use crate::{
         grabbed_object::{GrabbedObject, UpdatePlayerCharacterActive, object_anchor::ObjectAnchor},
     },
     utilities::system_sets::InputSystems,
-    world::grabbable_object::{DefaultGrabOrientation, GrabOrientation},
+    world::grabbable_object::GrabOrientation,
 };
 
 pub struct InspectorModePlugin;
 
 impl Plugin for InspectorModePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_reset_to_default_orientation_button)
+        app.add_plugins(InspectorModeUiPlugin)
             .add_systems(
                 Update,
                 toggle_inspector_mode_on_keypress.in_set(InputSystems),
@@ -57,7 +59,6 @@ fn on_toggle_inspector_mode(
     event: On<ToggleInspectorMode>,
     mut grabbed_object: Single<&mut GrabbedObject>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-    mut reset_orientation_button_visibility: Single<&mut Visibility, With<ResetOrientationButton>>,
     mut commands: Commands,
     player_entity: Single<Entity, With<Player>>,
 ) {
@@ -75,11 +76,6 @@ fn on_toggle_inspector_mode(
     cursor_options.grab_mode = match set_inspecting {
         true => CursorGrabMode::None,
         false => CursorGrabMode::Locked,
-    };
-
-    **reset_orientation_button_visibility = match set_inspecting {
-        true => Visibility::Visible,
-        false => Visibility::Hidden,
     };
 
     commands.trigger(UpdatePlayerCharacterActive {
@@ -119,41 +115,4 @@ fn rotate_grabbed_object_on_drag(
         grab_orientation.0 = horizontal_rotation * grab_orientation.0;
         grab_orientation.0 = vertical_rotation * grab_orientation.0;
     }
-}
-
-// UI
-
-/// Marker component.
-#[derive(Component, Clone, Copy)]
-struct ResetOrientationButton;
-
-fn spawn_reset_to_default_orientation_button(mut commands: Commands) {
-    commands
-        .spawn((
-            ResetOrientationButton,
-            Button,
-            Visibility::Hidden,
-            Node {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(10.0),
-                right: Val::Px(10.0),
-                padding: UiRect::all(Val::Px(10.0)),
-                ..default()
-            },
-            BackgroundColor(Color::from(SKY_600)),
-        ))
-        .with_child(Text::new("Reset orientation"))
-        .observe(on_default_orientation_button_click);
-}
-
-fn on_default_orientation_button_click(
-    _: On<Pointer<Click>>,
-    mut grab_orientations: Query<(&mut GrabOrientation, Option<&DefaultGrabOrientation>)>,
-    grabbed_object: Single<&GrabbedObject>,
-) {
-    let (mut orientation, default) = grab_orientations
-        .get_mut(grabbed_object.entity.unwrap())
-        .unwrap();
-
-    orientation.0 = default.map_or(Quat::IDENTITY, |orientation| orientation.value());
 }

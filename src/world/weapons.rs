@@ -88,8 +88,6 @@ fn load_weapon_configs(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .into_string()
                 .expect("OsString of file name should always be convertable to String.");
 
-            println!("Now loading: {}", file_name);
-
             let path = format!("weapons/{}", file_name);
             let weapon_config_handle = asset_server.load::<WeaponConfig>(path);
 
