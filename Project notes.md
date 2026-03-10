@@ -11,12 +11,10 @@ Info and documentation for development.
 
 
 ## Code Refactoring & Improvements
-
+- try out the 'AssetChanged' query filter to use in 'update_weapon_when_asset_modified' fn. This should filter weapons that reference the changed WeaponConfig.
+    - might be simpler to write that checking AssetEvent messages, but haven't tried it yet.
 
 ## Backlog
-- enable asset hot-reloading, update weapon values when asset modified
-    - recoil, bullet speed & impact force should all automatically update, because the data is read from the asset each time
-    - update weapon mass manually, because it doesn't reference back to the asset data
 - add UI to inspector to configure shot origin position (at barrel end)
     - start bullet from origin
     - start muzzle flash at origin

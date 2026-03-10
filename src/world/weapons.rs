@@ -40,7 +40,13 @@ impl Plugin for WeaponsPlugin {
         .init_asset::<WeaponConfig>()
         .init_asset_loader::<WeaponConfigLoader>()
         .add_systems(Startup, load_weapon_configs)
-        .add_systems(Update, spawn_weapon_when_config_loaded)
+        .add_systems(
+            Update,
+            (
+                spawn_weapon_when_config_loaded,
+                update_weapon_when_asset_modified,
+            ),
+        )
         .add_observer(on_spawn_weapon);
     }
 }
@@ -178,6 +184,52 @@ fn on_spawn_weapon(
 
     if let FiringType::Automatic(seconds_between_shots) = weapon_config.firing_type {
         weapon_commands.insert(AutomaticFire::new(seconds_between_shots.as_duration()));
+    }
+}
+
+fn update_weapon_when_asset_modified(
+    mut reader: MessageReader<AssetEvent<WeaponConfig>>,
+    mut weapons: Query<(
+        Entity,
+        &Weapon,
+        &mut Mass,
+        &mut Collider,
+        Option<&mut AutomaticFire>,
+    )>,
+    weapon_configs: Res<Assets<WeaponConfig>>,
+    mut commands: Commands,
+) {
+    for message in reader.read() {
+        let AssetEvent::Modified { id } = message else {
+            continue;
+        };
+
+        let weapon_config = weapon_configs
+            .get(*id)
+            .expect("WeaponConfig modified message should always point to existing asset");
+
+        for (weapon_entity, _, mut mass, mut collider, automatic_fire) in weapons
+            .iter_mut()
+            .filter(|(_, weapon, _, _, _)| weapon.config.id() == *id)
+        {
+            mass.0 = weapon_config.weight;
+            *collider = Collider::from(Cuboid::from_size(weapon_config.collider_size));
+
+            match (weapon_config.firing_type, automatic_fire) {
+                (FiringType::SemiAutomatic, None) => (),
+                (FiringType::SemiAutomatic, Some(_)) => {
+                    commands.entity(weapon_entity).remove::<AutomaticFire>();
+                }
+                (FiringType::Automatic(seconds_between_shots), None) => {
+                    commands
+                        .entity(weapon_entity)
+                        .insert(AutomaticFire::new(seconds_between_shots.as_duration()));
+                }
+                (FiringType::Automatic(seconds_between_shots), Some(mut automatic_fire)) => {
+                    automatic_fire.time_between_shots = seconds_between_shots.as_duration();
+                }
+            }
+        }
     }
 }
 

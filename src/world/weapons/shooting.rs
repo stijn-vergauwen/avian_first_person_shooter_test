@@ -43,7 +43,7 @@ pub struct ShootWeapon {
 #[derive(Component, Clone, Copy)]
 pub struct AutomaticFire {
     last_shot_at: Option<Duration>,
-    time_between_shots: Duration,
+    pub time_between_shots: Duration,
 }
 
 impl AutomaticFire {
