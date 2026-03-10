@@ -1,5 +1,7 @@
 use avian_first_person_shooter_test::{
-    player::{PlayerPlugin, grabbed_weapon::PlayerWeaponCollisionHooks},
+    player::{
+        PlayerPlugin, player_weapon_collision_hook::PlayerWeaponCollisionHooks,
+    },
     utilities::UtilitiesPlugin,
     world::WorldPlugin,
 };

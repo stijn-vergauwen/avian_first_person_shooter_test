@@ -7,7 +7,7 @@ use bevy::{
 use crate::{
     player::{
         Player,
-        grabbed_object::{GrabbedObject, ObjectAnchor, UpdatePlayerCharacterActive},
+        grabbed_object::{GrabbedObject, UpdatePlayerCharacterActive, object_anchor::ObjectAnchor},
     },
     utilities::system_sets::InputSystems,
     world::grabbable_object::{DefaultGrabOrientation, GrabOrientation},

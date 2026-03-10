@@ -4,8 +4,11 @@ mod grabbed_object;
 pub mod grabbed_weapon;
 mod movement_input;
 mod spawner;
+pub mod player_weapon_collision_hook;
+mod inspector_mode;
 
 use bevy::prelude::*;
+use inspector_mode::InspectorModePlugin;
 
 use crate::player::{
     crosshair::CrosshairPlugin, cursor_lock::CursorLockPlugin, grabbed_object::GrabbedObjectPlugin,
@@ -43,6 +46,7 @@ impl Plugin for PlayerPlugin {
             CrosshairPlugin,
             GrabbedObjectPlugin,
             GrabbedWeaponPlugin,
+            InspectorModePlugin
         ));
     }
 }

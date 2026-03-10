@@ -13,6 +13,8 @@ Info and documentation for development.
 ## Code Refactoring & Improvements
 - try out the 'AssetChanged' query filter to use in 'update_weapon_when_asset_modified' fn. This should filter weapons that reference the changed WeaponConfig.
     - might be simpler to write that checking AssetEvent messages, but haven't tried it yet.
+- make state for inspector mode, this should be globally available for checking etc
+- object anchors lag a bit behind player movement, see if I can interpolate or exterpolate anchor values in calculation fn
 
 ## Backlog
 - add UI to inspector to configure shot origin position (at barrel end)
