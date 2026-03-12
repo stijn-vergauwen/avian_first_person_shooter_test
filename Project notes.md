@@ -18,10 +18,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- add UI to inspector to configure shot origin position (at barrel end)
-    - start bullet from origin
-    - start muzzle flash at origin
-    - apply shot recoil from origin
 - add save button to inspector, onclick, save WeaponConfig values back to ron file
 - make Bevy state for inspector mode, this should be globally available for checking etc
 - add UI to inspector to configure aim down sight position

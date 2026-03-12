@@ -113,7 +113,7 @@ fn on_spawn_weapon(
         MuzzleFlashAnimation::new(MUZZLE_FLASH_DURATION),
         Mesh3d(muzzle_flash_assets.mesh.clone()),
         MeshMaterial3d(muzzle_flash_assets.material.clone()),
-        Transform::from_xyz(0.0, 0.0, -0.6),
+        Transform::from_translation(weapon_config.shot_origin),
     ));
 
     if let FiringType::Automatic(seconds_between_shots) = weapon_config.firing_type {

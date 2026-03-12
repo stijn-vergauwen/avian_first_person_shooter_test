@@ -124,22 +124,23 @@ fn update_automatic_fire(
 
 fn on_shoot_weapon(
     shoot_weapon: On<ShootWeapon>,
-    mut weapons_query: Query<(Entity, &GlobalTransform, Forces, &Weapon)>,
+    mut weapons: Query<(&GlobalTransform, Forces, &Weapon)>,
     weapon_configs: Res<Assets<WeaponConfig>>,
     mut commands: Commands,
 ) {
-    let (weapon_entity, global_weapon_transform, mut weapon_forces, weapon) = weapons_query
+    let (global_transform, mut weapon_forces, weapon) = weapons
         .get_mut(shoot_weapon.entity)
         .expect("ShootWeapon should always point to weapon entity.");
     let weapon_config = weapon_configs.get(&weapon.config).unwrap();
 
-    weapon_forces.apply_linear_impulse(global_weapon_transform.back() * weapon_config.recoil);
+    let origin = global_transform.transform_point(weapon_config.shot_origin);
+    let direction = global_transform.forward();
 
-    let origin = global_weapon_transform.translation() + global_weapon_transform.forward() * 0.2;
-    let direction = global_weapon_transform.forward();
+    weapon_forces
+        .apply_linear_impulse_at_point(global_transform.back() * weapon_config.recoil, origin);
 
     commands.trigger(SpawnBullet {
-        shot_by: weapon_entity,
+        shot_by: shoot_weapon.entity,
         origin,
         direction,
         travel_speed: weapon_config.bullet_speed,

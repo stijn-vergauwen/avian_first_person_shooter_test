@@ -3,6 +3,7 @@ use bevy::prelude::*;
 
 use super::{
     Weapon,
+    muzzle_flash::MuzzleFlashAnimation,
     shooting::AutomaticFire,
     weapon_config::{FiringType, WeaponConfig},
 };
@@ -56,6 +57,7 @@ fn update_weapon_when_asset_modified(
 fn on_weapon_config_modified(
     weapon_config_modified: On<WeaponConfigModified>,
     mut weapons: Query<(&mut Mass, &mut Collider, Option<&mut AutomaticFire>), With<Weapon>>,
+    mut muzzle_flashes: Query<(&mut Transform, &ChildOf), With<MuzzleFlashAnimation>>,
     mut commands: Commands,
 ) {
     let weapon_config = &weapon_config_modified.new_data;
@@ -80,5 +82,12 @@ fn on_weapon_config_modified(
                 automatic_fire.time_between_shots = seconds_between_shots.as_duration();
             }
         }
+
+        let (mut transform, _) = muzzle_flashes
+            .iter_mut()
+            .find(|(_, child_of)| child_of.parent() == weapon_entity)
+            .unwrap();
+
+        transform.translation = weapon_config.shot_origin;
     }
 }
