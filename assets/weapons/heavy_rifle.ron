@@ -6,5 +6,5 @@ WeaponConfig(
     bullet_speed: 400.0,
     bullet_impact_force: 250.0,
     firing_type: SemiAutomatic,
-    shot_origin: Vec3(0.0, 0.02, -0.42),
+    shot_origin: Vec3(0.0, 0.015, -0.42),
 )

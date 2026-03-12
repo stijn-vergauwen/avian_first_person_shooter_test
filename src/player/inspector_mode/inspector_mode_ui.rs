@@ -1,7 +1,7 @@
 use bevy::{
     color::palettes::{
         css::{BLUE, GREEN, RED},
-        tailwind::{NEUTRAL_600, SKY_600},
+        tailwind::{NEUTRAL_700, SKY_600},
     },
     feathers::controls::{SliderProps, slider},
     prelude::*,
@@ -66,6 +66,7 @@ fn spawn_inspector_overlay(mut commands: Commands) {
         .with_children(|overlay| {
             overlay.spawn((
                 Node {
+                    width: px(300.0),
                     margin: UiRect::all(px(20.0)),
                     padding: UiRect::all(px(10.0)),
                     display: Display::Flex,
@@ -73,7 +74,7 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                     row_gap: px(6.0),
                     ..default()
                 },
-                BackgroundColor(Color::from(NEUTRAL_600)),
+                BackgroundColor(Color::from(NEUTRAL_700)),
                 children![
                     Text::new("Shot origin"),
                     build_config_slider(SliderForWeaponConfig {
@@ -243,8 +244,8 @@ fn build_config_slider(slider_for_weapon_config: SliderForWeaponConfig) -> impl 
                 value: 0.0,
             },
             (
-                SliderPrecision(2),
-                SliderStep(0.01),
+                SliderPrecision(3),
+                SliderStep(0.001),
                 slider_for_weapon_config,
             ),
         ),
