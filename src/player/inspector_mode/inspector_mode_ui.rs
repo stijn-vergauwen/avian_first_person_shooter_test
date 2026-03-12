@@ -13,7 +13,9 @@ use crate::{
     utilities::system_sets::DisplaySystems,
     world::{
         grabbable_object::{DefaultGrabOrientation, GrabOrientation},
-        weapons::{Weapon, weapon_config::WeaponConfig},
+        weapons::{
+            Weapon, weapon_config::WeaponConfig, weapon_config_modified::WeaponConfigModified,
+        },
     },
 };
 
@@ -25,18 +27,25 @@ impl Plugin for InspectorModeUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_inspector_overlay)
             .add_systems(Update, draw_test_gizmo.in_set(DisplaySystems))
-            .add_observer(on_toggle_inspector_mode);
+            .add_observer(on_toggle_inspector_mode)
+            .add_observer(on_weapon_config_modified)
+            .add_observer(on_update_inspector_overlay);
     }
 }
 
 #[derive(Component)]
 struct InspectorOverlay;
 
-#[allow(clippy::type_complexity)]
 #[derive(Component)]
 struct SliderForWeaponConfig {
     get_value: Box<dyn Fn(&WeaponConfig) -> f32 + Send + Sync>,
     set_value: Box<dyn Fn(&mut WeaponConfig, f32) + Send + Sync>,
+}
+
+/// Decribes a request to update all the UI elements of the inspector mode overlay.
+#[derive(Event)]
+struct UpdateInspectorOverlay {
+    weapon_config: WeaponConfig,
 }
 
 fn spawn_inspector_overlay(mut commands: Commands) {
@@ -108,7 +117,6 @@ fn on_toggle_inspector_mode(
     event: On<ToggleInspectorMode>,
     mut inspector_overlay_visibility: Single<&mut Visibility, With<InspectorOverlay>>,
     grabbed_object: Single<&GrabbedObject>,
-    sliders: Query<(Entity, &SliderForWeaponConfig)>,
     weapons: Query<&Weapon>,
     weapon_configs: Res<Assets<WeaponConfig>>,
     mut commands: Commands,
@@ -118,18 +126,61 @@ fn on_toggle_inspector_mode(
         false => Visibility::Hidden,
     };
 
+    if event.set_inspecting
+        && let Some(grabbed_entity) = grabbed_object.entity
+        && let Ok(weapon) = weapons.get(grabbed_entity)
+    {
+        let weapon_config = weapon_configs.get(weapon.config()).unwrap().clone();
+
+        commands.trigger(UpdateInspectorOverlay { weapon_config });
+    };
+}
+
+fn on_weapon_config_modified(
+    weapon_config_modified: On<WeaponConfigModified>,
+    grabbed_object: Single<&GrabbedObject>,
+    mut commands: Commands,
+) {
+    if grabbed_object.entity.is_some_and(|grabbed_entity| {
+        weapon_config_modified
+            .weapon_entities
+            .contains(&grabbed_entity)
+    }) {
+        commands.trigger(UpdateInspectorOverlay {
+            weapon_config: weapon_config_modified.new_data.clone(),
+        });
+    }
+}
+
+fn on_update_inspector_overlay(
+    update_inspector_overlay: On<UpdateInspectorOverlay>,
+    sliders: Query<(Entity, &SliderForWeaponConfig)>,
+    mut commands: Commands,
+) {
+    for (slider_entity, slider_for_weapon_config) in sliders.iter() {
+        let new_value =
+            (slider_for_weapon_config.get_value)(&update_inspector_overlay.weapon_config);
+
+        commands
+            .entity(slider_entity)
+            .insert(SliderValue(new_value));
+    }
+}
+
+fn on_slider_value_changed(
+    value_change: On<ValueChange<f32>>,
+    grabbed_object: Single<&GrabbedObject>,
+    weapons: Query<&Weapon>,
+    sliders: Query<&SliderForWeaponConfig>,
+    mut weapon_configs: ResMut<Assets<WeaponConfig>>,
+) {
     if let Some(grabbed_entity) = grabbed_object.entity
         && let Ok(weapon) = weapons.get(grabbed_entity)
     {
-        let weapon_config = weapon_configs.get(weapon.config()).unwrap();
+        let weapon_config = weapon_configs.get_mut(weapon.config()).unwrap();
 
-        for (slider_entity, slider_for_weapon_config) in sliders.iter() {
-            let new_value = (slider_for_weapon_config.get_value)(weapon_config);
-
-            commands
-                .entity(slider_entity)
-                .insert(SliderValue(new_value));
-        }
+        let slider_for_weapon_config = sliders.get(value_change.source).unwrap();
+        (slider_for_weapon_config.set_value)(weapon_config, value_change.value);
     };
 }
 
@@ -149,7 +200,7 @@ fn draw_test_gizmo(
     mut gizmos: Gizmos,
     grabbed_object: Single<&GrabbedObject>,
     weapons: Query<(&Weapon, &GlobalTransform)>,
-    mut weapon_configs: ResMut<Assets<WeaponConfig>>,
+    weapon_configs: Res<Assets<WeaponConfig>>,
 ) {
     let Some(grabbed_entity) = grabbed_object.entity else {
         return;
@@ -159,7 +210,7 @@ fn draw_test_gizmo(
         return;
     };
 
-    let weapon_config = weapon_configs.get_mut(weapon.config()).unwrap();
+    let weapon_config = weapon_configs.get(weapon.config()).unwrap();
 
     let transform = global_transform.compute_transform()
         * Transform::from_translation(weapon_config.shot_origin);
@@ -197,36 +248,6 @@ fn build_config_slider(slider_for_weapon_config: SliderForWeaponConfig) -> impl 
                 slider_for_weapon_config,
             ),
         ),
-        observe(build_on_slider_changed_observer()),
+        observe(on_slider_value_changed),
     )
-}
-
-#[allow(clippy::type_complexity)]
-fn build_on_slider_changed_observer() -> impl Fn(
-    On<ValueChange<f32>>,
-    Query<&SliderForWeaponConfig>,
-    Single<&GrabbedObject>,
-    Query<&Weapon>,
-    ResMut<Assets<WeaponConfig>>,
-    Commands,
-) {
-    move |value_change: On<ValueChange<f32>>,
-          query: Query<&SliderForWeaponConfig>,
-          grabbed_object: Single<&GrabbedObject>,
-          weapons: Query<&Weapon>,
-          mut weapon_configs: ResMut<Assets<WeaponConfig>>,
-          mut commands: Commands| {
-        if let Some(grabbed_entity) = grabbed_object.entity
-            && let Ok(weapon) = weapons.get(grabbed_entity)
-        {
-            let weapon_config = weapon_configs.get_mut(weapon.config()).unwrap();
-
-            let slider_for_weapon_config = query.get(value_change.event_target()).unwrap();
-            (slider_for_weapon_config.set_value)(weapon_config, value_change.value);
-        };
-
-        commands
-            .entity(value_change.source)
-            .insert(SliderValue(value_change.value));
-    }
 }

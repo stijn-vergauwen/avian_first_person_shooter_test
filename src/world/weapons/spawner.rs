@@ -20,13 +20,7 @@ pub struct WeaponSpawnerPlugin;
 impl Plugin for WeaponSpawnerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, load_weapon_configs)
-            .add_systems(
-                Update,
-                (
-                    spawn_weapon_when_config_loaded,
-                    update_weapon_when_asset_modified,
-                ),
-            )
+            .add_systems(Update, spawn_weapon_when_config_loaded)
             .add_observer(on_spawn_weapon);
     }
 }
@@ -110,7 +104,7 @@ fn on_spawn_weapon(
         SceneRoot(weapon_model),
         event.transform,
         RigidBody::Dynamic,
-        cuboid_collider_from_size(weapon_config.collider_size),
+        Collider::from(Cuboid::from_size(weapon_config.collider_size)),
         Mass(weapon_config.weight),
         MaxAngularSpeed(40.0),
     ));
@@ -125,75 +119,6 @@ fn on_spawn_weapon(
     if let FiringType::Automatic(seconds_between_shots) = weapon_config.firing_type {
         weapon_commands.insert(AutomaticFire::new(seconds_between_shots.as_duration()));
     }
-}
-
-// TODO: move update logic out of spawner module
-fn update_weapon_when_asset_modified(
-    mut reader: MessageReader<AssetEvent<WeaponConfig>>,
-    mut weapons: Query<(
-        Entity,
-        &Weapon,
-        &mut Mass,
-        &mut Collider,
-        Option<&mut AutomaticFire>,
-    )>,
-    weapon_configs: Res<Assets<WeaponConfig>>,
-    mut commands: Commands,
-) {
-    for message in reader.read() {
-        let AssetEvent::Modified { id } = message else {
-            continue;
-        };
-
-        let weapon_config = weapon_configs
-            .get(*id)
-            .expect("WeaponConfig modified message should always point to existing asset");
-
-        for (weapon_entity, _, mass, collider, automatic_fire) in weapons
-            .iter_mut()
-            .filter(|(_, weapon, _, _, _)| weapon.config.id() == *id)
-        {
-            update_weapon_properties(
-                weapon_config,
-                weapon_entity,
-                mass,
-                collider,
-                automatic_fire,
-                &mut commands,
-            );
-        }
-    }
-}
-
-fn update_weapon_properties(
-    weapon_config: &WeaponConfig,
-    weapon_entity: Entity,
-    mut mass: Mut<Mass>,
-    mut collider: Mut<Collider>,
-    automatic_fire: Option<Mut<AutomaticFire>>,
-    commands: &mut Commands,
-) {
-    mass.0 = weapon_config.weight;
-    *collider = cuboid_collider_from_size(weapon_config.collider_size);
-
-    match (weapon_config.firing_type, automatic_fire) {
-        (FiringType::SemiAutomatic, None) => (),
-        (FiringType::SemiAutomatic, Some(_)) => {
-            commands.entity(weapon_entity).remove::<AutomaticFire>();
-        }
-        (FiringType::Automatic(seconds_between_shots), None) => {
-            commands
-                .entity(weapon_entity)
-                .insert(AutomaticFire::new(seconds_between_shots.as_duration()));
-        }
-        (FiringType::Automatic(seconds_between_shots), Some(mut automatic_fire)) => {
-            automatic_fire.time_between_shots = seconds_between_shots.as_duration();
-        }
-    }
-}
-
-fn cuboid_collider_from_size(size: Vec3) -> Collider {
-    Collider::from(Cuboid::from_size(size))
 }
 
 fn calculate_weapon_spawn_transform(weapons_to_spawn: &WeaponsToSpawn) -> Transform {

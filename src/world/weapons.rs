@@ -4,6 +4,7 @@ pub mod shooting;
 mod spawner;
 pub mod weapon_config;
 mod weapon_config_loader;
+pub mod weapon_config_modified;
 mod weapon_config_save;
 
 use bevy::prelude::*;
@@ -13,6 +14,7 @@ use shooting::WeaponShootingPlugin;
 use spawner::WeaponSpawnerPlugin;
 use weapon_config::WeaponConfig;
 use weapon_config_loader::WeaponConfigLoader;
+use weapon_config_modified::WeaponConfigModifiedPlugin;
 use weapon_config_save::WeaponConfigSavePlugin;
 
 pub struct WeaponsPlugin;
@@ -25,6 +27,7 @@ impl Plugin for WeaponsPlugin {
             BulletPlugin,
             WeaponConfigSavePlugin,
             WeaponSpawnerPlugin,
+            WeaponConfigModifiedPlugin,
         ))
         .init_asset::<WeaponConfig>()
         .init_asset_loader::<WeaponConfigLoader>();
