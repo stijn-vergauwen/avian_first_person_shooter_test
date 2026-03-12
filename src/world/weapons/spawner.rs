@@ -127,6 +127,7 @@ fn on_spawn_weapon(
     }
 }
 
+// TODO: move update logic out of spawner module
 fn update_weapon_when_asset_modified(
     mut reader: MessageReader<AssetEvent<WeaponConfig>>,
     mut weapons: Query<(
@@ -215,6 +216,7 @@ fn save_test_weapon_config(mut commands: Commands) {
         bullet_speed: 300.0,
         bullet_impact_force: 50.0,
         firing_type: FiringType::Automatic(SecondsBetweenShots(0.15)),
+        shot_origin: Vec3::new(0.0, 0.1, -0.2),
     };
 
     commands.trigger(SaveWeaponConfig {

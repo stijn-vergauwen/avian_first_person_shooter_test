@@ -1,5 +1,8 @@
 use bevy::{
-    color::palettes::tailwind::{NEUTRAL_600, SKY_600},
+    color::palettes::{
+        css::{BLUE, GREEN, RED},
+        tailwind::{NEUTRAL_600, SKY_600},
+    },
     feathers::controls::{SliderProps, slider},
     prelude::*,
     ui_widgets::{SliderPrecision, SliderStep, SliderValue, ValueChange, observe},
@@ -8,7 +11,10 @@ use bevy::{
 use crate::{
     player::grabbed_object::GrabbedObject,
     utilities::system_sets::DisplaySystems,
-    world::grabbable_object::{DefaultGrabOrientation, GrabOrientation, GrabbableObject},
+    world::{
+        grabbable_object::{DefaultGrabOrientation, GrabOrientation},
+        weapons::{Weapon, weapon_config::WeaponConfig},
+    },
 };
 
 use super::ToggleInspectorMode;
@@ -17,8 +23,7 @@ pub struct InspectorModeUiPlugin;
 
 impl Plugin for InspectorModeUiPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<WeaponShotOrigin>()
-            .add_systems(Startup, spawn_inspector_overlay)
+        app.add_systems(Startup, spawn_inspector_overlay)
             .add_systems(Update, draw_test_gizmo.in_set(DisplaySystems))
             .add_observer(on_toggle_inspector_mode);
     }
@@ -26,9 +31,6 @@ impl Plugin for InspectorModeUiPlugin {
 
 #[derive(Component)]
 struct InspectorOverlay;
-
-#[derive(Resource, Default)]
-struct WeaponShotOrigin(Vec3);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Axis {
@@ -71,20 +73,19 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                 ],
             ));
 
-            overlay
-                .spawn((
-                    Button,
-                    Node {
-                        position_type: PositionType::Absolute,
-                        bottom: Val::Px(10.0),
-                        right: Val::Px(10.0),
-                        padding: UiRect::all(Val::Px(10.0)),
-                        ..default()
-                    },
-                    BackgroundColor(Color::from(SKY_600)),
-                ))
-                .with_child(Text::new("Reset orientation"))
-                .observe(on_default_orientation_button_click);
+            overlay.spawn((
+                Button,
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(10.0),
+                    right: Val::Px(10.0),
+                    padding: UiRect::all(Val::Px(10.0)),
+                    ..default()
+                },
+                BackgroundColor(Color::from(SKY_600)),
+                observe(on_default_orientation_button_click),
+                children![Text::new("Reset orientation")],
+            ));
         });
 }
 
@@ -113,19 +114,39 @@ fn on_default_orientation_button_click(
 fn draw_test_gizmo(
     mut gizmos: Gizmos,
     grabbed_object: Single<&GrabbedObject>,
-    grabbable_objects: Query<&GlobalTransform, With<GrabbableObject>>,
-    shot_origin: Res<WeaponShotOrigin>,
+    weapons: Query<(&Weapon, &GlobalTransform)>,
+    mut weapon_configs: ResMut<Assets<WeaponConfig>>,
 ) {
     let Some(grabbed_entity) = grabbed_object.entity else {
         return;
     };
 
-    let global_transform = grabbable_objects.get(grabbed_entity).unwrap();
+    let Ok((weapon, global_transform)) = weapons.get(grabbed_entity) else {
+        return;
+    };
 
-    let transform =
-        global_transform.compute_transform() * Transform::from_translation(shot_origin.0);
+    let weapon_config = weapon_configs.get_mut(weapon.config()).unwrap();
 
-    gizmos.axes(transform, 0.2);
+    let transform = global_transform.compute_transform()
+        * Transform::from_translation(weapon_config.shot_origin);
+
+    gizmos.arrow(
+        transform.translation,
+        transform.transform_point(Vec3::NEG_Z * 0.5),
+        BLUE,
+    );
+
+    gizmos.line(
+        transform.transform_point(Vec3::NEG_X * 0.1),
+        transform.transform_point(Vec3::X * 0.1),
+        RED,
+    );
+
+    gizmos.line(
+        transform.transform_point(Vec3::NEG_Y * 0.1),
+        transform.transform_point(Vec3::Y * 0.1),
+        GREEN,
+    );
 }
 
 fn build_config_slider(axis: Axis) -> impl Bundle {
@@ -139,23 +160,43 @@ fn build_config_slider(axis: Axis) -> impl Bundle {
             (SliderPrecision(2), SliderStep(0.01)),
         ),
         observe(build_on_slider_changed_observer(match axis {
-            Axis::X => |shot_origin: &mut WeaponShotOrigin, value| shot_origin.0.x = value,
-            Axis::Y => |shot_origin: &mut WeaponShotOrigin, value| shot_origin.0.y = value,
-            Axis::Z => |shot_origin: &mut WeaponShotOrigin, value| shot_origin.0.z = value,
+            Axis::X => |weapon_config: &mut WeaponConfig, slider_value| {
+                weapon_config.shot_origin.x = slider_value
+            },
+            Axis::Y => |weapon_config: &mut WeaponConfig, slider_value| {
+                weapon_config.shot_origin.y = slider_value
+            },
+            Axis::Z => |weapon_config: &mut WeaponConfig, slider_value| {
+                weapon_config.shot_origin.z = slider_value
+            },
         })),
     )
 }
 
+#[allow(clippy::type_complexity)]
 fn build_on_slider_changed_observer<F>(
     set_field: F,
-) -> impl Fn(On<ValueChange<f32>>, ResMut<WeaponShotOrigin>, Commands)
+) -> impl Fn(
+    On<ValueChange<f32>>,
+    Single<&GrabbedObject>,
+    Query<&Weapon>,
+    ResMut<Assets<WeaponConfig>>,
+    Commands,
+)
 where
-    F: Fn(&mut WeaponShotOrigin, f32),
+    F: Fn(&mut WeaponConfig, f32),
 {
     move |value_change: On<ValueChange<f32>>,
-          mut shot_origin: ResMut<WeaponShotOrigin>,
+          grabbed_object: Single<&GrabbedObject>,
+          weapons: Query<&Weapon>,
+          mut weapon_configs: ResMut<Assets<WeaponConfig>>,
           mut commands: Commands| {
-        set_field(&mut shot_origin, value_change.value);
+        if let Some(grabbed_entity) = grabbed_object.entity
+            && let Ok(weapon) = weapons.get(grabbed_entity)
+        {
+            let weapon_config = weapon_configs.get_mut(weapon.config()).unwrap();
+            set_field(weapon_config, value_change.value);
+        };
 
         commands
             .entity(value_change.source)

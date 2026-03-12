@@ -2,7 +2,7 @@ mod bullet;
 pub mod muzzle_flash;
 pub mod shooting;
 mod spawner;
-mod weapon_config;
+pub mod weapon_config;
 mod weapon_config_loader;
 mod weapon_config_save;
 
@@ -44,5 +44,9 @@ impl Weapon {
             config,
             trigger_is_pulled: false,
         }
+    }
+
+    pub fn config(&self) -> &Handle<WeaponConfig> {
+        &self.config
     }
 }

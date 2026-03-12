@@ -12,6 +12,8 @@ pub struct WeaponConfig {
     pub bullet_speed: f32,
     pub bullet_impact_force: f32,
     pub firing_type: FiringType,
+    /// The position relative to the weapon where shots should be fired from.
+    pub shot_origin: Vec3,
 }
 
 #[derive(Reflect, Debug, Deserialize, Serialize, Clone, Copy)]

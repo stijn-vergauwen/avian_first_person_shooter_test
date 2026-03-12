@@ -18,6 +18,10 @@ Info and documentation for development.
 
 ## Backlog
 - add UI to inspector to configure shot origin position (at barrel end)
+    - replace slider internal state with updating based on weaponconfig value
+        - try making a 'link to weapon config' component that stores 2 closures, a getter and a setter for the specific weapon config value that slider is for
+        - try refactoring so only 1 closure needs to be specified
+    - rework slider ValueChanged observer to send an event that modifies WeaponConfig instead of modifying directly
     - start bullet from origin
     - start muzzle flash at origin
     - apply shot recoil from origin
