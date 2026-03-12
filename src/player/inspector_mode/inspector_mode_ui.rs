@@ -32,11 +32,11 @@ impl Plugin for InspectorModeUiPlugin {
 #[derive(Component)]
 struct InspectorOverlay;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Axis {
-    X,
-    Y,
-    Z,
+#[allow(clippy::type_complexity)]
+#[derive(Component)]
+struct SliderForWeaponConfig {
+    get_value: Box<dyn Fn(&WeaponConfig) -> f32 + Send + Sync>,
+    set_value: Box<dyn Fn(&mut WeaponConfig, f32) + Send + Sync>,
 }
 
 fn spawn_inspector_overlay(mut commands: Commands) {
@@ -67,9 +67,24 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                 BackgroundColor(Color::from(NEUTRAL_600)),
                 children![
                     Text::new("Shot origin"),
-                    build_config_slider(Axis::X),
-                    build_config_slider(Axis::Y),
-                    build_config_slider(Axis::Z),
+                    build_config_slider(SliderForWeaponConfig {
+                        get_value: Box::new(|weapon_config| weapon_config.shot_origin.x),
+                        set_value: Box::new(|weapon_config, slider_value| weapon_config
+                            .shot_origin
+                            .x = slider_value)
+                    }),
+                    build_config_slider(SliderForWeaponConfig {
+                        get_value: Box::new(|weapon_config| weapon_config.shot_origin.y),
+                        set_value: Box::new(|weapon_config, slider_value| weapon_config
+                            .shot_origin
+                            .y = slider_value)
+                    }),
+                    build_config_slider(SliderForWeaponConfig {
+                        get_value: Box::new(|weapon_config| weapon_config.shot_origin.z),
+                        set_value: Box::new(|weapon_config, slider_value| weapon_config
+                            .shot_origin
+                            .z = slider_value)
+                    }),
                 ],
             ));
 
@@ -92,10 +107,29 @@ fn spawn_inspector_overlay(mut commands: Commands) {
 fn on_toggle_inspector_mode(
     event: On<ToggleInspectorMode>,
     mut inspector_overlay_visibility: Single<&mut Visibility, With<InspectorOverlay>>,
+    grabbed_object: Single<&GrabbedObject>,
+    sliders: Query<(Entity, &SliderForWeaponConfig)>,
+    weapons: Query<&Weapon>,
+    weapon_configs: Res<Assets<WeaponConfig>>,
+    mut commands: Commands,
 ) {
     **inspector_overlay_visibility = match event.set_inspecting {
         true => Visibility::Visible,
         false => Visibility::Hidden,
+    };
+
+    if let Some(grabbed_entity) = grabbed_object.entity
+        && let Ok(weapon) = weapons.get(grabbed_entity)
+    {
+        let weapon_config = weapon_configs.get(weapon.config()).unwrap();
+
+        for (slider_entity, slider_for_weapon_config) in sliders.iter() {
+            let new_value = (slider_for_weapon_config.get_value)(weapon_config);
+
+            commands
+                .entity(slider_entity)
+                .insert(SliderValue(new_value));
+        }
     };
 }
 
@@ -149,7 +183,7 @@ fn draw_test_gizmo(
     );
 }
 
-fn build_config_slider(axis: Axis) -> impl Bundle {
+fn build_config_slider(slider_for_weapon_config: SliderForWeaponConfig) -> impl Bundle {
     (
         slider(
             SliderProps {
@@ -157,36 +191,27 @@ fn build_config_slider(axis: Axis) -> impl Bundle {
                 max: 1.0,
                 value: 0.0,
             },
-            (SliderPrecision(2), SliderStep(0.01)),
+            (
+                SliderPrecision(2),
+                SliderStep(0.01),
+                slider_for_weapon_config,
+            ),
         ),
-        observe(build_on_slider_changed_observer(match axis {
-            Axis::X => |weapon_config: &mut WeaponConfig, slider_value| {
-                weapon_config.shot_origin.x = slider_value
-            },
-            Axis::Y => |weapon_config: &mut WeaponConfig, slider_value| {
-                weapon_config.shot_origin.y = slider_value
-            },
-            Axis::Z => |weapon_config: &mut WeaponConfig, slider_value| {
-                weapon_config.shot_origin.z = slider_value
-            },
-        })),
+        observe(build_on_slider_changed_observer()),
     )
 }
 
 #[allow(clippy::type_complexity)]
-fn build_on_slider_changed_observer<F>(
-    set_field: F,
-) -> impl Fn(
+fn build_on_slider_changed_observer() -> impl Fn(
     On<ValueChange<f32>>,
+    Query<&SliderForWeaponConfig>,
     Single<&GrabbedObject>,
     Query<&Weapon>,
     ResMut<Assets<WeaponConfig>>,
     Commands,
-)
-where
-    F: Fn(&mut WeaponConfig, f32),
-{
+) {
     move |value_change: On<ValueChange<f32>>,
+          query: Query<&SliderForWeaponConfig>,
           grabbed_object: Single<&GrabbedObject>,
           weapons: Query<&Weapon>,
           mut weapon_configs: ResMut<Assets<WeaponConfig>>,
@@ -195,7 +220,9 @@ where
             && let Ok(weapon) = weapons.get(grabbed_entity)
         {
             let weapon_config = weapon_configs.get_mut(weapon.config()).unwrap();
-            set_field(weapon_config, value_change.value);
+
+            let slider_for_weapon_config = query.get(value_change.event_target()).unwrap();
+            (slider_for_weapon_config.set_value)(weapon_config, value_change.value);
         };
 
         commands

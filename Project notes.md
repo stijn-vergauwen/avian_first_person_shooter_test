@@ -14,17 +14,23 @@ Info and documentation for development.
 - try out the 'AssetChanged' query filter to use in 'update_weapon_when_asset_modified' fn. This should filter weapons that reference the changed WeaponConfig.
     - might be simpler to write that checking AssetEvent messages, but haven't tried it yet.
 - object anchors lag a bit behind player movement, see if I can interpolate or exterpolate anchor values in calculation fn
+    - wait first try updating in FixedUpdate & using Avian's Position & Rotation components
 
 
 ## Backlog
 - add UI to inspector to configure shot origin position (at barrel end)
     - replace slider internal state with updating based on weaponconfig value
-        - try making a 'link to weapon config' component that stores 2 closures, a getter and a setter for the specific weapon config value that slider is for
+        - try making a 'link to weapon config' component that stores 2 closures, a getter and a setter for the specific weapon config value that slider is for -> done! :O
         - try refactoring so only 1 closure needs to be specified
+    - make event for WeaponConfigReloaded, trigger this whenever the asset is hot-reloaded. Update all inspector sliders on event
+    - make event for WeaponConfigModified, trigger this whenever the asset is modified in any way (both through inspector & hot-reload).
+    - rework inspector sliders to no longer update their own state when value changed, only set the Weaponconfig value. Then listen to WeaponConfigModified events instead of WeaponConfigReloaded events.
+        - now the sliders should always stay updated, without having multiple places where it's state is set.
     - rework slider ValueChanged observer to send an event that modifies WeaponConfig instead of modifying directly
     - start bullet from origin
     - start muzzle flash at origin
     - apply shot recoil from origin
+- when leaving inspector mode, save WeaponConfig values back to ron file
 - make state for inspector mode, this should be globally available for checking etc
 - add UI to inspector to configure aim down sight position
     - draw ray to visualize how player camera will be lined up
