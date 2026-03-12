@@ -6,6 +6,7 @@ use avian_first_person_shooter_test::{
     world::WorldPlugin,
 };
 use avian3d::prelude::*;
+use bevy::feathers::{FeathersPlugins, dark_theme::create_dark_theme, theme::UiTheme};
 #[allow(unused_imports)]
 use bevy::{prelude::*, window::WindowMode};
 
@@ -23,10 +24,12 @@ fn main() {
             PhysicsPlugins::default().with_collision_hooks::<PlayerWeaponCollisionHooks>(),
             PhysicsDebugPlugin,
             PhysicsPickingPlugin,
+            FeathersPlugins,
             WorldPlugin,
             UtilitiesPlugin,
             PlayerPlugin,
         ))
         .insert_resource(Time::from_hz(128_f64))
+        .insert_resource(UiTheme(create_dark_theme()))
         .run();
 }
