@@ -18,7 +18,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- add save button to inspector, onclick, save WeaponConfig values back to ron file
 - make Bevy state for inspector mode, this should be globally available for checking etc
 - add UI to inspector to configure aim down sight position
     - draw ray to visualize how player camera will be lined up

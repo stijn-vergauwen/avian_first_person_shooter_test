@@ -144,8 +144,8 @@ fn save_test_weapon_config(mut commands: Commands) {
         shot_origin: Vec3::new(0.0, 0.1, -0.2),
     };
 
-    commands.trigger(SaveWeaponConfig {
+    commands.trigger(SaveWeaponConfig::from_file_name(
         weapon_config,
-        file_name: String::from("test_weapon"),
-    });
+        "test weapon",
+    ));
 }

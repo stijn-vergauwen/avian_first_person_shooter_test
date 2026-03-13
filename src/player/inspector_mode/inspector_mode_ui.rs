@@ -15,6 +15,7 @@ use crate::{
         grabbable_object::{DefaultGrabOrientation, GrabOrientation},
         weapons::{
             Weapon, weapon_config::WeaponConfig, weapon_config_modified::WeaponConfigModified,
+            weapon_config_save::SaveWeaponConfig,
         },
     },
 };
@@ -111,6 +112,20 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                 observe(on_default_orientation_button_click),
                 children![Text::new("Reset orientation")],
             ));
+
+            overlay.spawn((
+                Button,
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(10.0),
+                    left: Val::Px(10.0),
+                    padding: UiRect::all(Val::Px(10.0)),
+                    ..default()
+                },
+                BackgroundColor(Color::from(SKY_600)),
+                observe(on_save_button_click),
+                children![Text::new("Save configuration")],
+            ));
         });
 }
 
@@ -196,6 +211,29 @@ fn on_default_orientation_button_click(
 
     orientation.0 = default.map_or(Quat::IDENTITY, |orientation| orientation.value());
 }
+
+fn on_save_button_click(
+    _: On<Pointer<Click>>,
+    grabbed_object: Single<&GrabbedObject>,
+    weapons: Query<&Weapon>,
+    weapon_configs: Res<Assets<WeaponConfig>>,
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+) {
+    if let Some(grabbed_entity) = grabbed_object.entity
+        && let Ok(weapon) = weapons.get(grabbed_entity)
+    {
+        let weapon_config = weapon_configs.get(weapon.config()).unwrap().clone();
+        let path = asset_server.get_path(weapon.config()).unwrap().to_string();
+
+        commands.trigger(SaveWeaponConfig {
+            path,
+            weapon_config,
+        });
+    };
+}
+
+// Gizmos
 
 fn draw_test_gizmo(
     mut gizmos: Gizmos,

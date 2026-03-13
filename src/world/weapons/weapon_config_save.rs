@@ -16,7 +16,16 @@ impl Plugin for WeaponConfigSavePlugin {
 #[derive(Event)]
 pub struct SaveWeaponConfig {
     pub weapon_config: WeaponConfig,
-    pub file_name: String,
+    pub path: String,
+}
+
+impl SaveWeaponConfig {
+    pub fn from_file_name(weapon_config: WeaponConfig, file_name: &str) -> Self {
+        Self {
+            weapon_config,
+            path: format!("weapons/{}.ron", file_name),
+        }
+    }
 }
 
 fn on_save_weapon_config(event: On<SaveWeaponConfig>) {
@@ -30,7 +39,7 @@ fn on_save_weapon_config(event: On<SaveWeaponConfig>) {
     )
     .unwrap();
 
-    let path = format!("assets/weapons/{}.ron", event.file_name);
+    let path_from_crate = format!("assets/{}", event.path);
 
-    fs::write(path, serialized).unwrap();
+    fs::write(path_from_crate, serialized).unwrap();
 }

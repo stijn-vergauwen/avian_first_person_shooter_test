@@ -5,7 +5,7 @@ mod spawner;
 pub mod weapon_config;
 mod weapon_config_loader;
 pub mod weapon_config_modified;
-mod weapon_config_save;
+pub mod weapon_config_save;
 
 use bevy::prelude::*;
 use bullet::BulletPlugin;
