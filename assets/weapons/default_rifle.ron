@@ -7,5 +7,5 @@ WeaponConfig(
     bullet_impact_force: 50.0,
     firing_type: Automatic(SecondsBetweenShots(0.12)),
     shot_origin: Vec3(0.0, 0.015, -0.42),
-    ads_position: Vec3(0.0, 0.06, 0.194),
+    ads_position: Vec3(-0.007, 0.053, 0.267),
 )

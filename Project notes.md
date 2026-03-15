@@ -23,6 +23,7 @@ Info and documentation for development.
 - add UI to inspector to configure empty casing ejection position & direction
     - add config for spin along each axis, and how randomized it should be
     - eject casing according to config
+- make object movement controllers stronger when aiming down sight. Atm weapon is way too unstable and doesn't fully reach ads position
 
 Visuals & polish:
 - remake world area's in Blender, this way the models can be more detailed, have more interesting shapes and it's easier to add colors
