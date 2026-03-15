@@ -20,17 +20,29 @@ use crate::{
     },
 };
 
-use super::ToggleInspectorMode;
+use super::InspectorModeState;
 
 pub struct InspectorModeUiPlugin;
 
 impl Plugin for InspectorModeUiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_inspector_overlay)
-            .add_systems(Update, draw_test_gizmo.in_set(DisplaySystems))
-            .add_observer(on_toggle_inspector_mode)
-            .add_observer(on_weapon_config_modified)
-            .add_observer(on_update_inspector_overlay);
+        app.add_systems(
+            OnEnter(InspectorModeState::Enabled),
+            on_inspector_mode_enabled,
+        )
+        .add_systems(
+            OnEnter(InspectorModeState::Disabled),
+            on_inspector_mode_disabled,
+        )
+        .add_systems(Startup, spawn_inspector_overlay)
+        .add_systems(
+            Update,
+            draw_test_gizmo
+                .in_set(DisplaySystems)
+                .run_if(in_state(InspectorModeState::Enabled)),
+        )
+        .add_observer(on_weapon_config_modified)
+        .add_observer(on_update_inspector_overlay);
     }
 }
 
@@ -129,27 +141,28 @@ fn spawn_inspector_overlay(mut commands: Commands) {
         });
 }
 
-fn on_toggle_inspector_mode(
-    event: On<ToggleInspectorMode>,
+fn on_inspector_mode_enabled(
     mut inspector_overlay_visibility: Single<&mut Visibility, With<InspectorOverlay>>,
     grabbed_object: Single<&GrabbedObject>,
     weapons: Query<&Weapon>,
     weapon_configs: Res<Assets<WeaponConfig>>,
     mut commands: Commands,
 ) {
-    **inspector_overlay_visibility = match event.set_inspecting {
-        true => Visibility::Visible,
-        false => Visibility::Hidden,
-    };
+    **inspector_overlay_visibility = Visibility::Visible;
 
-    if event.set_inspecting
-        && let Some(grabbed_entity) = grabbed_object.entity
+    if let Some(grabbed_entity) = grabbed_object.entity
         && let Ok(weapon) = weapons.get(grabbed_entity)
     {
         let weapon_config = weapon_configs.get(weapon.config()).unwrap().clone();
 
         commands.trigger(UpdateInspectorOverlay { weapon_config });
     };
+}
+
+fn on_inspector_mode_disabled(
+    mut inspector_overlay_visibility: Single<&mut Visibility, With<InspectorOverlay>>,
+) {
+    **inspector_overlay_visibility = Visibility::Hidden;
 }
 
 fn on_weapon_config_modified(

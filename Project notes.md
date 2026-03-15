@@ -18,7 +18,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- make Bevy state for inspector mode, this should be globally available for checking etc
 - add UI to inspector to configure aim down sight position
     - draw ray to visualize how player camera will be lined up
     - align player camera to ads position on ads (different per gun, should replace 'aim_down_sight' AnchorOffset)
