@@ -14,6 +14,8 @@ pub struct WeaponConfig {
     pub firing_type: FiringType,
     /// The position relative to the weapon where shots should be fired from.
     pub shot_origin: Vec3,
+    /// How the weapon should be held relative to the player camera when aiming down sight.
+    pub ads_position: Vec3,
 }
 
 #[derive(Reflect, Debug, Deserialize, Serialize, Clone, Copy)]

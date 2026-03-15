@@ -1,6 +1,6 @@
 use bevy::{
     color::palettes::{
-        css::{BLUE, GREEN, RED},
+        css::{BLUE, GREEN, LIME, RED},
         tailwind::{NEUTRAL_700, SKY_600},
     },
     feathers::controls::{SliderProps, slider},
@@ -77,39 +77,87 @@ fn spawn_inspector_overlay(mut commands: Commands) {
             },
         ))
         .with_children(|overlay| {
-            overlay.spawn((
-                Node {
-                    width: px(300.0),
-                    margin: UiRect::all(px(20.0)),
-                    padding: UiRect::all(px(10.0)),
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Column,
-                    row_gap: px(6.0),
-                    ..default()
-                },
-                BackgroundColor(Color::from(NEUTRAL_700)),
-                children![
-                    Text::new("Shot origin"),
-                    build_config_slider(SliderForWeaponConfig {
-                        get_value: Box::new(|weapon_config| weapon_config.shot_origin.x),
-                        set_value: Box::new(|weapon_config, slider_value| weapon_config
-                            .shot_origin
-                            .x = slider_value)
-                    }),
-                    build_config_slider(SliderForWeaponConfig {
-                        get_value: Box::new(|weapon_config| weapon_config.shot_origin.y),
-                        set_value: Box::new(|weapon_config, slider_value| weapon_config
-                            .shot_origin
-                            .y = slider_value)
-                    }),
-                    build_config_slider(SliderForWeaponConfig {
-                        get_value: Box::new(|weapon_config| weapon_config.shot_origin.z),
-                        set_value: Box::new(|weapon_config, slider_value| weapon_config
-                            .shot_origin
-                            .z = slider_value)
-                    }),
-                ],
-            ));
+            overlay
+                .spawn((
+                    Node {
+                        margin: UiRect::all(px(20.0)),
+                        padding: UiRect::all(px(10.0)),
+                        display: Display::Flex,
+                        flex_direction: FlexDirection::Column,
+                        row_gap: px(10.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::from(NEUTRAL_700)),
+                ))
+                .with_children(|config_menu| {
+                    config_menu.spawn((
+                        Node {
+                            width: px(300.0),
+                            display: Display::Flex,
+                            flex_direction: FlexDirection::Column,
+                            row_gap: px(6.0),
+                            ..default()
+                        },
+                        children![
+                            Text::new("Shot origin"),
+                            build_config_slider(SliderForWeaponConfig {
+                                get_value: Box::new(|weapon_config| weapon_config.shot_origin.x),
+                                set_value: Box::new(|weapon_config, slider_value| weapon_config
+                                    .shot_origin
+                                    .x =
+                                    slider_value)
+                            }),
+                            build_config_slider(SliderForWeaponConfig {
+                                get_value: Box::new(|weapon_config| weapon_config.shot_origin.y),
+                                set_value: Box::new(|weapon_config, slider_value| weapon_config
+                                    .shot_origin
+                                    .y =
+                                    slider_value)
+                            }),
+                            build_config_slider(SliderForWeaponConfig {
+                                get_value: Box::new(|weapon_config| weapon_config.shot_origin.z),
+                                set_value: Box::new(|weapon_config, slider_value| weapon_config
+                                    .shot_origin
+                                    .z =
+                                    slider_value)
+                            }),
+                        ],
+                    ));
+
+                    config_menu.spawn((
+                        Node {
+                            width: px(300.0),
+                            display: Display::Flex,
+                            flex_direction: FlexDirection::Column,
+                            row_gap: px(6.0),
+                            ..default()
+                        },
+                        children![
+                            Text::new("Aim down sight position"),
+                            build_config_slider(SliderForWeaponConfig {
+                                get_value: Box::new(|weapon_config| weapon_config.ads_position.x),
+                                set_value: Box::new(|weapon_config, slider_value| weapon_config
+                                    .ads_position
+                                    .x =
+                                    slider_value)
+                            }),
+                            build_config_slider(SliderForWeaponConfig {
+                                get_value: Box::new(|weapon_config| weapon_config.ads_position.y),
+                                set_value: Box::new(|weapon_config, slider_value| weapon_config
+                                    .ads_position
+                                    .y =
+                                    slider_value)
+                            }),
+                            build_config_slider(SliderForWeaponConfig {
+                                get_value: Box::new(|weapon_config| weapon_config.ads_position.z),
+                                set_value: Box::new(|weapon_config, slider_value| weapon_config
+                                    .ads_position
+                                    .z =
+                                    slider_value)
+                            }),
+                        ],
+                    ));
+                });
 
             overlay.spawn((
                 Button,
@@ -246,6 +294,26 @@ fn on_save_button_click(
     };
 }
 
+// Utilities
+
+fn build_config_slider(slider_for_weapon_config: SliderForWeaponConfig) -> impl Bundle {
+    (
+        slider(
+            SliderProps {
+                min: -1.0,
+                max: 1.0,
+                value: 0.0,
+            },
+            (
+                SliderPrecision(3),
+                SliderStep(0.001),
+                slider_for_weapon_config,
+            ),
+        ),
+        observe(on_slider_value_changed),
+    )
+}
+
 // Gizmos
 
 fn draw_test_gizmo(
@@ -263,10 +331,20 @@ fn draw_test_gizmo(
     };
 
     let weapon_config = weapon_configs.get(weapon.config()).unwrap();
+    let weapon_transform = global_transform.compute_transform();
 
-    let transform = global_transform.compute_transform()
-        * Transform::from_translation(weapon_config.shot_origin);
+    draw_forward_direction_arrow(
+        &mut gizmos,
+        calculate_config_transform(weapon_transform, weapon_config.shot_origin),
+    );
 
+    draw_ads_arrow(
+        &mut gizmos,
+        calculate_config_transform(weapon_transform, weapon_config.ads_position),
+    );
+}
+
+fn draw_forward_direction_arrow(gizmos: &mut Gizmos, transform: Transform) {
     gizmos.arrow(
         transform.translation,
         transform.transform_point(Vec3::NEG_Z * 0.5),
@@ -286,20 +364,21 @@ fn draw_test_gizmo(
     );
 }
 
-fn build_config_slider(slider_for_weapon_config: SliderForWeaponConfig) -> impl Bundle {
-    (
-        slider(
-            SliderProps {
-                min: -1.0,
-                max: 1.0,
-                value: 0.0,
-            },
-            (
-                SliderPrecision(3),
-                SliderStep(0.001),
-                slider_for_weapon_config,
-            ),
-        ),
-        observe(on_slider_value_changed),
-    )
+fn draw_ads_arrow(gizmos: &mut Gizmos, transform: Transform) {
+    gizmos.arrow(
+        transform.translation,
+        transform.transform_point(Vec3::NEG_Z * 0.5),
+        LIME,
+    );
+
+    gizmos.circle(transform.to_isometry(), 0.02, LIME);
+    gizmos.circle(
+        (transform * Transform::from_translation(Vec3::NEG_Z * 0.3)).to_isometry(),
+        0.02,
+        LIME,
+    );
+}
+
+fn calculate_config_transform(weapon_transform: Transform, offset_config: Vec3) -> Transform {
+    weapon_transform * Transform::from_translation(offset_config)
 }

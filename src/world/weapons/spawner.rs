@@ -142,6 +142,7 @@ fn save_test_weapon_config(mut commands: Commands) {
         bullet_impact_force: 50.0,
         firing_type: FiringType::Automatic(SecondsBetweenShots(0.15)),
         shot_origin: Vec3::new(0.0, 0.1, -0.2),
+        ads_position: Vec3::new(0.0, 0.2, 0.0),
     };
 
     commands.trigger(SaveWeaponConfig::from_file_name(

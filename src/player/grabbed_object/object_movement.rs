@@ -2,10 +2,15 @@ use avian3d::prelude::{ComputedMass, Forces, RigidBodyForces};
 use bevy::prelude::*;
 
 use crate::{
-    player::Player, utilities::system_sets::DataSystems, world::grabbable_object::GrabOrientation,
+    player::{Player, PlayerCamera},
+    utilities::system_sets::DataSystems,
+    world::{
+        grabbable_object::GrabOrientation,
+        weapons::{Weapon, weapon_config::WeaponConfig},
+    },
 };
 
-use super::GrabbedObject;
+use super::{GrabbedObject, object_anchor::ObjectAnchor};
 
 pub struct GrabbedObjectMovementPlugin;
 
@@ -26,6 +31,9 @@ fn update_grabbed_object_position(
     mut grabbed_object: Single<&mut GrabbedObject>,
     mut grabbable_objects: Query<(&GlobalTransform, Forces, &ComputedMass), Without<Player>>,
     mut player: Single<Forces, With<Player>>,
+    player_camera: Single<&GlobalTransform, With<PlayerCamera>>,
+    weapons: Query<&Weapon>,
+    weapon_configs: Res<Assets<WeaponConfig>>,
     time: Res<Time>,
 ) {
     let Some(grabbed_entity) = grabbed_object.entity else {
@@ -36,7 +44,21 @@ fn update_grabbed_object_position(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
-    let target_position = grabbed_object.current_anchor_value().translation.to_vec3();
+    let mut target_position = grabbed_object.current_anchor_value().translation.to_vec3();
+
+    // Override for calculating ads position
+    // TODO: remove this workaround once object anchors have been reworked
+    if grabbed_object.current_object_anchor == ObjectAnchor::AimDownSight {
+        let Ok(weapon) = weapons.get(grabbed_entity) else {
+            return;
+        };
+
+        let weapon_config = weapon_configs.get(weapon.config()).unwrap();
+        let camera_transform = *player_camera;
+
+        target_position = camera_transform.translation()
+            - camera_transform.rotation() * weapon_config.ads_position;
+    }
 
     grabbed_object
         .position_force_controller
@@ -75,9 +97,18 @@ fn update_grabbed_object_rotation(
 
     let player_rotation = grabbed_object.current_anchor_value().rotation;
 
+    let mut target_rotation = player_rotation * grab_orientation.value();
+
+    // Override for calculating ads rotation
+    // TODO: remove this workaround once object anchors have been reworked
+    if grabbed_object.current_object_anchor == ObjectAnchor::AimDownSight {
+        let z_rotation = grab_orientation.0.to_euler(EulerRot::YXZ).2;
+        target_rotation = player_rotation * Quat::from_axis_angle(Vec3::Z, z_rotation);
+    }
+
     grabbed_object
         .rotation_force_controller
-        .set_target_position(player_rotation * grab_orientation.value());
+        .set_target_position(target_rotation);
 
     let new_acceleration = grabbed_object
         .rotation_force_controller

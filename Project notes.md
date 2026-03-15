@@ -18,9 +18,8 @@ Info and documentation for development.
 
 
 ## Backlog
-- add UI to inspector to configure aim down sight position
-    - draw ray to visualize how player camera will be lined up
-    - align player camera to ads position on ads (different per gun, should replace 'aim_down_sight' AnchorOffset)
+- rework ObjectAnchor code to no longer need a workaround / override for the ads position
+- add reset button to inspector mode to reset to source file, remove the auto reset when leaving inspector mode
 - add UI to inspector to configure empty casing ejection position & direction
     - add config for spin along each axis, and how randomized it should be
     - eject casing according to config
