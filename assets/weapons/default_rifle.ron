@@ -17,4 +17,5 @@ WeaponConfig(
     ),
     shell_ejection_force: 4.0,
     shell_ejection_spin: Vec3(0.0, -23.115839, 0.0),
+    shell_ejection_randomness: 0.4,
 )

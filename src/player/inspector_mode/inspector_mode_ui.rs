@@ -263,6 +263,29 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                                     })
                                 }
                             ),
+                            (Text::new("Ejection randomness"), TextFont::from_font_size(16.0)),
+                            (
+                                slider(
+                                    SliderProps {
+                                        min: 0.0,
+                                        max: 1.0,
+                                        value: 0.0,
+                                    },
+                                    (
+                                        SliderPrecision(2),
+                                        SliderStep(0.01),
+                                        SliderForWeaponConfig {
+                                            get_value: Box::new(
+                                                |weapon_config| weapon_config.shell_ejection_randomness
+                                            ),
+                                            set_value: Box::new(|weapon_config, slider_value| {
+                                                weapon_config.shell_ejection_randomness = slider_value
+                                            })
+                                        },
+                                    ),
+                                ),
+                                observe(on_slider_value_changed),
+                            ),
                         ],
                     ));
                 });

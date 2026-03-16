@@ -26,6 +26,8 @@ pub struct WeaponConfig {
     pub shell_ejection_force: f32,
     /// The spin (Angular velocity) along each axis that ejected shells should have.
     pub shell_ejection_spin: Vec3,
+    /// How much the force, rotation & spin of ejected shells should be randomized.
+    pub shell_ejection_randomness: f32,
 }
 
 #[derive(Reflect, Debug, Deserialize, Serialize, Clone, Copy)]

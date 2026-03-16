@@ -18,7 +18,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- add config for randomness of shell ejection (force, rotation & spin)
 - rework ObjectAnchor code to no longer need a workaround / override for the ads position
 - make object movement controllers stronger when aiming down sight. Atm weapon is way too unstable and doesn't fully reach ads position
 

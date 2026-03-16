@@ -155,6 +155,7 @@ fn save_test_weapon_config(mut commands: Commands) {
         ),
         shell_ejection_force: 2.0,
         shell_ejection_spin: Vec3::new(0.0, 10.0, 0.0),
+        shell_ejection_randomness: 0.0,
     };
 
     commands.trigger(SaveWeaponConfig::from_file_name(

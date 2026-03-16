@@ -1,11 +1,16 @@
 use std::time::Duration;
 
 use avian3d::prelude::{
-    AngularVelocity, Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody, RigidBodyForces
+    AngularVelocity, Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody,
+    RigidBodyForces,
 };
 use bevy::{color::palettes::tailwind::YELLOW_700, prelude::*};
+use rand::random_range;
 
-use crate::{utilities::system_sets::DataSystems, world::grabbable_object::GrabbableObject};
+use crate::{
+    utilities::{euler_angle::EulerAngle, system_sets::DataSystems},
+    world::grabbable_object::GrabbableObject,
+};
 
 use super::{Weapon, bullet::SpawnBullet, weapon_config::WeaponConfig};
 
@@ -169,8 +174,28 @@ fn eject_casing(
         ..default()
     };
 
-    let shell_direction =
+    let mut shell_direction =
         weapon_rotation * weapon_config.shell_ejection_rotation.to_quat() * Dir3::NEG_Z;
+    let mut ejection_force = weapon_config.shell_ejection_force;
+    let mut shell_spin = weapon_rotation * weapon_config.shell_ejection_spin;
+
+    // Apply randomness
+    if weapon_config.shell_ejection_randomness > 0.0 {
+        let randomness = weapon_config.shell_ejection_randomness;
+        let range = -randomness..randomness;
+
+        let shell_direction_randomness = EulerAngle::from_radians(
+            random_range(range.clone()) * 0.2,
+            random_range(range.clone()) * 0.2,
+            0.0,
+            EulerRot::YXZ,
+        );
+        shell_direction = shell_direction_randomness.to_quat() * shell_direction;
+
+        ejection_force += random_range(range.clone()) * 2.0;
+
+        shell_spin.y += random_range(range.clone()) * 10.0;
+    }
 
     commands.spawn((
         GrabbableObject,
@@ -180,8 +205,8 @@ fn eject_casing(
         RigidBody::Dynamic,
         Collider::from(bullet_casing_assets.shape),
         Mass(0.4),
-        LinearVelocity(weapon_velocity.0 + shell_direction * weapon_config.shell_ejection_force),
+        LinearVelocity(weapon_velocity.0 + shell_direction * ejection_force),
         LinearDamping(0.05),
-        AngularVelocity(weapon_rotation * weapon_config.shell_ejection_spin),
+        AngularVelocity(shell_spin),
     ));
 }
