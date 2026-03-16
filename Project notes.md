@@ -19,7 +19,6 @@ Info and documentation for development.
 
 ## Backlog
 - rework ObjectAnchor code to no longer need a workaround / override for the ads position
-- add reset button to inspector mode to reset to source file, remove the auto reset when leaving inspector mode
 - add UI to inspector to configure empty casing ejection position & direction
     - add config for spin along each axis, and how randomized it should be
     - eject casing according to config

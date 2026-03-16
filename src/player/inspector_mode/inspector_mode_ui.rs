@@ -1,7 +1,7 @@
 use bevy::{
     color::palettes::{
         css::{BLUE, GREEN, LIME, RED},
-        tailwind::{NEUTRAL_700, SKY_600},
+        tailwind::{NEUTRAL_600, NEUTRAL_700, SKY_600},
     },
     feathers::controls::{SliderProps, slider},
     prelude::*,
@@ -186,6 +186,20 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                 observe(on_save_button_click),
                 children![Text::new("Save configuration")],
             ));
+
+            overlay.spawn((
+                Button,
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(60.0),
+                    left: Val::Px(10.0),
+                    padding: UiRect::all(Val::Px(10.0)),
+                    ..default()
+                },
+                BackgroundColor(Color::from(NEUTRAL_600)),
+                observe(on_reset_config_button_click),
+                children![Text::new("Reset configuration")],
+            ));
         });
 }
 
@@ -291,6 +305,20 @@ fn on_save_button_click(
             path,
             weapon_config,
         });
+    };
+}
+
+fn on_reset_config_button_click(
+    _: On<Pointer<Click>>,
+    grabbed_object: Single<&GrabbedObject>,
+    weapons: Query<&Weapon>,
+    asset_server: Res<AssetServer>,
+) {
+    if let Some(grabbed_entity) = grabbed_object.entity
+        && let Ok(weapon) = weapons.get(grabbed_entity)
+    {
+        let path = asset_server.get_path(weapon.config()).unwrap();
+        asset_server.reload(path);
     };
 }
 

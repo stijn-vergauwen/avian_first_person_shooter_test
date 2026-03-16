@@ -12,7 +12,7 @@ use crate::{
         grabbed_object::{GrabbedObject, UpdatePlayerCharacterActive, object_anchor::ObjectAnchor},
     },
     utilities::system_sets::InputSystems,
-    world::{grabbable_object::GrabOrientation, weapons::Weapon},
+    world::grabbable_object::GrabOrientation,
 };
 
 pub struct InspectorModePlugin;
@@ -87,10 +87,8 @@ fn on_inspector_mode_enabled(
 fn on_inspector_mode_disabled(
     mut grabbed_object: Single<&mut GrabbedObject>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-    mut commands: Commands,
     player_entity: Single<Entity, With<Player>>,
-    weapons: Query<&Weapon>,
-    asset_server: Res<AssetServer>,
+    mut commands: Commands,
 ) {
     grabbed_object.current_object_anchor = ObjectAnchor::Default;
     cursor_options.visible = false;
@@ -99,13 +97,6 @@ fn on_inspector_mode_disabled(
     commands.trigger(UpdatePlayerCharacterActive {
         entity: *player_entity,
     });
-
-    if let Some(grabbed_entity) = grabbed_object.entity
-        && let Ok(weapon) = weapons.get(grabbed_entity)
-    {
-        let path = asset_server.get_path(weapon.config()).unwrap();
-        asset_server.reload(path);
-    };
 }
 
 fn set_cursor_icon_on_pointer_event<E: Clone + Reflect + std::fmt::Debug>(
