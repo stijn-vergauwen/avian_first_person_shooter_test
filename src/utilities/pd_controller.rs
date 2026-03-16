@@ -57,6 +57,10 @@ where
         }
     }
 
+    pub fn set_config(&mut self, config: PdControllerConfig) {
+        self.config = config;
+    }
+
     pub fn target_position(&self) -> T {
         self.target_position
     }

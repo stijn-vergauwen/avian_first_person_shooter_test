@@ -7,7 +7,7 @@ WeaponConfig(
     bullet_impact_force: 50.0,
     firing_type: Automatic(SecondsBetweenShots(0.12)),
     shot_origin: Vec3(0.0, 0.015, -0.42),
-    ads_position: Vec3(-0.007, 0.053, 0.3),
+    ads_position: Vec3(-0.007, 0.062, 0.266),
     shell_ejection_position: Vec3(0.03, 0.027, 0.067),
     shell_ejection_rotation: EulerAngle(
         x: Angle(0.41865212),

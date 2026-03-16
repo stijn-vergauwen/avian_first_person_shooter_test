@@ -36,6 +36,9 @@ pub struct GrabbedObject {
     pub entity: Option<Entity>,
     position_force_controller: PdController<Vec3>,
     rotation_force_controller: QuaternionPdController,
+    position_controller_config: PdControllerConfig,
+    rotation_controller_config: PdControllerConfig,
+    ads_controller_config: PdControllerConfig,
     // TODO: split anchor values to new component
     anchor_values: CalculatedAnchorValues,
     pub current_object_anchor: ObjectAnchor,
@@ -45,6 +48,7 @@ impl GrabbedObject {
     pub fn new(
         position_force_controller_config: PdControllerConfig,
         rotation_force_controller_config: PdControllerConfig,
+        ads_config: PdControllerConfig,
     ) -> Self {
         Self {
             entity: None,
@@ -52,6 +56,9 @@ impl GrabbedObject {
             rotation_force_controller: QuaternionPdController::new(
                 rotation_force_controller_config,
             ),
+            position_controller_config: position_force_controller_config,
+            rotation_controller_config: rotation_force_controller_config,
+            ads_controller_config: ads_config,
             anchor_values: CalculatedAnchorValues::default(),
             current_object_anchor: ObjectAnchor::Default,
         }
@@ -60,6 +67,20 @@ impl GrabbedObject {
     fn current_anchor_value(&self) -> Isometry3d {
         self.anchor_values
             .get_from_object_anchor(self.current_object_anchor)
+    }
+
+    pub fn switch_controller_config(&mut self, use_ads_config: bool) {
+        self.position_force_controller
+            .set_config(match use_ads_config {
+                true => self.ads_controller_config,
+                false => self.position_controller_config,
+            });
+
+        self.rotation_force_controller
+            .set_config(match use_ads_config {
+                true => self.ads_controller_config,
+                false => self.rotation_controller_config,
+            });
     }
 }
 

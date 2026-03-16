@@ -44,6 +44,10 @@ impl QuaternionPdController {
         }
     }
 
+    pub fn set_config(&mut self, config: PdControllerConfig) {
+        self.config = config;
+    }
+
     /// Returns the controllers current 'position' value.
     pub fn position(&self) -> Quat {
         self.values.position

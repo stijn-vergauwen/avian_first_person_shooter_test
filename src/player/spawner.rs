@@ -42,6 +42,7 @@ fn spawn_player(
             GrabbedObject::new(
                 PdControllerConfig::from_parameters(2.5, 1.0, 1.5),
                 PdControllerConfig::from_parameters(2.0, 0.6, 1.0),
+                PdControllerConfig::from_parameters(4.0, 1.2, 1.0),
             ),
             Visibility::Inherited,
             Transform::from_translation(start_position),

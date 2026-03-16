@@ -62,4 +62,6 @@ fn aim_down_sight(
             (ObjectAnchor::AimDownSight, false) => ObjectAnchor::Default,
             _ => return,
         };
+
+    grabbed_object.switch_controller_config(set_is_aiming);
 }

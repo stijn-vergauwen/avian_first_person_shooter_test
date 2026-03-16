@@ -19,7 +19,6 @@ Info and documentation for development.
 
 ## Backlog
 - rework ObjectAnchor code to no longer need a workaround / override for the ads position
-- make object movement controllers stronger when aiming down sight. Atm weapon is way too unstable and doesn't fully reach ads position
 
 Visuals & polish:
 - remake world area's in Blender, this way the models can be more detailed, have more interesting shapes and it's easier to add colors
