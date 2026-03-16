@@ -3,7 +3,10 @@ use std::{fs, time::Duration};
 use avian3d::prelude::{Collider, Mass, MaxAngularSpeed, RigidBody};
 use bevy::prelude::*;
 
-use crate::world::{TABLE_POSITION, grabbable_object::GrabbableObject};
+use crate::{
+    utilities::{angle::Angle, euler_angle::EulerAngle},
+    world::{TABLE_POSITION, grabbable_object::GrabbableObject},
+};
 
 use super::{
     Weapon,
@@ -143,6 +146,15 @@ fn save_test_weapon_config(mut commands: Commands) {
         firing_type: FiringType::Automatic(SecondsBetweenShots(0.15)),
         shot_origin: Vec3::new(0.0, 0.1, -0.2),
         ads_position: Vec3::new(0.0, 0.2, 0.0),
+        shell_ejection_position: Vec3::new(0.1, 0.0, 0.0),
+        shell_ejection_rotation: EulerAngle::new(
+            Angle::ZERO,
+            Angle::ZERO,
+            Angle::from_degrees(20.0),
+            EulerRot::YXZ,
+        ),
+        shell_ejection_force: 2.0,
+        shell_ejection_spin: Vec3::new(0.0, 10.0, 0.0),
     };
 
     commands.trigger(SaveWeaponConfig::from_file_name(

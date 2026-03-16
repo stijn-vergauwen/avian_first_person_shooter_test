@@ -8,4 +8,13 @@ WeaponConfig(
     firing_type: SemiAutomatic,
     shot_origin: Vec3(0.0, 0.015, -0.42),
     ads_position: Vec3(-0.06, -0.016, 0.26),
+    shell_ejection_position: Vec3(0.1, 0.0, 0.0),
+    shell_ejection_rotation: EulerAngle(
+        x: Angle(0.34906584),
+        y: Angle(0.0),
+        z: Angle(0.0),
+        order: YXZ,
+    ),
+    shell_ejection_force: 2.0,
+    shell_ejection_spin: Vec3(0.0, 10.0, 0.0),
 )

@@ -13,7 +13,7 @@ use super::GrabbedObject;
 
 const ANCHOR_OFFSETS: AnchorOffsets = AnchorOffsets {
     inspecting: Vec3::new(0.0, 0.0, -1.2),
-    default: Vec3::new(0.3, -0.3, -1.0),
+    default: Vec3::new(0.3, -0.15, -1.0),
     aim_down_sight: Vec3::new(0.01, -0.04, -0.25),
 };
 

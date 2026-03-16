@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use avian3d::prelude::{
-    Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody, RigidBodyForces,
+    AngularVelocity, Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody, RigidBodyForces
 };
 use bevy::{color::palettes::tailwind::YELLOW_700, prelude::*};
 
@@ -152,19 +152,25 @@ fn eject_casing(
     shoot_weapon: On<ShootWeapon>,
     weapons: Query<(&Weapon, &GlobalTransform, &LinearVelocity)>,
     bullet_casing_assets: Res<BulletCasingAssets>,
+    weapon_configs: Res<Assets<WeaponConfig>>,
     mut commands: Commands,
 ) {
-    let (_weapon, weapon_transform, weapon_velocity) = weapons
+    let (weapon, weapon_transform, weapon_velocity) = weapons
         .get(shoot_weapon.entity)
         .expect("ShootWeapon should always point to weapon entity.");
 
-    let ejection_offset = Vec3::new(0.1, 0.0, 0.0);
+    let weapon_config = weapon_configs.get(weapon.config()).unwrap();
+    let weapon_rotation = weapon_transform.rotation();
+
+    let ejection_offset = weapon_config.shell_ejection_position;
     let casing_transform = Transform {
-        translation: weapon_transform.translation() + weapon_transform.rotation() * ejection_offset,
-        rotation: weapon_transform.rotation()
-            * Quat::from_axis_angle(Vec3::NEG_Z, -20f32.to_radians()),
+        translation: weapon_transform.translation() + weapon_rotation * ejection_offset,
+        rotation: weapon_rotation,
         ..default()
     };
+
+    let shell_direction =
+        weapon_rotation * weapon_config.shell_ejection_rotation.to_quat() * Dir3::NEG_Z;
 
     commands.spawn((
         GrabbableObject,
@@ -174,7 +180,8 @@ fn eject_casing(
         RigidBody::Dynamic,
         Collider::from(bullet_casing_assets.shape),
         Mass(0.4),
-        LinearVelocity(weapon_velocity.0 + casing_transform.right() * 2.0),
+        LinearVelocity(weapon_velocity.0 + shell_direction * weapon_config.shell_ejection_force),
         LinearDamping(0.05),
+        AngularVelocity(weapon_rotation * weapon_config.shell_ejection_spin),
     ));
 }

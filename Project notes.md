@@ -18,10 +18,8 @@ Info and documentation for development.
 
 
 ## Backlog
+- add config for randomness of shell ejection (force, rotation & spin)
 - rework ObjectAnchor code to no longer need a workaround / override for the ads position
-- add UI to inspector to configure empty casing ejection position & direction
-    - add config for spin along each axis, and how randomized it should be
-    - eject casing according to config
 - make object movement controllers stronger when aiming down sight. Atm weapon is way too unstable and doesn't fully reach ads position
 
 Visuals & polish:

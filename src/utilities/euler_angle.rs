@@ -1,10 +1,11 @@
 use crate::utilities::angle::Angle;
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::ops::{Add, AddAssign, Div, Mul, Sub};
 
 // TODO: add conversions to & from Quaterions
 
-#[derive(Copy, Clone, Default, Debug, PartialEq)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Reflect, Deserialize, Serialize)]
 pub struct EulerAngle {
     /// The rotation around the X axis.
     pub x: Angle,
@@ -22,6 +23,25 @@ impl EulerAngle {
 
     pub fn from_radians(x: f32, y: f32, z: f32, order: EulerRot) -> Self {
         Self::new(Angle(x), Angle(y), Angle(z), order)
+    }
+
+    pub fn to_quat(&self) -> Quat {
+        let as_tuple = match self.order {
+            EulerRot::ZYX => (self.z, self.y, self.x),
+            EulerRot::ZXY => (self.z, self.x, self.y),
+            EulerRot::YXZ => (self.y, self.x, self.z),
+            EulerRot::YZX => (self.y, self.z, self.x),
+            EulerRot::XYZ => (self.x, self.y, self.z),
+            EulerRot::XZY => (self.x, self.z, self.y),
+            _ => panic!("EulerRot type not supported!"),
+        };
+
+        Quat::from_euler(
+            self.order,
+            as_tuple.0.radians(),
+            as_tuple.1.radians(),
+            as_tuple.2.radians(),
+        )
     }
 }
 

@@ -1,11 +1,15 @@
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
 use std::ops::{Add, AddAssign, Div, Mul, Range, Sub};
 
+use bevy::reflect::Reflect;
+use serde::{Deserialize, Serialize};
+
 /// An angle in radians.
 ///
 /// - In the context of Bevy, this angle represents a clockwise rotation along an axis.
 /// - Radians and degrees both go in the same direction.
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default, Reflect, Deserialize, Serialize)]
+
 pub struct Angle(pub f32);
 
 #[allow(unused)]

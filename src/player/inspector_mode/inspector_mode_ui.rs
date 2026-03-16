@@ -1,6 +1,6 @@
 use bevy::{
     color::palettes::{
-        css::{BLUE, GREEN, LIME, RED},
+        css::{BLUE, GREEN, LIME, ORANGE, RED},
         tailwind::{NEUTRAL_600, NEUTRAL_700, SKY_600},
     },
     feathers::controls::{SliderProps, slider},
@@ -10,7 +10,7 @@ use bevy::{
 
 use crate::{
     player::grabbed_object::GrabbedObject,
-    utilities::system_sets::DisplaySystems,
+    utilities::{angle::Angle, system_sets::DisplaySystems},
     world::{
         grabbable_object::{DefaultGrabOrientation, GrabOrientation},
         weapons::{
@@ -155,6 +155,114 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                                     .z =
                                     slider_value)
                             }),
+                        ],
+                    ));
+
+                    config_menu.spawn((
+                        Node {
+                            width: px(300.0),
+                            display: Display::Flex,
+                            flex_direction: FlexDirection::Column,
+                            row_gap: px(6.0),
+                            ..default()
+                        },
+                        children![
+                            Text::new("Shell ejection"),
+                            (Text::new("Position"), TextFont::from_font_size(16.0),),
+                            build_config_slider(SliderForWeaponConfig {
+                                get_value: Box::new(|weapon_config| weapon_config
+                                    .shell_ejection_position
+                                    .x),
+                                set_value: Box::new(|weapon_config, slider_value| weapon_config
+                                    .shell_ejection_position
+                                    .x =
+                                    slider_value)
+                            }),
+                            build_config_slider(SliderForWeaponConfig {
+                                get_value: Box::new(|weapon_config| weapon_config
+                                    .shell_ejection_position
+                                    .y),
+                                set_value: Box::new(|weapon_config, slider_value| weapon_config
+                                    .shell_ejection_position
+                                    .y =
+                                    slider_value)
+                            }),
+                            build_config_slider(SliderForWeaponConfig {
+                                get_value: Box::new(|weapon_config| weapon_config
+                                    .shell_ejection_position
+                                    .z),
+                                set_value: Box::new(|weapon_config, slider_value| weapon_config
+                                    .shell_ejection_position
+                                    .z =
+                                    slider_value)
+                            }),
+                            (Text::new("Rotation (Y,X)"), TextFont::from_font_size(16.0),),
+                            build_config_slider_with_range(
+                                160.0,
+                                SliderForWeaponConfig {
+                                    get_value: Box::new(|weapon_config| weapon_config
+                                        .shell_ejection_rotation
+                                        .y
+                                        .as_degrees()),
+                                    set_value: Box::new(|weapon_config, slider_value| {
+                                        weapon_config.shell_ejection_rotation.y =
+                                            Angle::from_degrees(slider_value)
+                                    })
+                                }
+                            ),
+                            build_config_slider_with_range(
+                                160.0,
+                                SliderForWeaponConfig {
+                                    get_value: Box::new(|weapon_config| weapon_config
+                                        .shell_ejection_rotation
+                                        .x
+                                        .as_degrees()),
+                                    set_value: Box::new(|weapon_config, slider_value| {
+                                        weapon_config.shell_ejection_rotation.x =
+                                            Angle::from_degrees(slider_value)
+                                    })
+                                }
+                            ),
+                            (Text::new("Ejection force"), TextFont::from_font_size(16.0)),
+                            (
+                                slider(
+                                    SliderProps {
+                                        min: 0.0,
+                                        max: 8.0,
+                                        value: 0.0,
+                                    },
+                                    (
+                                        SliderPrecision(1),
+                                        SliderStep(0.1),
+                                        SliderForWeaponConfig {
+                                            get_value: Box::new(
+                                                |weapon_config| weapon_config.shell_ejection_force
+                                            ),
+                                            set_value: Box::new(|weapon_config, slider_value| {
+                                                weapon_config.shell_ejection_force = slider_value
+                                            })
+                                        },
+                                    ),
+                                ),
+                                observe(on_slider_value_changed),
+                            ),
+                            (
+                                Text::new("Spin (Y axis, turns/s)"),
+                                TextFont::from_font_size(16.0),
+                            ),
+                            build_config_slider_with_range(
+                                5.0,
+                                SliderForWeaponConfig {
+                                    get_value: Box::new(|weapon_config| Angle(
+                                        weapon_config.shell_ejection_spin.y
+                                    )
+                                    .as_turns()),
+                                    set_value: Box::new(|weapon_config, slider_value| {
+                                        weapon_config.shell_ejection_spin.y =
+                                            Angle::from_turns(slider_value).radians()
+                                    })
+                                }
+                            ),
                         ],
                     ));
                 });
@@ -342,6 +450,27 @@ fn build_config_slider(slider_for_weapon_config: SliderForWeaponConfig) -> impl 
     )
 }
 
+fn build_config_slider_with_range(
+    range: f32,
+    slider_for_weapon_config: SliderForWeaponConfig,
+) -> impl Bundle {
+    (
+        slider(
+            SliderProps {
+                min: -range,
+                max: range,
+                value: 0.0,
+            },
+            (
+                SliderPrecision(3),
+                SliderStep(0.001),
+                slider_for_weapon_config,
+            ),
+        ),
+        observe(on_slider_value_changed),
+    )
+}
+
 // Gizmos
 
 fn draw_test_gizmo(
@@ -369,6 +498,13 @@ fn draw_test_gizmo(
     draw_ads_arrow(
         &mut gizmos,
         calculate_config_transform(weapon_transform, weapon_config.ads_position),
+    );
+
+    draw_shell_ejection_arrow(
+        &mut gizmos,
+        weapon_transform
+            * Transform::from_translation(weapon_config.shell_ejection_position)
+                .with_rotation(weapon_config.shell_ejection_rotation.to_quat()),
     );
 }
 
@@ -405,6 +541,16 @@ fn draw_ads_arrow(gizmos: &mut Gizmos, transform: Transform) {
         0.02,
         LIME,
     );
+}
+
+fn draw_shell_ejection_arrow(gizmos: &mut Gizmos, transform: Transform) {
+    gizmos.arrow(
+        transform.translation,
+        transform.transform_point(Vec3::NEG_Z * 0.2),
+        ORANGE,
+    );
+
+    gizmos.rect(transform.to_isometry(), Vec2::new(0.1, 0.05), ORANGE);
 }
 
 fn calculate_config_transform(weapon_transform: Transform, offset_config: Vec3) -> Transform {
