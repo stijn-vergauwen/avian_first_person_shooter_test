@@ -1,9 +1,7 @@
-pub mod object_anchor;
 mod object_movement;
 
 use avian3d::prelude::TransformInterpolation;
 use bevy::prelude::*;
-use object_anchor::{CalculatedAnchorValues, ObjectAnchor, ObjectAnchorPlugin};
 use object_movement::GrabbedObjectMovementPlugin;
 
 use crate::{
@@ -13,25 +11,31 @@ use crate::{
         system_sets::InputSystems,
     },
     world::{
-        character::Character, grabbable_object::GrabOrientation,
+        character::CharacterHead, grabbable_object::GrabOrientation,
         interaction_target::PlayerInteractionTarget,
     },
 };
+
+const PRIMARY_HAND_OFFSET: Vec3 = Vec3::new(0.3, -0.15, -1.0);
+const INSPECTING_OFFSET: Vec3 = Vec3::new(0.0, 0.0, -1.2);
 
 pub struct GrabbedObjectPlugin;
 
 impl Plugin for GrabbedObjectPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((GrabbedObjectMovementPlugin, ObjectAnchorPlugin))
+        app.add_plugins(GrabbedObjectMovementPlugin).insert_resource(GrabbedObject::new(
+                PdControllerConfig::from_parameters(2.5, 1.0, 1.5),
+                PdControllerConfig::from_parameters(2.0, 0.6, 1.0),
+                PdControllerConfig::from_parameters(4.0, 1.2, 1.0),
+            )).insert_resource(HoldPosition::PrimaryHand)
             .add_systems(Update, grab_object_on_keypress.in_set(InputSystems))
-            .add_observer(on_update_player_character_active)
             .add_observer(on_grab_object)
             .add_observer(on_drop_object);
     }
 }
 
 /// Holds data on the object held by the player.
-#[derive(Component, Clone)]
+#[derive(Resource, Clone)]
 pub struct GrabbedObject {
     pub entity: Option<Entity>,
     position_force_controller: PdController<Vec3>,
@@ -39,9 +43,6 @@ pub struct GrabbedObject {
     position_controller_config: PdControllerConfig,
     rotation_controller_config: PdControllerConfig,
     ads_controller_config: PdControllerConfig,
-    // TODO: split anchor values to new component
-    anchor_values: CalculatedAnchorValues,
-    pub current_object_anchor: ObjectAnchor,
 }
 
 impl GrabbedObject {
@@ -59,14 +60,7 @@ impl GrabbedObject {
             position_controller_config: position_force_controller_config,
             rotation_controller_config: rotation_force_controller_config,
             ads_controller_config: ads_config,
-            anchor_values: CalculatedAnchorValues::default(),
-            current_object_anchor: ObjectAnchor::Default,
         }
-    }
-
-    fn current_anchor_value(&self) -> Isometry3d {
-        self.anchor_values
-            .get_from_object_anchor(self.current_object_anchor)
     }
 
     pub fn switch_controller_config(&mut self, use_ads_config: bool) {
@@ -84,6 +78,17 @@ impl GrabbedObject {
     }
 }
 
+/// How the currently grabbed object should be held
+#[derive(Resource, Clone, Copy, PartialEq, Eq)]
+pub enum HoldPosition {
+    /// Hold object to right side of player.
+    PrimaryHand,
+    /// Hold object in front of player to inspect.
+    Inspecting,
+    /// Hold weapon in front of player to aim.
+    AimDownSight,
+}
+
 #[derive(EntityEvent, Clone, Copy)]
 struct GrabObject {
     entity: Entity,
@@ -94,27 +99,9 @@ struct DropObject {
     entity: Entity,
 }
 
-// TODO: either automatically update 'character active' value without needing an event, or rework event to 'set player active'. Current event is unclear in purpose and when to use
-#[derive(EntityEvent, Copy, Clone)]
-pub struct UpdatePlayerCharacterActive {
-    pub entity: Entity,
-}
-
-fn on_update_player_character_active(
-    update_player_character_active: On<UpdatePlayerCharacterActive>,
-    mut characters_query: Query<&mut Character>,
-    grabbed_object: Single<&GrabbedObject>,
-) {
-    let Ok(mut character) = characters_query.get_mut(update_player_character_active.entity) else {
-        return;
-    };
-
-    character.is_active = grabbed_object.current_object_anchor != ObjectAnchor::Inspecting;
-}
-
 fn grab_object_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    grabbed_object: Single<&GrabbedObject>,
+    grabbed_object: Res<GrabbedObject>,
     player_interaction_target: Res<PlayerInteractionTarget>,
     mut commands: Commands,
 ) {
@@ -131,8 +118,10 @@ fn grab_object_on_keypress(
 
 fn on_grab_object(
     event: On<GrabObject>,
-    mut grabbed_object: Single<&mut GrabbedObject>,
     grab_orientations: Query<&GrabOrientation>,
+    player_head: Single<&GlobalTransform, With<CharacterHead>>,
+    mut grabbed_object: ResMut<GrabbedObject>,
+    mut hold_position: ResMut<HoldPosition>,
     mut commands: Commands,
 ) {
     let Ok(grab_orientation) = grab_orientations.get(event.entity) else {
@@ -144,19 +133,23 @@ fn on_grab_object(
     // Add interpolation
     commands.entity(event.entity).insert(TransformInterpolation);
 
+    // Reset hold position
+    *hold_position = HoldPosition::PrimaryHand;
+
     // Set force controllers to new start values
-    let target_isometry = grabbed_object.current_anchor_value();
     grabbed_object
+        
         .position_force_controller
-        .set_start_position(target_isometry.translation.into());
+        .set_start_position(player_head.transform_point(PRIMARY_HAND_OFFSET));
     grabbed_object
+        
         .rotation_force_controller
-        .set_start_position(target_isometry.rotation * grab_orientation.value());
+        .set_start_position(player_head.rotation() * grab_orientation.value());
 }
 
 fn on_drop_object(
     event: On<DropObject>,
-    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut grabbed_object: ResMut<GrabbedObject>,
     mut commands: Commands,
 ) {
     grabbed_object.entity = None;

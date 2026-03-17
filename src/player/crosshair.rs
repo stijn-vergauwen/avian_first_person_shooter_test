@@ -56,7 +56,7 @@ fn spawn_crosshair(mut commands: Commands) {
 fn update_crosshair_color(
     player_interaction_target: Res<PlayerInteractionTarget>,
     grabbable_query: Query<&GrabbableObject>,
-    grabbed_object: Single<&GrabbedObject>,
+    grabbed_object: Res<GrabbedObject>,
     mut crosshair_color: Single<&mut BorderColor, With<Crosshair>>,
 ) {
     let new_color = match player_interaction_target.current_target() {

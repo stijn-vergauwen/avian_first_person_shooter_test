@@ -11,7 +11,7 @@ use crate::{
 #[derive(SystemParam)]
 pub struct PlayerWeaponCollisionHooks<'w, 's> {
     player_head_mesh: Single<'w, 's, Entity, With<PlayerHeadMesh>>,
-    grabbed_object: Single<'w, 's, &'static GrabbedObject>,
+    grabbed_object: Res<'w, GrabbedObject>,
     weapons_query: Query<'w, 's, &'static Weapon>,
 }
 

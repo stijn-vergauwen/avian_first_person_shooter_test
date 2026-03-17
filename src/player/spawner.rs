@@ -2,11 +2,7 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::CYAN_700, core_pipeline::prepass::DepthPrepass, prelude::*};
 
 use crate::{
-    player::{
-        MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera, PlayerHeadMesh,
-        grabbed_object::GrabbedObject,
-    },
-    utilities::pd_controller::config::PdControllerConfig,
+    player::{MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera, PlayerHeadMesh},
     world::{
         character::{Character, CharacterHead, CharacterNeck},
         desired_movement::DesiredMovement,
@@ -39,11 +35,6 @@ fn spawn_player(
         .spawn((
             Player,
             Character { is_active: true },
-            GrabbedObject::new(
-                PdControllerConfig::from_parameters(2.5, 1.0, 1.5),
-                PdControllerConfig::from_parameters(2.0, 0.6, 1.0),
-                PdControllerConfig::from_parameters(4.0, 1.2, 1.0),
-            ),
             Visibility::Inherited,
             Transform::from_translation(start_position),
             RigidBody::Dynamic,

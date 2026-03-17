@@ -336,9 +336,9 @@ fn spawn_inspector_overlay(mut commands: Commands) {
 
 fn on_inspector_mode_enabled(
     mut inspector_overlay_visibility: Single<&mut Visibility, With<InspectorOverlay>>,
-    grabbed_object: Single<&GrabbedObject>,
     weapons: Query<&Weapon>,
     weapon_configs: Res<Assets<WeaponConfig>>,
+    grabbed_object: Res<GrabbedObject>,
     mut commands: Commands,
 ) {
     **inspector_overlay_visibility = Visibility::Visible;
@@ -360,7 +360,7 @@ fn on_inspector_mode_disabled(
 
 fn on_weapon_config_modified(
     weapon_config_modified: On<WeaponConfigModified>,
-    grabbed_object: Single<&GrabbedObject>,
+    grabbed_object: Res<GrabbedObject>,
     mut commands: Commands,
 ) {
     if grabbed_object.entity.is_some_and(|grabbed_entity| {
@@ -391,9 +391,9 @@ fn on_update_inspector_overlay(
 
 fn on_slider_value_changed(
     value_change: On<ValueChange<f32>>,
-    grabbed_object: Single<&GrabbedObject>,
     weapons: Query<&Weapon>,
     sliders: Query<&SliderForWeaponConfig>,
+    grabbed_object: Res<GrabbedObject>,
     mut weapon_configs: ResMut<Assets<WeaponConfig>>,
 ) {
     if let Some(grabbed_entity) = grabbed_object.entity
@@ -409,7 +409,7 @@ fn on_slider_value_changed(
 fn on_default_orientation_button_click(
     _: On<Pointer<Click>>,
     mut grab_orientations: Query<(&mut GrabOrientation, Option<&DefaultGrabOrientation>)>,
-    grabbed_object: Single<&GrabbedObject>,
+    grabbed_object: Res<GrabbedObject>,
 ) {
     let (mut orientation, default) = grab_orientations
         .get_mut(grabbed_object.entity.unwrap())
@@ -420,7 +420,7 @@ fn on_default_orientation_button_click(
 
 fn on_save_button_click(
     _: On<Pointer<Click>>,
-    grabbed_object: Single<&GrabbedObject>,
+    grabbed_object: Res<GrabbedObject>,
     weapons: Query<&Weapon>,
     weapon_configs: Res<Assets<WeaponConfig>>,
     asset_server: Res<AssetServer>,
@@ -441,7 +441,7 @@ fn on_save_button_click(
 
 fn on_reset_config_button_click(
     _: On<Pointer<Click>>,
-    grabbed_object: Single<&GrabbedObject>,
+    grabbed_object: Res<GrabbedObject>,
     weapons: Query<&Weapon>,
     asset_server: Res<AssetServer>,
 ) {
@@ -498,7 +498,7 @@ fn build_config_slider_with_range(
 
 fn draw_test_gizmo(
     mut gizmos: Gizmos,
-    grabbed_object: Single<&GrabbedObject>,
+    grabbed_object: Res<GrabbedObject>,
     weapons: Query<(&Weapon, &GlobalTransform)>,
     weapon_configs: Res<Assets<WeaponConfig>>,
 ) {

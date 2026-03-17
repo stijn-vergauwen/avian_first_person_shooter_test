@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-use super::grabbed_object::object_anchor::ObjectAnchor;
+use super::grabbed_object::HoldPosition;
 
 pub struct GrabbedWeaponPlugin;
 
@@ -24,11 +24,12 @@ impl Plugin for GrabbedWeaponPlugin {
 
 fn toggle_weapon_trigger(
     mouse_input: Res<ButtonInput<MouseButton>>,
-    grabbed_object: Single<&GrabbedObject>,
+    grabbed_object: Res<GrabbedObject>,
+    hold_position: Res<HoldPosition>,
     weapons_query: Query<&Weapon>,
     mut commands: Commands,
 ) {
-    if grabbed_object.current_object_anchor != ObjectAnchor::Inspecting
+    if *hold_position != HoldPosition::Inspecting
         && let Some(grabbed_entity) = grabbed_object.entity
         && weapons_query.contains(grabbed_entity)
     {
@@ -48,20 +49,20 @@ fn toggle_weapon_trigger(
 
 fn aim_down_sight(
     mouse_input: Res<ButtonInput<MouseButton>>,
-    mut grabbed_object: Single<&mut GrabbedObject>,
     weapons_query: Query<&Weapon>,
+    mut grabbed_object: ResMut<GrabbedObject>,
+    mut hold_position: ResMut<HoldPosition>,
 ) {
     let set_is_aiming = mouse_input.pressed(MouseButton::Right)
         && grabbed_object
             .entity
             .is_some_and(|grabbed_entity| weapons_query.contains(grabbed_entity));
 
-    grabbed_object.current_object_anchor =
-        match (grabbed_object.current_object_anchor, set_is_aiming) {
-            (ObjectAnchor::Default, true) => ObjectAnchor::AimDownSight,
-            (ObjectAnchor::AimDownSight, false) => ObjectAnchor::Default,
-            _ => return,
-        };
+    *hold_position = match (*hold_position, set_is_aiming) {
+        (HoldPosition::PrimaryHand, true) => HoldPosition::AimDownSight,
+        (HoldPosition::AimDownSight, false) => HoldPosition::PrimaryHand,
+        _ => return,
+    };
 
     grabbed_object.switch_controller_config(set_is_aiming);
 }

@@ -7,13 +7,11 @@ use bevy::{
 use inspector_mode_ui::InspectorModeUiPlugin;
 
 use crate::{
-    player::{
-        Player,
-        grabbed_object::{GrabbedObject, UpdatePlayerCharacterActive, object_anchor::ObjectAnchor},
-    },
-    utilities::system_sets::InputSystems,
+    player::grabbed_object::GrabbedObject, utilities::system_sets::InputSystems,
     world::grabbable_object::GrabOrientation,
 };
+
+use super::grabbed_object::HoldPosition;
 
 pub struct InspectorModePlugin;
 
@@ -52,12 +50,12 @@ pub enum InspectorModeState {
 
 fn toggle_inspector_mode_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    grabbed_object: Single<&GrabbedObject>,
+    hold_position: Res<HoldPosition>,
     inspector_state: Res<State<InspectorModeState>>,
     mut next_inspector_state: ResMut<NextState<InspectorModeState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyT)
-        || grabbed_object.current_object_anchor == ObjectAnchor::Inspecting
+        || *hold_position == HoldPosition::Inspecting
             && keyboard_input.just_pressed(KeyCode::Escape)
     {
         let next_state = match inspector_state.get() {
@@ -70,40 +68,28 @@ fn toggle_inspector_mode_on_keypress(
 }
 
 fn on_inspector_mode_enabled(
-    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut hold_position: ResMut<HoldPosition>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-    mut commands: Commands,
-    player_entity: Single<Entity, With<Player>>,
 ) {
-    grabbed_object.current_object_anchor = ObjectAnchor::Inspecting;
+    *hold_position = HoldPosition::Inspecting;
     cursor_options.visible = true;
     cursor_options.grab_mode = CursorGrabMode::None;
-
-    commands.trigger(UpdatePlayerCharacterActive {
-        entity: *player_entity,
-    });
 }
 
 fn on_inspector_mode_disabled(
-    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut hold_position: ResMut<HoldPosition>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-    player_entity: Single<Entity, With<Player>>,
-    mut commands: Commands,
 ) {
-    grabbed_object.current_object_anchor = ObjectAnchor::Default;
+    *hold_position = HoldPosition::PrimaryHand;
     cursor_options.visible = false;
     cursor_options.grab_mode = CursorGrabMode::Locked;
-
-    commands.trigger(UpdatePlayerCharacterActive {
-        entity: *player_entity,
-    });
 }
 
 fn set_cursor_icon_on_pointer_event<E: Clone + Reflect + std::fmt::Debug>(
     icon: SystemCursorIcon,
-) -> impl Fn(On<Pointer<E>>, Single<&GrabbedObject>, Single<&mut CursorIcon>) {
-    move |event, grabbed_object, mut window_cursor| {
-        if grabbed_object.current_object_anchor == ObjectAnchor::Inspecting
+) -> impl Fn(On<Pointer<E>>, Res<GrabbedObject>, Res<HoldPosition>, Single<&mut CursorIcon>) {
+    move |event, grabbed_object, hold_position, mut window_cursor| {
+        if *hold_position == HoldPosition::Inspecting
             && grabbed_object.entity == Some(event.entity)
         {
             **window_cursor = CursorIcon::System(icon);
@@ -113,7 +99,7 @@ fn set_cursor_icon_on_pointer_event<E: Clone + Reflect + std::fmt::Debug>(
 
 fn rotate_grabbed_object_on_drag(
     event: On<Pointer<Drag>>,
-    grabbed_object: Single<&GrabbedObject>,
+    grabbed_object: Res<GrabbedObject>,
     inspector_state: Res<State<InspectorModeState>>,
     mut grab_orientations: Query<&mut GrabOrientation>,
 ) {

@@ -2,15 +2,16 @@ use avian3d::prelude::{ComputedMass, Forces, RigidBodyForces};
 use bevy::prelude::*;
 
 use crate::{
-    player::{Player, PlayerCamera},
+    player::{Player, PlayerCamera, grabbed_object::PRIMARY_HAND_OFFSET},
     utilities::system_sets::DataSystems,
     world::{
+        character::CharacterHead,
         grabbable_object::GrabOrientation,
         weapons::{Weapon, weapon_config::WeaponConfig},
     },
 };
 
-use super::{GrabbedObject, object_anchor::ObjectAnchor};
+use super::{GrabbedObject, HoldPosition, INSPECTING_OFFSET};
 
 pub struct GrabbedObjectMovementPlugin;
 
@@ -28,10 +29,12 @@ impl Plugin for GrabbedObjectMovementPlugin {
 }
 
 fn update_grabbed_object_position(
-    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut grabbed_object: ResMut<GrabbedObject>,
+    hold_position: Res<HoldPosition>,
     mut grabbable_objects: Query<(&GlobalTransform, Forces, &ComputedMass), Without<Player>>,
     mut player: Single<Forces, With<Player>>,
     player_camera: Single<&GlobalTransform, With<PlayerCamera>>,
+    player_head: Single<&GlobalTransform, With<CharacterHead>>,
     weapons: Query<&Weapon>,
     weapon_configs: Res<Assets<WeaponConfig>>,
     time: Res<Time>,
@@ -44,21 +47,19 @@ fn update_grabbed_object_position(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
-    let mut target_position = grabbed_object.current_anchor_value().translation.to_vec3();
-
-    // Override for calculating ads position
-    // TODO: remove this workaround once object anchors have been reworked
-    if grabbed_object.current_object_anchor == ObjectAnchor::AimDownSight {
-        let Ok(weapon) = weapons.get(grabbed_entity) else {
-            return;
-        };
-
-        let weapon_config = weapon_configs.get(weapon.config()).unwrap();
-        let camera_transform = *player_camera;
-
-        target_position = camera_transform.translation()
-            - camera_transform.rotation() * weapon_config.ads_position;
-    }
+    let target_position = match *hold_position {
+        HoldPosition::PrimaryHand => player_head.transform_point(PRIMARY_HAND_OFFSET),
+        HoldPosition::Inspecting => player_camera.transform_point(INSPECTING_OFFSET),
+        HoldPosition::AimDownSight => {
+            if let Ok(weapon) = weapons.get(grabbed_entity)
+                && let Some(weapon_config) = weapon_configs.get(weapon.config())
+            {
+                player_camera.transform_point(-weapon_config.ads_position)
+            } else {
+                return;
+            }
+        }
+    };
 
     grabbed_object
         .position_force_controller
@@ -83,8 +84,10 @@ fn update_grabbed_object_position(
 }
 
 fn update_grabbed_object_rotation(
-    mut grabbed_object: Single<&mut GrabbedObject>,
+    mut grabbed_object: ResMut<GrabbedObject>,
+    hold_position: Res<HoldPosition>,
     mut grabbable_objects: Query<(&GlobalTransform, Forces, &GrabOrientation, &ComputedMass)>,
+    player_head: Single<&GlobalTransform, With<CharacterHead>>,
     time: Res<Time>,
 ) {
     let Some(grabbed_entity) = grabbed_object.entity else {
@@ -95,16 +98,15 @@ fn update_grabbed_object_rotation(
         "GrabbedObject should always point to existing entity with RigidBody component, or None.",
     );
 
-    let player_rotation = grabbed_object.current_anchor_value().rotation;
+    let player_rotation = player_head.rotation();
 
-    let mut target_rotation = player_rotation * grab_orientation.value();
-
-    // Override for calculating ads rotation
-    // TODO: remove this workaround once object anchors have been reworked
-    if grabbed_object.current_object_anchor == ObjectAnchor::AimDownSight {
-        let z_rotation = grab_orientation.0.to_euler(EulerRot::YXZ).2;
-        target_rotation = player_rotation * Quat::from_axis_angle(Vec3::Z, z_rotation);
-    }
+    let target_rotation = match *hold_position {
+        HoldPosition::AimDownSight => {
+            let z_rotation = grab_orientation.0.to_euler(EulerRot::YXZ).2;
+            player_rotation * Quat::from_axis_angle(Vec3::Z, z_rotation)
+        }
+        _ => player_rotation * grab_orientation.value(),
+    };
 
     grabbed_object
         .rotation_force_controller

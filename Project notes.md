@@ -18,7 +18,14 @@ Info and documentation for development.
 
 
 ## Backlog
-- rework ObjectAnchor code to no longer need a workaround / override for the ads position
+- add event to set character active and use for inspector mode
+- add tabs to inspector menu
+    - shot origin tab
+    - aim down sight tab
+    - shell ejection tab
+    - only show config elements of active tab
+    - only draw gizmos of active tab
+- only show inspector config menu & buttons when grabbed object is a weapon
 
 Visuals & polish:
 - remake world area's in Blender, this way the models can be more detailed, have more interesting shapes and it's easier to add colors
