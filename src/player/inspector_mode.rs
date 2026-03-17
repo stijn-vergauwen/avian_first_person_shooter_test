@@ -7,11 +7,12 @@ use bevy::{
 use inspector_mode_ui::InspectorModeUiPlugin;
 
 use crate::{
-    player::grabbed_object::GrabbedObject, utilities::system_sets::InputSystems,
-    world::grabbable_object::GrabOrientation,
+    player::grabbed_object::GrabbedObject,
+    utilities::system_sets::InputSystems,
+    world::{character::SetCharacterActive, grabbable_object::GrabOrientation},
 };
 
-use super::grabbed_object::HoldPosition;
+use super::{Player, grabbed_object::HoldPosition};
 
 pub struct InspectorModePlugin;
 
@@ -70,27 +71,40 @@ fn toggle_inspector_mode_on_keypress(
 fn on_inspector_mode_enabled(
     mut hold_position: ResMut<HoldPosition>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
+    player_entity: Single<Entity, With<Player>>,
+    mut commands: Commands,
 ) {
     *hold_position = HoldPosition::Inspecting;
     cursor_options.visible = true;
     cursor_options.grab_mode = CursorGrabMode::None;
+
+    commands.trigger(SetCharacterActive {
+        entity: *player_entity,
+        set_active: false,
+    });
 }
 
 fn on_inspector_mode_disabled(
     mut hold_position: ResMut<HoldPosition>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
+    player_entity: Single<Entity, With<Player>>,
+    mut commands: Commands,
 ) {
     *hold_position = HoldPosition::PrimaryHand;
     cursor_options.visible = false;
     cursor_options.grab_mode = CursorGrabMode::Locked;
+
+    commands.trigger(SetCharacterActive {
+        entity: *player_entity,
+        set_active: true,
+    });
 }
 
 fn set_cursor_icon_on_pointer_event<E: Clone + Reflect + std::fmt::Debug>(
     icon: SystemCursorIcon,
 ) -> impl Fn(On<Pointer<E>>, Res<GrabbedObject>, Res<HoldPosition>, Single<&mut CursorIcon>) {
     move |event, grabbed_object, hold_position, mut window_cursor| {
-        if *hold_position == HoldPosition::Inspecting
-            && grabbed_object.entity == Some(event.entity)
+        if *hold_position == HoldPosition::Inspecting && grabbed_object.entity == Some(event.entity)
         {
             **window_cursor = CursorIcon::System(icon);
         }

@@ -17,10 +17,12 @@ pub struct CharacterPlugin;
 
 impl Plugin for CharacterPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(CharacterJumpPlugin).add_systems(
-            FixedUpdate,
-            (update_movement_force, update_rotation).in_set(DataSystems::UpdateEntities),
-        );
+        app.add_plugins(CharacterJumpPlugin)
+            .add_observer(on_set_character_active)
+            .add_systems(
+                FixedUpdate,
+                (update_movement_force, update_rotation).in_set(DataSystems::UpdateEntities),
+            );
     }
 }
 
@@ -37,6 +39,22 @@ pub struct CharacterHead;
 /// Marker component.
 #[derive(Component, Clone, Copy)]
 pub struct CharacterNeck;
+
+#[derive(EntityEvent, Clone, Copy)]
+pub struct SetCharacterActive {
+    pub entity: Entity,
+    pub set_active: bool,
+}
+
+fn on_set_character_active(
+    event: On<SetCharacterActive>,
+    mut character_query: Query<&mut Character>,
+) {
+    let mut character = character_query
+        .get_mut(event.entity)
+        .expect("SetCharacterActive should always point to valid Character entity.");
+    character.is_active = event.set_active;
+}
 
 fn update_movement_force(
     mut characters_query: Query<(
