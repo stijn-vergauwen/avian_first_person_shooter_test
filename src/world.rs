@@ -13,7 +13,11 @@ pub mod weapons;
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::{color::palettes::tailwind::*, prelude::*};
+use bevy::{
+    color::palettes::tailwind::*,
+    light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap},
+    prelude::*,
+};
 use grabbable_object::GrabbableObjectPlugin;
 use rand::RngExt;
 
@@ -50,6 +54,11 @@ impl Plugin for WorldPlugin {
             IndoorAreaPlugin,
             GymAreaPlugin,
         ))
+        .insert_resource(GlobalAmbientLight {
+            color: Color::from(BLUE_300),
+            ..default()
+        })
+        .insert_resource(DirectionalLightShadowMap { size: 4096 })
         .add_systems(
             Startup,
             (spawn_static_entities, spawn_dynamic_entities, spawn_radio),
@@ -107,8 +116,16 @@ fn spawn_static_entities(
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
+            illuminance: light_consts::lux::AMBIENT_DAYLIGHT,
+            color: Color::from(YELLOW_50),
             ..default()
         },
+        CascadeShadowConfigBuilder {
+            first_cascade_far_bound: 4.0,
+            maximum_distance: 100.0,
+            ..default()
+        }
+        .build(),
         Transform {
             translation: Vec3::new(0.0, 20.0, 0.0),
             rotation: Quat::from_euler(EulerRot::YXZ, 10f32.to_radians(), -50f32.to_radians(), 0.0),

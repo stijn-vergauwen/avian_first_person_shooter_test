@@ -1,5 +1,12 @@
 use avian3d::prelude::*;
-use bevy::{color::palettes::tailwind::CYAN_700, core_pipeline::prepass::DepthPrepass, prelude::*};
+use bevy::{
+    anti_alias::smaa::{Smaa, SmaaPreset},
+    color::palettes::tailwind::CYAN_700,
+    core_pipeline::{prepass::DepthPrepass, tonemapping::Tonemapping},
+    post_process::bloom::Bloom,
+    prelude::*,
+    render::view::Hdr,
+};
 
 use crate::{
     player::{MAX_GRAB_DISTANCE, Player, PlayerBody, PlayerCamera, PlayerHeadMesh},
@@ -106,12 +113,7 @@ fn spawn_player(
         .spawn((
             PlayerCamera,
             Camera3d::default(),
-            Projection::Perspective(PerspectiveProjection {
-                fov: 55f32.to_radians(),
-                ..default()
-            }),
             IsDefaultUiCamera,
-            DepthPrepass,
             CurrentInteractionTarget::from_config(InteractionTargetConfig {
                 max_distance: MAX_GRAB_DISTANCE,
                 query_filter: SpatialQueryFilter::from_excluded_entities(vec![
@@ -121,6 +123,24 @@ fn spawn_player(
             }),
             Transform::from_xyz(0.0, head_shape.half_size.y, -head_shape.half_size.z),
             ChildOf(player_head_entity),
+        ))
+        .insert((
+            // Rendering & post-processing related components
+            DepthPrepass,
+            Msaa::Off,
+            Smaa {
+                preset: SmaaPreset::Ultra,
+            },
+            Hdr,
+            Tonemapping::TonyMcMapface,
+            Projection::Perspective(PerspectiveProjection {
+                fov: 55f32.to_radians(),
+                ..default()
+            }),
+            Bloom {
+                intensity: 0.05,
+                ..Bloom::NATURAL
+            },
         ))
         .id();
 
