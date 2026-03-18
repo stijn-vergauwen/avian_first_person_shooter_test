@@ -13,6 +13,9 @@ Info and documentation for development.
 ## Code Refactoring & Improvements
 
 ## Backlog
+- remake shooting range area
+    - spawn shooting targets in shooting range
+    - make button model in Blender, spawn this in & make interactive to reset targets
 - add tabs to inspector menu
     - shot origin tab
     - aim down sight tab
@@ -24,9 +27,6 @@ Info and documentation for development.
 Visuals & polish:
 - remake world area's in Blender, this way the models can be more detailed, have more interesting shapes and it's easier to add colors
 - use grid / prototype texture on objects, with consistent scale
-- remake shooting range area
-    - make static objects in Blender (walls and things like tables & screens at standing position)
-    - make button model in Blender, spawn this in & make interactive to reset targets
 - remake parkour area
     - add blocks with their heights displayed to test jumping
     - add ramps with their slope displayed to test movement on slopes

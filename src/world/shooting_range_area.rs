@@ -4,14 +4,13 @@ use std::f32::consts::PI;
 
 use avian3d::prelude::*;
 use bevy::{
-    color::palettes::tailwind::{NEUTRAL_700, STONE_600},
+    color::palettes::tailwind::NEUTRAL_700,
     prelude::*,
 };
 use shooting_targets::{
     ShootingTargetsPlugin, spawn_falling_standing_target, spawn_rotating_standing_target,
 };
 
-use crate::world::{ArrayOfObjects, spawn_array_of_static_objects};
 
 pub struct ShootingRangeAreaPlugin;
 
@@ -52,22 +51,17 @@ fn setup_assets(
 
 fn spawn_static_entities(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
-    let wall_shape = Cuboid::new(0.5, 0.8, 40.0);
-    spawn_array_of_static_objects(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        ArrayOfObjects {
-            center_position: Vec3::new(40.0, wall_shape.half_size.y, -60.0),
-            count: 7,
-            distance_between: Vec3::new(10.0, 0.0, 0.0),
-            shape: wall_shape,
-            color: Color::from(STONE_600),
+    commands.spawn((
+        SceneRoot(asset_server.load("models/Shooting range area.glb#Scene0")),
+        Transform {
+            translation: Vec3::new(0.0, 0.0, -20.0),
+            ..default()
         },
-    );
+        RigidBody::Static,
+        ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
+    ));
 }
 
 fn spawn_test_targets(
