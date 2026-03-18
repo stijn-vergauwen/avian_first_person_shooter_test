@@ -1,34 +1,50 @@
 mod object_movement;
 
 use avian3d::prelude::TransformInterpolation;
-use bevy::prelude::*;
+use bevy::{
+    color::palettes::tailwind::{BLUE_300, LIME_300, PURPLE_300},
+    prelude::*,
+};
 use object_movement::GrabbedObjectMovementPlugin;
 
 use crate::{
     utilities::{
         pd_controller::{PdController, config::PdControllerConfig},
         quaternion_pd_controller::QuaternionPdController,
-        system_sets::InputSystems,
+        system_sets::{DisplaySystems, InputSystems},
     },
     world::{
-        character::CharacterHead, grabbable_object::GrabOrientation,
+        character::CharacterHead,
+        grabbable_object::GrabOrientation,
         interaction_target::PlayerInteractionTarget,
+        weapons::{Weapon, weapon_config::WeaponConfig},
     },
 };
 
+use super::PlayerCamera;
+
 const PRIMARY_HAND_OFFSET: Vec3 = Vec3::new(0.3, -0.15, -1.0);
 const INSPECTING_OFFSET: Vec3 = Vec3::new(0.0, 0.0, -1.2);
+const DRAW_HOLD_POSITION_GIZMOS: bool = false;
 
 pub struct GrabbedObjectPlugin;
 
 impl Plugin for GrabbedObjectPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(GrabbedObjectMovementPlugin).insert_resource(GrabbedObject::new(
+        app.add_plugins(GrabbedObjectMovementPlugin)
+            .insert_resource(GrabbedObject::new(
                 PdControllerConfig::from_parameters(2.5, 1.0, 1.5),
                 PdControllerConfig::from_parameters(2.0, 0.6, 1.0),
                 PdControllerConfig::from_parameters(4.0, 1.2, 1.0),
-            )).insert_resource(HoldPosition::PrimaryHand)
-            .add_systems(Update, grab_object_on_keypress.in_set(InputSystems))
+            ))
+            .insert_resource(HoldPosition::PrimaryHand)
+            .add_systems(
+                Update,
+                (
+                    grab_object_on_keypress.in_set(InputSystems),
+                    draw_gizmos.in_set(DisplaySystems),
+                ),
+            )
             .add_observer(on_grab_object)
             .add_observer(on_drop_object);
     }
@@ -138,11 +154,9 @@ fn on_grab_object(
 
     // Set force controllers to new start values
     grabbed_object
-        
         .position_force_controller
         .set_start_position(player_head.transform_point(PRIMARY_HAND_OFFSET));
     grabbed_object
-        
         .rotation_force_controller
         .set_start_position(player_head.rotation() * grab_orientation.value());
 }
@@ -158,4 +172,37 @@ fn on_drop_object(
     commands
         .entity(event.entity)
         .remove::<TransformInterpolation>();
+}
+
+fn draw_gizmos(
+    mut gizmos: Gizmos,
+    player_camera: Single<&GlobalTransform, With<PlayerCamera>>,
+    player_head: Single<&GlobalTransform, With<CharacterHead>>,
+    grabbed_object: Res<GrabbedObject>,
+    weapons: Query<&Weapon>,
+    weapon_configs: Res<Assets<WeaponConfig>>,
+) {
+    if !DRAW_HOLD_POSITION_GIZMOS {
+        return;
+    }
+
+    let primary_hand_transform =
+        player_head.compute_transform() * Transform::from_translation(PRIMARY_HAND_OFFSET);
+
+    gizmos.sphere(primary_hand_transform.to_isometry(), 0.1, BLUE_300);
+
+    let inspecting_transform =
+        player_camera.compute_transform() * Transform::from_translation(INSPECTING_OFFSET);
+
+    gizmos.sphere(inspecting_transform.to_isometry(), 0.1, PURPLE_300);
+
+    if let Some(grabbed_entity) = grabbed_object.entity
+        && let Ok(weapon) = weapons.get(grabbed_entity)
+        && let Some(weapon_config) = weapon_configs.get(weapon.config())
+    {
+        let aim_down_sight_transform = player_camera.compute_transform()
+            * Transform::from_translation(-weapon_config.ads_position);
+
+        gizmos.sphere(aim_down_sight_transform.to_isometry(), 0.1, LIME_300);
+    }
 }

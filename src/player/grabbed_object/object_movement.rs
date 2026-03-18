@@ -28,6 +28,7 @@ impl Plugin for GrabbedObjectMovementPlugin {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn update_grabbed_object_position(
     mut grabbed_object: ResMut<GrabbedObject>,
     hold_position: Res<HoldPosition>,

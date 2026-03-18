@@ -18,7 +18,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- add event to set character active and use for inspector mode
 - add tabs to inspector menu
     - shot origin tab
     - aim down sight tab
@@ -66,3 +65,9 @@ Extra:
 - Transparent textures being displayed as dark areas:
     - I had this issue with the bullet impact decal
     - Reason is likely because 'AphaMode' value in StandardMaterial defaults to 'Opaque' which ignores alpha values, I set it to 'Mask' to fix it in this case.
+- `Transform` and `GlobalTransform` should both be kept up-to-date with physics by Avian, there should never be a need to consider using Position or Rotation instead of transforms.
+    - Avian3D runs Bevy's transform propagation in FixedUpdate.
+        - under `impl Plugin for PhysicsTransformPlugin` in the 'physics_transform' module you can see Bevy's propagate systems are added to it's schedule.
+        - `self.schedule` defaults to FixedPostUpdate, and the run condition 'config.propagate_before_physics' defaults to true.
+    - I also now see that Transforms get updated immediately after physics calculations, so I should never need to use Position instead of Transform to get more up-to-date values. (as the avian docs already told me, but now I see the code..).
+    - I was under the impression that when I switched from Transform to Position that the result did look more correct, but turns out this shouldn't be te case, need to verify again. Just using Transform & GlobalTransform everywhere does sound a lot simpler.

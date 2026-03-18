@@ -169,6 +169,7 @@ fn spawn_dynamic_entities(
             Restitution::new(0.8),
             Transform::from_translation(spawn_position + vertical_offset + horizontal_offset),
             MaxAngularSpeed(40.0),
+            TranslationInterpolation,
         ));
     }
 }

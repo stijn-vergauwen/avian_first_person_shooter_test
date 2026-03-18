@@ -100,6 +100,7 @@ fn on_inspector_mode_disabled(
     });
 }
 
+#[allow(clippy::type_complexity)]
 fn set_cursor_icon_on_pointer_event<E: Clone + Reflect + std::fmt::Debug>(
     icon: SystemCursorIcon,
 ) -> impl Fn(On<Pointer<E>>, Res<GrabbedObject>, Res<HoldPosition>, Single<&mut CursorIcon>) {

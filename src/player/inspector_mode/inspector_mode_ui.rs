@@ -49,6 +49,7 @@ impl Plugin for InspectorModeUiPlugin {
 #[derive(Component)]
 struct InspectorOverlay;
 
+#[allow(clippy::type_complexity)]
 #[derive(Component)]
 struct SliderForWeaponConfig {
     get_value: Box<dyn Fn(&WeaponConfig) -> f32 + Send + Sync>,
