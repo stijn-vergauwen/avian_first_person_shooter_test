@@ -15,7 +15,7 @@ use std::f32::consts::PI;
 use avian3d::prelude::*;
 use bevy::{
     color::palettes::tailwind::*,
-    light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap},
+    light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap, NotShadowCaster},
     prelude::*,
 };
 use grabbable_object::GrabbableObjectPlugin;
@@ -54,6 +54,7 @@ impl Plugin for WorldPlugin {
             IndoorAreaPlugin,
             GymAreaPlugin,
         ))
+        .insert_resource(ClearColor(Color::from(SKY_300)))
         .insert_resource(GlobalAmbientLight {
             color: Color::from(BLUE_300),
             ..default()
@@ -61,7 +62,12 @@ impl Plugin for WorldPlugin {
         .insert_resource(DirectionalLightShadowMap { size: 4096 })
         .add_systems(
             Startup,
-            (spawn_static_entities, spawn_dynamic_entities, spawn_radio),
+            (
+                spawn_static_entities,
+                spawn_dynamic_entities,
+                spawn_radio,
+                spawn_test_table,
+            ),
         );
     }
 }
@@ -76,10 +82,15 @@ fn spawn_static_entities(
 
     commands.spawn((
         Mesh3d(meshes.add(ground_shape)),
-        MeshMaterial3d(materials.add(Color::from(STONE_200))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::from(STONE_200),
+            perceptual_roughness: 1.0,
+            ..default()
+        })),
         RigidBody::Static,
         Collider::from(ground_shape),
         Transform::from_xyz(0.0, -ground_shape.half_size.y, 0.0),
+        NotShadowCaster,
     ));
 
     // Wall
@@ -207,6 +218,18 @@ fn spawn_radio(mut commands: Commands, asset_server: Res<AssetServer>) {
         Collider::cuboid(0.4, 0.2, 0.15),
         Mass(5.0),
         MaxAngularSpeed(40.0),
+    ));
+}
+
+fn spawn_test_table(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let table_model = asset_server.load("models/Outdoor table.glb#Scene0");
+
+    commands.spawn((
+        SceneRoot(table_model),
+        Transform::from_xyz(-6.0, 0.0, -8.0),
+        RigidBody::Dynamic,
+        ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh)
+            .with_default_density(ColliderDensity(600.0)),
     ));
 }
 

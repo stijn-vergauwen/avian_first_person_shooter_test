@@ -1,28 +1,30 @@
 use avian_first_person_shooter_test::{
-    player::{
-        PlayerPlugin, player_weapon_collision_hook::PlayerWeaponCollisionHooks,
-    },
+    player::{PlayerPlugin, player_weapon_collision_hook::PlayerWeaponCollisionHooks},
     utilities::UtilitiesPlugin,
     world::WorldPlugin,
 };
 use avian3d::prelude::*;
 use bevy::feathers::{FeathersPlugins, dark_theme::create_dark_theme, theme::UiTheme};
-#[allow(unused_imports)]
 use bevy::{prelude::*, window::WindowMode};
+
+const FULLSCREEN: bool = true;
 
 fn main() {
     App::new()
         .add_plugins((
-            // DefaultPlugins,
-            DefaultPlugins.set(WindowPlugin {
-                primary_window: Some(Window {
-                    mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
+            if FULLSCREEN {
+                DefaultPlugins.set(WindowPlugin {
+                    primary_window: Some(Window {
+                        mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
+                        ..default()
+                    }),
                     ..default()
-                }),
-                ..default()
-            }),
+                })
+            } else {
+                DefaultPlugins.build()
+            },
             PhysicsPlugins::default().with_collision_hooks::<PlayerWeaponCollisionHooks>(),
-            PhysicsDebugPlugin,
+            // PhysicsDebugPlugin,
             PhysicsPickingPlugin,
             FeathersPlugins,
             WorldPlugin,
