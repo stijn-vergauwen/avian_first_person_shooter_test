@@ -19,7 +19,6 @@ fn spawn_static_entities(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // Parkour area
     let block_shape = Cuboid::from_length(4.0);
     let mut array_of_objects = ArrayOfObjects {
         center_position: Vec3::new(0.0, block_shape.half_size.y, 40.0),

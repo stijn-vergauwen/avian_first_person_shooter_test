@@ -16,28 +16,34 @@ Info and documentation for development.
 - remake shooting range area
     - spawn shooting targets in shooting range
     - make button model in Blender, spawn this in & make interactive to reset targets
+- only show inspector config menu & buttons when grabbed object is a weapon
+- use grid / prototype texture on objects, with consistent scale
+    - on ground
+    - on yellow blocks
+    - idk if it looks good on everything
+- remake gym area
+    - add blocks with their heights displayed to test jumping
+    - add ramps with their slope displayed to test movement on slopes
+    - add gaps of different widths to test how far the player can jump
+    - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
+- bullet impact particle effect, dependent on hit angle & color of hit object
+    - spawn small cubes on hit
+    - start direction and speed should be dependent on bullet hit angle and force
+    - despawn after some duration
+    - give cubes the same color as the object that was hit
+    - mix in a few bright orange / yellow cubes as a 'spark' effect
+- add skybox
+
+
+Extra:
 - add tabs to inspector menu
     - shot origin tab
     - aim down sight tab
     - shell ejection tab
     - only show config elements of active tab
     - only draw gizmos of active tab
-- only show inspector config menu & buttons when grabbed object is a weapon
-
-Visuals & polish:
-- remake world area's in Blender, this way the models can be more detailed, have more interesting shapes and it's easier to add colors
-- use grid / prototype texture on objects, with consistent scale
-- remake parkour area
-    - add blocks with their heights displayed to test jumping
-    - add ramps with their slope displayed to test movement on slopes
-    - add gaps of different widths to test how far the player can jump
-- remake indoors area, not quite sure what I want with this
-- bullet impact particle effect, dependent on hit angle & color of hit object
 - add view bobbing, move player camera, maybe small downwards force based on movement speed and smooth return using pd controller
-- add skybox
-- try out ambient occlusion
-
-Extra:
+- sound effects for shooting, bullet hits, walking, object impacts
 - make flying disc shooting area
 - add toggle to shoot discs every few seconds
 - shatter disc on hit
@@ -45,7 +51,7 @@ Extra:
 
 ## Thoughts & Info For Future Projects
 - Reworks for PID controller:
-    - make single interface, allows splitting to more specific contrtoller implementations (quaternions, without initial response, etc)
+    - make single interface, allows splitting to more specific contrtoller implementations (quaternions, without initial response)
         - I'm thinking a common PidController trait, maybe with a generic T for 'position' type and a associated type for velocity & acceleration that defaults to T
         - then multiple struct variants that implement this trait, a default one that copies what I already have, one for rotation that uses quaternion & scaled axis types, and one that leaves out initial response param so I can remove some of the calculations.
     - make generic components for controlling an entities position or rotation, both directly and through physics engine.

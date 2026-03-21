@@ -4,7 +4,6 @@ pub mod desired_rotation;
 pub mod grabbable_object;
 pub mod grounded;
 mod gym_area;
-mod indoor_area;
 pub mod interaction_target;
 mod shooting_range_area;
 mod wall_mirror;
@@ -28,7 +27,6 @@ use crate::world::{
     grabbable_object::{DefaultGrabOrientation, GrabbableObject},
     grounded::GroundedPlugin,
     gym_area::GymAreaPlugin,
-    indoor_area::IndoorAreaPlugin,
     interaction_target::InteractionTargetPlugin,
     shooting_range_area::ShootingRangeAreaPlugin,
     wall_mirror::WallMirrorPlugin,
@@ -51,7 +49,6 @@ impl Plugin for WorldPlugin {
             GroundedPlugin,
             WallMirrorPlugin,
             ShootingRangeAreaPlugin,
-            IndoorAreaPlugin,
             GymAreaPlugin,
         ))
         .insert_resource(ClearColor(Color::from(SKY_300)))
