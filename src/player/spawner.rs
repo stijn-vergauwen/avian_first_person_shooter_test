@@ -113,6 +113,10 @@ fn spawn_player(
         .spawn((
             PlayerCamera,
             Camera3d::default(),
+            Projection::Perspective(PerspectiveProjection {
+                near: 0.001,
+                ..default()
+            }),
             IsDefaultUiCamera,
             CurrentInteractionTarget::from_config(InteractionTargetConfig {
                 max_distance: MAX_GRAB_DISTANCE,

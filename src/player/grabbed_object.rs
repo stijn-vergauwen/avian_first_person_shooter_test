@@ -35,7 +35,7 @@ impl Plugin for GrabbedObjectPlugin {
             .insert_resource(GrabbedObject::new(
                 PdControllerConfig::from_parameters(2.5, 1.0, 1.5),
                 PdControllerConfig::from_parameters(2.0, 0.6, 1.0),
-                PdControllerConfig::from_parameters(4.0, 1.2, 1.0),
+                PdControllerConfig::from_parameters(4.3, 1.2, 1.0),
             ))
             .insert_resource(HoldPosition::PrimaryHand)
             .add_systems(
