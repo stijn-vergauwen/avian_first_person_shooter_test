@@ -13,9 +13,6 @@ Info and documentation for development.
 ## Code Refactoring & Improvements
 
 ## Backlog
-- remake shooting range area
-    - spawn shooting targets in shooting range
-    - make button model in Blender, spawn this in & make interactive to reset targets
 - use grid / prototype texture on objects, with consistent scale
     - on ground
     - on yellow blocks
