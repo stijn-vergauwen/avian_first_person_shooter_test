@@ -1,0 +1,21 @@
+WeaponConfig(
+    path_to_model: "models/APC9K SMG.glb#Scene0",
+    collider_size: Vec3(0.05, 0.12, 0.4),
+    weight: 2.5,
+    recoil: 8.0,
+    bullet_speed: 250.0,
+    bullet_impact_force: 18.0,
+    firing_type: Automatic(SecondsBetweenShots(0.055)),
+    shot_origin: Vec3(0.0, 0.006, -0.16),
+    ads_position: Vec3(0.0, 0.036, 0.259),
+    shell_ejection_position: Vec3(0.024, 0.02, -0.006),
+    shell_ejection_rotation: EulerAngle(
+        x: Angle(0.3255737),
+        y: Angle(-1.7641613),
+        z: Angle(0.0),
+        order: YXZ,
+    ),
+    shell_ejection_force: 3.0,
+    shell_ejection_spin: Vec3(0.0, -23.115839, 0.0),
+    shell_ejection_randomness: 0.5,
+)
