@@ -16,7 +16,6 @@ Info and documentation for development.
 - remake shooting range area
     - spawn shooting targets in shooting range
     - make button model in Blender, spawn this in & make interactive to reset targets
-- only show inspector config menu & buttons when grabbed object is a weapon
 - use grid / prototype texture on objects, with consistent scale
     - on ground
     - on yellow blocks

@@ -1,7 +1,7 @@
 use bevy::{
     color::palettes::{
         css::{BLUE, GREEN, LIME, ORANGE, RED},
-        tailwind::{NEUTRAL_600, NEUTRAL_700, SKY_600},
+        tailwind::{NEUTRAL_500, NEUTRAL_700, SKY_600},
     },
     feathers::controls::{SliderProps, slider},
     prelude::*,
@@ -49,6 +49,9 @@ impl Plugin for InspectorModeUiPlugin {
 #[derive(Component)]
 struct InspectorOverlay;
 
+#[derive(Component)]
+struct WeaponConfigMenu;
+
 #[allow(clippy::type_complexity)]
 #[derive(Component)]
 struct SliderForWeaponConfig {
@@ -80,12 +83,14 @@ fn spawn_inspector_overlay(mut commands: Commands) {
         .with_children(|overlay| {
             overlay
                 .spawn((
+                    WeaponConfigMenu,
+                    Visibility::Hidden,
                     Node {
                         margin: UiRect::all(px(20.0)),
                         padding: UiRect::all(px(10.0)),
                         display: Display::Flex,
                         flex_direction: FlexDirection::Column,
-                        row_gap: px(10.0),
+                        row_gap: px(30.0),
                         ..default()
                     },
                     BackgroundColor(Color::from(NEUTRAL_700)),
@@ -264,7 +269,10 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                                     })
                                 }
                             ),
-                            (Text::new("Ejection randomness"), TextFont::from_font_size(16.0)),
+                            (
+                                Text::new("Ejection randomness"),
+                                TextFont::from_font_size(16.0)
+                            ),
                             (
                                 slider(
                                     SliderProps {
@@ -276,17 +284,49 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                                         SliderPrecision(2),
                                         SliderStep(0.01),
                                         SliderForWeaponConfig {
-                                            get_value: Box::new(
-                                                |weapon_config| weapon_config.shell_ejection_randomness
-                                            ),
+                                            get_value: Box::new(|weapon_config| weapon_config
+                                                .shell_ejection_randomness),
                                             set_value: Box::new(|weapon_config, slider_value| {
-                                                weapon_config.shell_ejection_randomness = slider_value
+                                                weapon_config.shell_ejection_randomness =
+                                                    slider_value
                                             })
                                         },
                                     ),
                                 ),
                                 observe(on_slider_value_changed),
                             ),
+                        ],
+                    ));
+
+                    config_menu.spawn((
+                        Node {
+                            width: px(300.0),
+                            display: Display::Flex,
+                            flex_direction: FlexDirection::Column,
+                            row_gap: px(6.0),
+                            ..default()
+                        },
+                        children![
+                            (
+                                Button,
+                                Node {
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    ..default()
+                                },
+                                BackgroundColor(Color::from(NEUTRAL_500)),
+                                observe(on_reset_config_button_click),
+                                children![Text::new("Reset configuration")],
+                            ),
+                            (
+                                Button,
+                                Node {
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    ..default()
+                                },
+                                BackgroundColor(Color::from(SKY_600)),
+                                observe(on_save_button_click),
+                                children![Text::new("Save configuration")],
+                            )
                         ],
                     ));
                 });
@@ -304,52 +344,32 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                 observe(on_default_orientation_button_click),
                 children![Text::new("Reset orientation")],
             ));
-
-            overlay.spawn((
-                Button,
-                Node {
-                    position_type: PositionType::Absolute,
-                    bottom: Val::Px(10.0),
-                    left: Val::Px(10.0),
-                    padding: UiRect::all(Val::Px(10.0)),
-                    ..default()
-                },
-                BackgroundColor(Color::from(SKY_600)),
-                observe(on_save_button_click),
-                children![Text::new("Save configuration")],
-            ));
-
-            overlay.spawn((
-                Button,
-                Node {
-                    position_type: PositionType::Absolute,
-                    bottom: Val::Px(60.0),
-                    left: Val::Px(10.0),
-                    padding: UiRect::all(Val::Px(10.0)),
-                    ..default()
-                },
-                BackgroundColor(Color::from(NEUTRAL_600)),
-                observe(on_reset_config_button_click),
-                children![Text::new("Reset configuration")],
-            ));
         });
 }
 
 fn on_inspector_mode_enabled(
     mut inspector_overlay_visibility: Single<&mut Visibility, With<InspectorOverlay>>,
+    mut config_menu_visibility: Single<
+        &mut Visibility,
+        (With<WeaponConfigMenu>, Without<InspectorOverlay>),
+    >,
     weapons: Query<&Weapon>,
     weapon_configs: Res<Assets<WeaponConfig>>,
     grabbed_object: Res<GrabbedObject>,
     mut commands: Commands,
 ) {
-    **inspector_overlay_visibility = Visibility::Visible;
+    **inspector_overlay_visibility = Visibility::Inherited;
 
     if let Some(grabbed_entity) = grabbed_object.entity
         && let Ok(weapon) = weapons.get(grabbed_entity)
     {
+        **config_menu_visibility = Visibility::Inherited;
+
         let weapon_config = weapon_configs.get(weapon.config()).unwrap().clone();
 
         commands.trigger(UpdateInspectorOverlay { weapon_config });
+    } else {
+        **config_menu_visibility = Visibility::Hidden;
     };
 }
 

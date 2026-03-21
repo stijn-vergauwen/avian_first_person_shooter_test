@@ -31,7 +31,7 @@ const JUMP_FORCE: f32 = 300.0;
 
 /// Mouse sensitivity calculated as: how many pixels the mouse needs to move in a direction to rotate by 1 radian in that direction.
 /// - Higher value = less sensitive.
-const PIXELS_PER_RADIAN: f32 = 600f32;
+const PIXELS_PER_RADIAN: f32 = 1000f32;
 
 const MAX_GRAB_DISTANCE: f32 = 2.5;
 
