@@ -20,7 +20,6 @@ Info and documentation for development.
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
 - bullet impact particle effect, dependent on hit angle & color of hit object
     - despawn after some duration
-    - give cubes the same color as the object that was hit
     - mix in a few bright orange / yellow cubes as a 'spark' effect
 - add skybox
 

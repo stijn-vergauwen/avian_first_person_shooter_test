@@ -208,19 +208,30 @@ fn spawn_bullet_impact_decal_on_hit(
 fn spawn_particles_on_hit(
     bullet_hit: On<BulletHit>,
     bullets: Query<&Bullet>,
+    mesh_materials: Query<&MeshMaterial3d<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
 ) {
+    let shape = Cuboid::from_length(0.03);
+    let mesh = meshes.add(shape);
+
+    let particle_color = match mesh_materials.get(bullet_hit.hit_entity).ok() {
+        Some(mesh_material) => materials.get(mesh_material.id()).unwrap().base_color,
+        None => Color::from(STONE_700),
+    };
+
+    let material = materials.add(StandardMaterial {
+        base_color: particle_color,
+        perceptual_roughness: 1.0,
+        ..default()
+    });
+
     let impact_force = bullets.get(bullet_hit.bullet_entity).unwrap().impact_force;
 
     let inverted_bullet_direction = -bullet_hit.bullet_direction;
     let particle_direction =
         Quat::from_axis_angle(bullet_hit.surface_normal.as_vec3(), PI) * inverted_bullet_direction;
-
-    let shape = Cuboid::from_length(0.03);
-    let mesh = meshes.add(shape);
-    let material = materials.add(Color::from(STONE_700));
 
     let particle_scale = 0.4 + impact_force / 250.0;
     let particle_count = 3 + (impact_force / 30.0).floor() as i32;
