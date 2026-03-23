@@ -19,8 +19,6 @@ Info and documentation for development.
     - add gaps of different widths to test how far the player can jump
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
 - bullet impact particle effect, dependent on hit angle & color of hit object
-    - spawn small cubes on hit
-    - start direction and speed should be dependent on bullet hit angle and force
     - despawn after some duration
     - give cubes the same color as the object that was hit
     - mix in a few bright orange / yellow cubes as a 'spark' effect

@@ -1,11 +1,12 @@
-use std::time::Duration;
+use std::{f32::consts::PI, time::Duration};
 
 use avian3d::prelude::*;
 use bevy::{
-    color::palettes::tailwind::AMBER_200,
+    color::palettes::tailwind::{AMBER_200, STONE_700},
     pbr::decal::{ForwardDecal, ForwardDecalMaterial, ForwardDecalMaterialExt},
     prelude::*,
 };
+use rand::random_range;
 
 use crate::utilities::system_sets::DataSystems;
 
@@ -15,13 +16,15 @@ pub struct BulletPlugin;
 
 impl Plugin for BulletPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_bullet_assets)
+        app.add_observer(on_spawn_bullet)
+            .add_observer(despawn_bullet_and_apply_force_on_hit)
+            .add_observer(spawn_bullet_impact_decal_on_hit)
+            .add_observer(spawn_particles_on_hit)
+            .add_systems(Startup, setup_bullet_assets)
             .add_systems(
                 FixedUpdate,
                 (update_bullets, despawn_bullets_past_lifetime).in_set(DataSystems::UpdateEntities),
-            )
-            .add_observer(on_bullet_hit)
-            .add_observer(on_spawn_bullet);
+            );
     }
 }
 
@@ -147,11 +150,29 @@ fn update_bullets(
     }
 }
 
-fn on_bullet_hit(
+fn despawn_bullet_and_apply_force_on_hit(
     bullet_hit: On<BulletHit>,
     bullets: Query<&Bullet>,
-    objects: Query<(&Position, &Rotation)>,
     mut forces_query: Query<Forces>,
+    mut commands: Commands,
+) {
+    if let Ok(mut forces) = forces_query.get_mut(bullet_hit.rigid_body_entity) {
+        let impact_force = bullets.get(bullet_hit.bullet_entity).unwrap().impact_force;
+
+        commands.queue(WakeBody(bullet_hit.rigid_body_entity));
+
+        forces.apply_linear_impulse_at_point(
+            bullet_hit.bullet_direction.as_vec3() * impact_force,
+            bullet_hit.hit_position,
+        );
+    }
+
+    commands.entity(bullet_hit.bullet_entity).despawn();
+}
+
+fn spawn_bullet_impact_decal_on_hit(
+    bullet_hit: On<BulletHit>,
+    objects: Query<(&Position, &Rotation)>,
     mut commands: Commands,
     bullet_impact_assets: Res<BulletImpactAssets>,
 ) {
@@ -182,19 +203,62 @@ fn on_bullet_hit(
         transform,
         ChildOf(bullet_hit.hit_entity),
     ));
+}
 
-    if let Ok(mut forces) = forces_query.get_mut(bullet_hit.rigid_body_entity) {
-        let impact_force = bullets.get(bullet_hit.bullet_entity).unwrap().impact_force;
+fn spawn_particles_on_hit(
+    bullet_hit: On<BulletHit>,
+    bullets: Query<&Bullet>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut commands: Commands,
+) {
+    let impact_force = bullets.get(bullet_hit.bullet_entity).unwrap().impact_force;
 
-        commands.queue(WakeBody(bullet_hit.rigid_body_entity));
+    let inverted_bullet_direction = -bullet_hit.bullet_direction;
+    let particle_direction =
+        Quat::from_axis_angle(bullet_hit.surface_normal.as_vec3(), PI) * inverted_bullet_direction;
 
-        forces.apply_linear_impulse_at_point(
-            bullet_hit.bullet_direction.as_vec3() * impact_force,
-            bullet_hit.hit_position,
+    let shape = Cuboid::from_length(0.03);
+    let mesh = meshes.add(shape);
+    let material = materials.add(Color::from(STONE_700));
+
+    let particle_scale = 0.4 + impact_force / 250.0;
+    let particle_count = 3 + (impact_force / 30.0).floor() as i32;
+
+    for _ in 0..particle_count {
+        let direction_offset = calculate_random_rotation(0.6);
+        let speed_offset = random_range(0.1..1.4);
+        let scale_range = particle_scale.min(0.9);
+        let scale_offset = Vec3::new(
+            random_range((1.0 - scale_range)..(1.0 + scale_range)),
+            random_range((1.0 - scale_range)..(1.0 + scale_range)),
+            random_range((1.0 - scale_range)..(1.0 + scale_range)),
         );
-    }
+        let final_scale = particle_scale * scale_offset;
 
-    commands.entity(bullet_hit.bullet_entity).despawn();
+        let start_direction = direction_offset * particle_direction;
+        let start_speed = impact_force / 10.0 * speed_offset / final_scale.length();
+        let start_position = bullet_hit.hit_position + start_direction * 0.1;
+
+        commands.spawn((
+            Mesh3d(mesh.clone()),
+            MeshMaterial3d(material.clone()),
+            Transform::from_translation(start_position).with_scale(final_scale),
+            RigidBody::Dynamic,
+            Collider::from(shape),
+            ColliderDensity(1000.0),
+            LinearVelocity(start_direction * start_speed),
+        ));
+    }
+}
+
+fn calculate_random_rotation(range: f32) -> Quat {
+    Quat::from_euler(
+        EulerRot::YXZ,
+        random_range(-range..range),
+        random_range(-range..range),
+        random_range(-range..range),
+    )
 }
 
 fn despawn_bullets_past_lifetime(
