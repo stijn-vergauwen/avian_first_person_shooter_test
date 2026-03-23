@@ -15,22 +15,26 @@ use avian3d::prelude::*;
 use bevy::{
     color::palettes::tailwind::*,
     light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap, NotShadowCaster},
+    math::Affine2,
     prelude::*,
 };
 use grabbable_object::GrabbableObjectPlugin;
 use rand::RngExt;
 
-use crate::world::{
-    character::CharacterPlugin,
-    desired_movement::DesiredMovementPlugin,
-    desired_rotation::DesiredRotationPlugin,
-    grabbable_object::{DefaultGrabOrientation, GrabbableObject},
-    grounded::GroundedPlugin,
-    gym_area::GymAreaPlugin,
-    interaction_target::InteractionTargetPlugin,
-    shooting_range_area::ShootingRangeAreaPlugin,
-    wall_mirror::WallMirrorPlugin,
-    weapons::WeaponsPlugin,
+use crate::{
+    utilities::load_repeating_texture,
+    world::{
+        character::CharacterPlugin,
+        desired_movement::DesiredMovementPlugin,
+        desired_rotation::DesiredRotationPlugin,
+        grabbable_object::{DefaultGrabOrientation, GrabbableObject},
+        grounded::GroundedPlugin,
+        gym_area::GymAreaPlugin,
+        interaction_target::InteractionTargetPlugin,
+        shooting_range_area::ShootingRangeAreaPlugin,
+        wall_mirror::WallMirrorPlugin,
+        weapons::WeaponsPlugin,
+    },
 };
 
 const TABLE_POSITION: Vec3 = Vec3::new(-9.3, 1.0, 0.0);
@@ -57,6 +61,7 @@ impl Plugin for WorldPlugin {
             ..default()
         })
         .insert_resource(DirectionalLightShadowMap { size: 4096 })
+        .add_systems(PreStartup, setup_prototype_textures)
         .add_systems(
             Startup,
             (
@@ -69,19 +74,37 @@ impl Plugin for WorldPlugin {
     }
 }
 
+#[derive(Resource)]
+struct PrototypeTextures {
+    grid: Handle<Image>,
+    #[allow(unused)]
+    checker: Handle<Image>,
+}
+
+fn setup_prototype_textures(asset_server: Res<AssetServer>, mut commands: Commands) {
+    commands.insert_resource(PrototypeTextures {
+        grid: load_repeating_texture(&asset_server, "textures/Grid texture.png"),
+        checker: load_repeating_texture(&asset_server, "textures/Checker texture.png"),
+    });
+}
+
 fn spawn_static_entities(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    prototype_textures: Res<PrototypeTextures>,
 ) {
     // Ground plane
     let ground_shape = Cuboid::new(600.0, 1.0, 600.0);
+    let texture_scale = 2.0;
 
     commands.spawn((
         Mesh3d(meshes.add(ground_shape)),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::from(STONE_200),
+            base_color: Color::from(STONE_300),
+            base_color_texture: Some(prototype_textures.grid.clone()),
             perceptual_roughness: 1.0,
+            uv_transform: Affine2::from_scale(ground_shape.size().xz() / texture_scale),
             ..default()
         })),
         RigidBody::Static,
@@ -146,11 +169,16 @@ fn spawn_dynamic_entities(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    prototype_textures: Res<PrototypeTextures>,
 ) {
     // Tower of cubes
     let cube_shape = Cuboid::new(1.0, 1.0, 1.0);
     let cube_mesh = meshes.add(cube_shape);
-    let cube_material = materials.add(Color::from(AMBER_400));
+    let cube_material = materials.add(StandardMaterial {
+        base_color: Color::from(AMBER_400),
+        base_color_texture: Some(prototype_textures.grid.clone()),
+        ..default()
+    });
     let spawn_count = 10;
     let spawn_position = Vec3::new(10.0, 1.0, -10.0);
 
@@ -167,7 +195,11 @@ fn spawn_dynamic_entities(
 
     // Pile of grabbable cubes
     let cube_shape = Cuboid::from_length(0.3);
-    let cube_color = Color::from(PURPLE_700);
+    let cube_material = materials.add(StandardMaterial {
+        base_color: Color::from(PURPLE_700),
+        base_color_texture: Some(prototype_textures.grid.clone()),
+        ..default()
+    });
     let cube_mesh = meshes.add(cube_shape);
     let mut rng = rand::rng();
     let spawn_count = 100;
@@ -175,8 +207,6 @@ fn spawn_dynamic_entities(
     let horizontal_spread = 0.3;
 
     for index in 0..spawn_count {
-        let cube_material = materials.add(cube_color);
-
         let vertical_offset = Vec3::Y * index as f32 * cube_shape.half_size.y;
         let horizontal_offset = Vec3::new(
             rng.random_range(-horizontal_spread..horizontal_spread),
@@ -187,7 +217,7 @@ fn spawn_dynamic_entities(
         commands.spawn((
             GrabbableObject,
             Mesh3d(cube_mesh.clone()),
-            MeshMaterial3d(cube_material),
+            MeshMaterial3d(cube_material.clone()),
             RigidBody::Dynamic,
             Collider::from(cube_shape),
             ColliderDensity(200.0),

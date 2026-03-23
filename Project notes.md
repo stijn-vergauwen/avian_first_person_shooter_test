@@ -13,10 +13,6 @@ Info and documentation for development.
 ## Code Refactoring & Improvements
 
 ## Backlog
-- use grid / prototype texture on objects, with consistent scale
-    - on ground
-    - on yellow blocks
-    - idk if it looks good on everything
 - remake gym area
     - add blocks with their heights displayed to test jumping
     - add ramps with their slope displayed to test movement on slopes
