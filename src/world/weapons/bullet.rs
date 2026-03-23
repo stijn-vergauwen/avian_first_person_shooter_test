@@ -11,6 +11,7 @@ use rand::random_range;
 use crate::utilities::system_sets::DataSystems;
 
 const BULLET_LIFETIME: Duration = Duration::from_secs(5);
+const DESPAWN_PARTICLE_AFTER_SLEEP_DURATION: Duration = Duration::from_millis(5000);
 
 pub struct BulletPlugin;
 
@@ -23,7 +24,15 @@ impl Plugin for BulletPlugin {
             .add_systems(Startup, setup_bullet_assets)
             .add_systems(
                 FixedUpdate,
-                (update_bullets, despawn_bullets_past_lifetime).in_set(DataSystems::UpdateEntities),
+                (
+                    (
+                        update_bullets,
+                        despawn_bullets_past_lifetime,
+                        update_started_sleeping_at,
+                    )
+                        .in_set(DataSystems::UpdateEntities),
+                    delete_sleeping_entities_after_duration.in_set(DataSystems::DespawnEntities),
+                ),
             );
     }
 }
@@ -68,6 +77,19 @@ struct BulletAssets {
 #[derive(Resource)]
 struct BulletImpactAssets {
     material: Handle<ForwardDecalMaterial<StandardMaterial>>,
+}
+
+/// Automatically despawns this entity after it has been sleeping for the given duration.
+#[derive(Component, Clone, Copy)]
+#[require(StartedSleepingAt)]
+struct DespawnAfterSleepingForDuration(Duration);
+
+/// Tracks the time since this entity started sleeping.
+///
+/// This entity starts sleeping whenever Avian physics adds the [Sleeping] component. The reason I'm not just using Avian's [SleepTimer] is because that stops counting once the entity is sleeping.
+#[derive(Component, Clone, Copy, Default)]
+struct StartedSleepingAt {
+    duration: Option<Duration>,
 }
 
 fn setup_bullet_assets(
@@ -238,7 +260,7 @@ fn spawn_particles_on_hit(
 
     for _ in 0..particle_count {
         let direction_offset = calculate_random_rotation(0.6);
-        let speed_offset = random_range(0.1..1.4);
+        let speed_offset = random_range(0.2..1.4);
         let scale_range = particle_scale.min(0.9);
         let scale_offset = Vec3::new(
             random_range((1.0 - scale_range)..(1.0 + scale_range)),
@@ -252,6 +274,7 @@ fn spawn_particles_on_hit(
         let start_position = bullet_hit.hit_position + start_direction * 0.1;
 
         commands.spawn((
+            DespawnAfterSleepingForDuration(DESPAWN_PARTICLE_AFTER_SLEEP_DURATION),
             Mesh3d(mesh.clone()),
             MeshMaterial3d(material.clone()),
             Transform::from_translation(start_position).with_scale(final_scale),
@@ -260,6 +283,38 @@ fn spawn_particles_on_hit(
             ColliderDensity(1000.0),
             LinearVelocity(start_direction * start_speed),
         ));
+    }
+}
+
+fn update_started_sleeping_at(
+    mut entities: Query<(&mut StartedSleepingAt, Has<Sleeping>)>,
+    time: Res<Time>,
+) {
+    for (mut started_sleeping_at, is_sleeping) in entities.iter_mut() {
+        if is_sleeping {
+            if started_sleeping_at.duration.is_none() {
+                started_sleeping_at.duration = Some(time.elapsed());
+            }
+        } else if started_sleeping_at.duration.is_some() {
+            started_sleeping_at.duration = None;
+        }
+    }
+}
+
+fn delete_sleeping_entities_after_duration(
+    sleeping_particles: Query<(Entity, &DespawnAfterSleepingForDuration, &StartedSleepingAt)>,
+    time: Res<Time>,
+    mut commands: Commands,
+) {
+    for (particle_entity, despawn_after, started_sleeping) in sleeping_particles.iter() {
+        let Some(started_sleeping) = started_sleeping.duration else {
+            continue;
+        };
+
+        if time.elapsed() > started_sleeping + despawn_after.0 {
+            commands.queue(WakeBody(particle_entity));
+            commands.entity(particle_entity).despawn();
+        }
     }
 }
 

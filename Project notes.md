@@ -19,7 +19,6 @@ Info and documentation for development.
     - add gaps of different widths to test how far the player can jump
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
 - bullet impact particle effect, dependent on hit angle & color of hit object
-    - despawn after some duration
     - mix in a few bright orange / yellow cubes as a 'spark' effect
 - add skybox
 
