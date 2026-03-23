@@ -10,18 +10,33 @@ pub struct GymAreaPlugin;
 
 impl Plugin for GymAreaPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_static_entities);
+        app.add_systems(Startup, (spawn_static_entities, spawn_old_static_entities));
     }
 }
 
-fn spawn_static_entities(
+
+
+fn spawn_static_entities(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        SceneRoot(asset_server.load("models/Gym area.glb#Scene0")),
+        Transform {
+            translation: Vec3::new(0.0, 0.0, 10.0),
+            ..default()
+        },
+        RigidBody::Static,
+        ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
+    ));
+}
+
+// TODO: remove once I don't need it as reference anymore
+fn spawn_old_static_entities(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let block_shape = Cuboid::from_length(4.0);
     let mut array_of_objects = ArrayOfObjects {
-        center_position: Vec3::new(0.0, block_shape.half_size.y, 40.0),
+        center_position: Vec3::new(0.0, block_shape.half_size.y, 60.0),
         count: 3,
         distance_between: Vec3::new(-8.0, 0.0, 0.0),
         shape: block_shape,
@@ -39,7 +54,7 @@ fn spawn_static_entities(
         RigidBody::Static,
         Collider::from(ramp_shape),
         Transform {
-            translation: Vec3::new(11.0, 2.0, 35.0),
+            translation: Vec3::new(11.0, 2.0, 55.0),
             rotation: Quat::from_axis_angle(Vec3::X, -20f32.to_radians()),
             ..default()
         },

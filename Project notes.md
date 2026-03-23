@@ -14,8 +14,8 @@ Info and documentation for development.
 
 ## Backlog
 - remake gym area
-    - add blocks with their heights displayed to test jumping
-    - add ramps with their slope displayed to test movement on slopes
+    - bake texture of height blocks in Blender so it correctly exports to Bevy. Currently in Bevy I see the texture but not the green color that should be mixed in.
+        - The cause of this seems to be that you can't export procedural stuff, you have to bake it or recreate it in the other application (this case Bevy)
     - add gaps of different widths to test how far the player can jump
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
 - bullet impact particle effect, dependent on hit angle & color of hit object
@@ -62,3 +62,8 @@ Extra:
         - `self.schedule` defaults to FixedPostUpdate, and the run condition 'config.propagate_before_physics' defaults to true.
     - I also now see that Transforms get updated immediately after physics calculations, so I should never need to use Position instead of Transform to get more up-to-date values. (as the avian docs already told me, but now I see the code..).
     - I was under the impression that when I switched from Transform to Position that the result did look more correct, but turns out this shouldn't be te case, need to verify again. Just using Transform & GlobalTransform everywhere does sound a lot simpler.
+- Procedural materials in Blender can't be directly exported to Bevy.
+    - I ran into this when building the gym area, some objects have the prototype texture + a color mixed in, in Bevy I only saw the texture not the color.
+    - Solution seems to be to bake the materials in Blender to images and use those instead.
+    - An alternative would be to recreate the procedural material in Bevy.
+    - This seems to be the case for any game engine or application, the procedural stuff only works in the context of the application itself, which makes sense.
