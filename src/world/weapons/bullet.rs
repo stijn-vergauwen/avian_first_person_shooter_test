@@ -195,12 +195,16 @@ fn despawn_bullet_and_apply_force_on_hit(
 fn spawn_bullet_impact_decal_on_hit(
     bullet_hit: On<BulletHit>,
     objects: Query<(&Position, &Rotation)>,
+    bullets: Query<&Bullet>,
     mut commands: Commands,
     bullet_impact_assets: Res<BulletImpactAssets>,
 ) {
     let (global_position, global_rotation) = objects
         .get(bullet_hit.hit_entity)
         .expect("BulletHit hit_entity should always have position & rotation components");
+
+    let impact_force = bullets.get(bullet_hit.bullet_entity).unwrap().impact_force;
+    let decal_scale = 0.05 + impact_force / 5000.0 + random_range(-0.01..0.01);
 
     // This Transform calculation is quite confusing, this has to do with the decal needing the be positioned relative to the hit entity (because it gets parented),
     //      as well as the ForwardDecal creating a quad that faces towards Y instead of NEG_Z (which would be 'forward').
@@ -210,7 +214,7 @@ fn spawn_bullet_impact_decal_on_hit(
 
     let mut transform = Transform {
         translation: impact_decal_position,
-        scale: Vec3::splat(0.05),
+        scale: Vec3::splat(decal_scale),
         ..default()
     }
     .looking_to(

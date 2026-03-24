@@ -18,8 +18,6 @@ Info and documentation for development.
         - The cause of this seems to be that you can't export procedural stuff, you have to bake it or recreate it in the other application (this case Bevy)
     - add gaps of different widths to test how far the player can jump
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
-- bullet impact particle effect, dependent on hit angle & color of hit object
-    - mix in a few bright orange / yellow cubes as a 'spark' effect
 - add skybox
 
 
