@@ -13,7 +13,7 @@ use crate::utilities::{
 };
 
 const BULLET_LIFETIME: Duration = Duration::from_secs(5);
-const DESPAWN_PARTICLE_AFTER_SLEEP_DURATION: Duration = Duration::from_millis(5000);
+const DESPAWN_PARTICLE_AFTER_SLEEP_DURATION: Duration = Duration::from_secs(5);
 
 pub struct BulletPlugin;
 

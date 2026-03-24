@@ -8,11 +8,16 @@ use bevy::{color::palettes::tailwind::YELLOW_700, prelude::*};
 use rand::random_range;
 
 use crate::{
-    utilities::{euler_angle::EulerAngle, system_sets::DataSystems},
+    utilities::{
+        despawn_after_sleep::DespawnAfterSleepingForDuration, euler_angle::EulerAngle,
+        system_sets::DataSystems,
+    },
     world::grabbable_object::GrabbableObject,
 };
 
 use super::{Weapon, bullet::SpawnBullet, weapon_config::WeaponConfig};
+
+const DESPAWN_CASING_AFTER_SLEEP_DURATION: Duration = Duration::from_secs(15);
 
 pub struct WeaponShootingPlugin;
 
@@ -199,6 +204,7 @@ fn eject_casing(
 
     commands.spawn((
         GrabbableObject,
+        DespawnAfterSleepingForDuration(DESPAWN_CASING_AFTER_SLEEP_DURATION),
         Mesh3d(bullet_casing_assets.mesh.clone()),
         MeshMaterial3d(bullet_casing_assets.material.clone()),
         casing_transform,
