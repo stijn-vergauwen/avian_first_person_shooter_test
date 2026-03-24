@@ -14,8 +14,6 @@ Info and documentation for development.
 
 ## Backlog
 - remake gym area
-    - bake texture of height blocks in Blender so it correctly exports to Bevy. Currently in Bevy I see the texture but not the green color that should be mixed in.
-        - The cause of this seems to be that you can't export procedural stuff, you have to bake it or recreate it in the other application (this case Bevy)
     - add gaps of different widths to test how far the player can jump
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
 - add skybox
@@ -30,6 +28,7 @@ Extra:
     - only draw gizmos of active tab
 - add view bobbing, move player camera, maybe small downwards force based on movement speed and smooth return using pd controller
 - sound effects for shooting, bullet hits, walking, object impacts
+- object pooling for bullets, impact decals, impact particles
 - make flying disc shooting area
 - add toggle to shoot discs every few seconds
 - shatter disc on hit
