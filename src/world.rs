@@ -259,39 +259,3 @@ fn spawn_test_table(mut commands: Commands, asset_server: Res<AssetServer>) {
             .with_default_density(ColliderDensity(600.0)),
     ));
 }
-
-// Utilities
-
-#[derive(Clone, Copy)]
-struct ArrayOfObjects<T: Into<Mesh> + IntoCollider<Collider> + Copy> {
-    center_position: Vec3,
-    count: usize,
-    distance_between: Vec3,
-    shape: T,
-    color: Color,
-}
-
-fn spawn_array_of_static_objects<T: Into<Mesh> + IntoCollider<Collider> + Copy>(
-    commands: &mut Commands,
-    meshes: &mut Assets<Mesh>,
-    materials: &mut Assets<StandardMaterial>,
-    array_of_objects: ArrayOfObjects<T>,
-) {
-    let start_position = array_of_objects.center_position
-        - array_of_objects.distance_between * (array_of_objects.count - 1) as f32 / 2.0;
-
-    let mesh_handle = meshes.add(array_of_objects.shape);
-    let material_handle = materials.add(array_of_objects.color);
-
-    for index in 0..array_of_objects.count {
-        let position = start_position + array_of_objects.distance_between * index as f32;
-
-        commands.spawn((
-            Mesh3d(mesh_handle.clone()),
-            MeshMaterial3d(material_handle.clone()),
-            RigidBody::Static,
-            Collider::from(array_of_objects.shape),
-            Transform::from_translation(position),
-        ));
-    }
-}

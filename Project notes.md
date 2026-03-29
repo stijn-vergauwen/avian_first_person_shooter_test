@@ -14,7 +14,6 @@ Info and documentation for development.
 
 ## Backlog
 - remake gym area
-    - add gaps of different widths to test how far the player can jump
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
 - add skybox
 
