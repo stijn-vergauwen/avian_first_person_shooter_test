@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use avian3d::prelude::*;
 use bevy::{
     anti_alias::smaa::{Smaa, SmaaPreset},
@@ -151,7 +153,7 @@ fn spawn_player(
             Skybox {
                 image: skybox_assets.skybox_image.clone(),
                 brightness: 1000.0,
-                ..default()
+                rotation: Quat::from_axis_angle(Vec3::Y, PI),
             },
         ))
         .id();

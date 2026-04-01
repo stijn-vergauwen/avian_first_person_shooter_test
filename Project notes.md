@@ -14,8 +14,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- convert the skybox 'Cloudy Bright Day' in 'Cozy Voxel Skybox' folder to Bevy format and use as skybox.
-    - Bevy expects a vertical image in the order from top to bottom of : X, NEG_X, Y, NEG_Y, Z, NEG_Z
 - remake gym area
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
 - export windows, linux and web builds

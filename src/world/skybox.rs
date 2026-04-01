@@ -19,7 +19,7 @@ pub struct SkyboxAssets {
 
 fn setup_skybox_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(SkyboxAssets {
-        skybox_image: asset_server.load("textures/skybox_test.png"),
+        skybox_image: asset_server.load("textures/Voxel skybox.png"),
     });
 }
 
