@@ -12,10 +12,13 @@ Info and documentation for development.
 
 ## Code Refactoring & Improvements
 
+
 ## Backlog
+- convert the skybox 'Cloudy Bright Day' in 'Cozy Voxel Skybox' folder to Bevy format and use as skybox.
+    - Bevy expects a vertical image in the order from top to bottom of : X, NEG_X, Y, NEG_Y, Z, NEG_Z
 - remake gym area
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
-- add skybox
+- export windows, linux and web builds
 
 
 Extra:
@@ -59,3 +62,7 @@ Extra:
     - Solution seems to be to bake the materials in Blender to images and use those instead.
     - An alternative would be to recreate the procedural material in Bevy.
     - This seems to be the case for any game engine or application, the procedural stuff only works in the context of the application itself, which makes sense.
+- Skybox images that are a single png image should follow the order: X, NEG_X, Y, NEG_Y, Z, NEG_Z. From top to bottom.
+    - I couldn't find any clear information on this in the docs, examples, or news blogs. Ended up finding it in a tutorial.
+    - Seems to be the same face order as Unity uses.
+    - If your source file isn't a single png image, you shouldn't need to be mindful of this as the correct order should be part of the file.

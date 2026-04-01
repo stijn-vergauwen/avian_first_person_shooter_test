@@ -8,6 +8,7 @@ pub mod interaction_target;
 mod shooting_range_area;
 mod wall_mirror;
 pub mod weapons;
+pub mod skybox;
 
 use std::f32::consts::PI;
 
@@ -20,6 +21,7 @@ use bevy::{
 };
 use grabbable_object::GrabbableObjectPlugin;
 use rand::RngExt;
+use skybox::SkyboxPlugin;
 
 use crate::{
     utilities::load_repeating_texture,
@@ -54,6 +56,7 @@ impl Plugin for WorldPlugin {
             WallMirrorPlugin,
             ShootingRangeAreaPlugin,
             GymAreaPlugin,
+            SkyboxPlugin,
         ))
         .insert_resource(ClearColor(Color::from(SKY_300)))
         .insert_resource(GlobalAmbientLight {

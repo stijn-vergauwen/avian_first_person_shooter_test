@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::{
     anti_alias::smaa::{Smaa, SmaaPreset},
     color::palettes::tailwind::CYAN_700,
-    core_pipeline::{prepass::DepthPrepass, tonemapping::Tonemapping},
+    core_pipeline::{Skybox, prepass::DepthPrepass, tonemapping::Tonemapping},
     post_process::bloom::Bloom,
     prelude::*,
     render::view::Hdr,
@@ -18,6 +18,7 @@ use crate::{
         interaction_target::{
             CurrentInteractionTarget, InteractionTargetConfig, PlayerInteractionTarget,
         },
+        skybox::SkyboxAssets,
     },
 };
 
@@ -33,6 +34,7 @@ fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    skybox_assets: Res<SkyboxAssets>,
 ) {
     let start_position = Vec3::new(0.0, 0.0, 0.0);
 
@@ -93,6 +95,7 @@ fn spawn_player(
         .id();
 
     // Spawn head mesh
+    
     let head_shape = Cuboid::from_length(0.35);
 
     let player_head_mesh_entity = commands
@@ -144,6 +147,11 @@ fn spawn_player(
             Bloom {
                 intensity: 0.05,
                 ..Bloom::NATURAL
+            },
+            Skybox {
+                image: skybox_assets.skybox_image.clone(),
+                brightness: 1000.0,
+                ..default()
             },
         ))
         .id();
