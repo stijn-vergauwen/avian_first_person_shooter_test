@@ -147,7 +147,7 @@ fn spawn_player(
                 ..default()
             }),
             Bloom {
-                intensity: 0.05,
+                intensity: 0.03,
                 ..Bloom::NATURAL
             },
             Skybox {

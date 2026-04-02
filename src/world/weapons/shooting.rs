@@ -1,8 +1,7 @@
 use std::time::Duration;
 
 use avian3d::prelude::{
-    AngularVelocity, Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody,
-    RigidBodyForces,
+    AngularVelocity, Collider, Forces, LinearDamping, LinearVelocity, Mass, RigidBody, WriteRigidBodyForces,
 };
 use bevy::{color::palettes::tailwind::YELLOW_700, prelude::*};
 use rand::random_range;

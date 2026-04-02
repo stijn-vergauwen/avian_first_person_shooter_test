@@ -1,4 +1,4 @@
-use avian3d::prelude::{ComputedMass, Forces, RigidBodyForces};
+use avian3d::prelude::{ComputedMass, Forces, ReadRigidBodyForces, WriteRigidBodyForces};
 use bevy::prelude::*;
 
 use crate::{
