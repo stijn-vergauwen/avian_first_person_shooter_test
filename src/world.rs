@@ -58,7 +58,6 @@ impl Plugin for WorldPlugin {
             GymAreaPlugin,
             SkyboxPlugin,
         ))
-        .insert_resource(ClearColor(Color::from(SKY_300)))
         .insert_resource(GlobalAmbientLight {
             color: Color::from(BLUE_300),
             ..default()
@@ -151,7 +150,6 @@ fn spawn_static_entities(
         DirectionalLight {
             shadows_enabled: true,
             illuminance: light_consts::lux::AMBIENT_DAYLIGHT,
-            color: Color::from(YELLOW_50),
             ..default()
         },
         CascadeShadowConfigBuilder {

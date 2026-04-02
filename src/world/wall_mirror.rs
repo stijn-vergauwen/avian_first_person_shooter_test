@@ -1,11 +1,16 @@
+use std::f32::consts::PI;
+
 use bevy::{
+    anti_alias::smaa::{Smaa, SmaaPreset},
     camera::{ImageRenderTarget, RenderTarget},
-    core_pipeline::prepass::DepthPrepass,
+    core_pipeline::{Skybox, prepass::DepthPrepass},
     prelude::*,
     render::render_resource::{Face, TextureFormat},
 };
 
 use crate::world::TABLE_POSITION;
+
+use super::skybox::SkyboxAssets;
 
 pub struct WallMirrorPlugin;
 
@@ -20,6 +25,7 @@ fn spawn_wall_mirror(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut images: ResMut<Assets<Image>>,
+    skybox_assets: Res<SkyboxAssets>,
 ) {
     let position = TABLE_POSITION + Vec3::new(-0.49, 1.5, 0.0);
 
@@ -51,6 +57,15 @@ fn spawn_wall_mirror(
         Camera3d::default(),
         RenderTarget::Image(ImageRenderTarget::from(mirror_image)),
         DepthPrepass,
+        Msaa::Off,
+        Smaa {
+            preset: SmaaPreset::Medium,
+        },
+        Skybox {
+            image: skybox_assets.skybox_image.clone(),
+            brightness: 1000.0,
+            rotation: Quat::from_axis_angle(Vec3::Y, PI),
+        },
         Transform {
             translation: position,
             rotation: Quat::from_axis_angle(Vec3::Y, -90f32.to_radians()),
