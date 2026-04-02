@@ -16,7 +16,22 @@ Info and documentation for development.
 ## Backlog
 - remake gym area
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
+    - What do I want in this parkour course?:
+        - Low wall to jump / 'vault' over
+        - A corner that you turn around and can immediately shoot a target from, so you can take cover behind corner
+        - A gap to jump over, for example between platforms
+        - Corridor where you run to the next cover and have to shoot something while running
+    - Idea:
+        - vault over start wall (already in place)
+        - turn right then left around 2 corners, shooting 1 target each (first one close, second one ruther down corridor)
+        - short corridor with doorway to the right into a larger room
+            - maybe a window halfway through the corridor to the larger room, where you can git a few targets while running? Also gives clue to room shape
+        - warehouse style room with boxes and ~5 targets, catwalk on back right corner with exit doorway towards neg X direction
+        - jump on a few boxes to reach catwalk
+        - final leap out of parkour course onto those large blocks I already placed? Might be fun and doesn't matter if you don't make the jump
 - export windows, linux and web builds
+- show quit button on esc and press it to close app
+- only show the game itself on windows builds, atm a terminal opens first and after that the game window
 
 
 Extra:
