@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use avian_first_person_shooter_test::{
     player::{PlayerPlugin, player_weapon_collision_hook::PlayerWeaponCollisionHooks},
     utilities::UtilitiesPlugin,
