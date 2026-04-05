@@ -31,7 +31,6 @@ Info and documentation for development.
         - final leap out of parkour course onto those large blocks I already placed? Might be fun and doesn't matter if you don't make the jump
 - export windows, linux and web builds
 - show quit button on esc and press it to close app
-- only show the game itself on windows builds, atm a terminal opens first and after that the game window
 
 
 Extra:
