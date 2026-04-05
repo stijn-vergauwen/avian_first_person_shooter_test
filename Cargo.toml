@@ -13,6 +13,9 @@ ron = "0.12.1"
 serde = "1.0.228"
 thiserror = "2.0.18"
 
+[target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dependencies]
+getrandom = { version = "0.4", features = ["wasm_js"] }
+
 [features]
 default = ["dev"] # This removes the need to add '--features dev' to your cargo command, but adds the need to add '--no-default-features' when building for release or distribution
 dev = ["bevy/dynamic_linking", "bevy/file_watcher", "bevy/debug"]
