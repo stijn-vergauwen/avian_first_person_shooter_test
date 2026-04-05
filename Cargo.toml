@@ -4,20 +4,35 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.18.1", features = [
-    "dynamic_linking",
-    "file_watcher",
-    "experimental_bevy_feathers",
-    "debug",
-] }
+bevy = { version = "0.18.1", features = ["experimental_bevy_feathers"] }
 avian3d = { version = "0.6.1" }
+log = { version = "0.4.29", features = ["max_level_debug"] }
+tracing = { version = "0.1.44", default-features = false }
 rand = "0.10.0"
 ron = "0.12.1"
 serde = "1.0.228"
 thiserror = "2.0.18"
 
-[profile.dev]
-opt-level = 1
+[features]
+default = ["dev"] # This removes the need to add '--features dev' to your cargo command, but adds the need to add '--no-default-features' when building for release or distribution
+dev = ["bevy/dynamic_linking", "bevy/file_watcher", "bevy/debug"]
+
+[profile.dev] # Build with command: cargo build --features dev
+debug = 0
+strip = "debuginfo"
+opt-level = 0
 
 [profile.dev.package."*"]
+opt-level = 2
+
+[profile.release] # Build with command: cargo build --release --no-default-features
 opt-level = 3
+panic = 'abort'
+debug = 0
+strip = "debuginfo"
+
+[profile.distribution] # Build with command: cargo build --profile distribution --no-default-features -F tracing/release_max_level_off -F log/release_max_level_off
+inherits = "release"
+strip = true
+lto = "thin"
+codegen-units = 1

@@ -1,0 +1,26 @@
+[alias]
+
+# === Run aliases ===
+
+# Default cargo alias for run (added for reference but can be removed)
+# run -> for iterative builds during development, includes stuff like dynamic linking and hot-reloading
+r = "run"
+
+# run release -> for testing release builds
+rr = "run --release --no-default-features"
+
+# run distribution -> for final distribution build
+rd = "run --profile distribution --no-default-features -F tracing/release_max_level_off -F log/release_max_level_off"
+
+
+# === Build aliases ===
+
+# Default cargo alias for build (added for reference but can be removed)
+# build -> for iterative builds during development, includes stuff like dynamic linking and hot-reloading
+b = "build"
+
+# build release -> for testing release builds
+br = "build --release --no-default-features"
+
+# build distribution -> for final distribution build
+bd = "build --profile distribution --no-default-features -F tracing/release_max_level_off -F log/release_max_level_off"
