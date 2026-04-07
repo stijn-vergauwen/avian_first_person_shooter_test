@@ -14,7 +14,6 @@ Info and documentation for development.
 
 
 ## Backlog
-- export windows, linux and web builds
 - remake gym area
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
     - What do I want in this parkour course?:
