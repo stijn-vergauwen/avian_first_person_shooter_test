@@ -306,6 +306,7 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                             row_gap: px(6.0),
                             ..default()
                         },
+                        #[cfg(not(target_family = "wasm"))]
                         children![
                             (
                                 Button,
@@ -326,8 +327,19 @@ fn spawn_inspector_overlay(mut commands: Commands) {
                                 BackgroundColor(Color::from(SKY_600)),
                                 observe(on_save_button_click),
                                 children![Text::new("Save configuration")],
-                            )
+                            ),
                         ],
+                        #[cfg(target_family = "wasm")]
+                        children![(
+                            Button,
+                            Node {
+                                padding: UiRect::all(Val::Px(10.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::from(NEUTRAL_500)),
+                            observe(on_reset_config_button_click),
+                            children![Text::new("Reset configuration")],
+                        )],
                     ));
                 });
 
@@ -439,6 +451,7 @@ fn on_default_orientation_button_click(
     orientation.0 = default.map_or(Quat::IDENTITY, |orientation| orientation.value());
 }
 
+#[cfg(not(target_family = "wasm"))]
 fn on_save_button_click(
     _: On<Pointer<Click>>,
     grabbed_object: Res<GrabbedObject>,

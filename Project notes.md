@@ -14,6 +14,7 @@ Info and documentation for development.
 
 
 ## Backlog
+- export windows, linux and web builds
 - remake gym area
     - make parkour course where you go over ramps and around corners and have a few spots where you can shoot targets
     - What do I want in this parkour course?:
@@ -29,7 +30,6 @@ Info and documentation for development.
         - warehouse style room with boxes and ~5 targets, catwalk on back right corner with exit doorway towards neg X direction
         - jump on a few boxes to reach catwalk
         - final leap out of parkour course onto those large blocks I already placed? Might be fun and doesn't matter if you don't make the jump
-- export windows, linux and web builds
 
 
 Extra:

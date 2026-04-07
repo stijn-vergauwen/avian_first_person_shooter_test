@@ -49,8 +49,10 @@ struct SpawnWeapon {
 }
 
 fn load_weapon_configs(asset_server: Res<AssetServer>, mut commands: Commands) {
-    let mut weapon_config_handles = Vec::new();
+    let mut weapon_config_file_names = Vec::new();
 
+    // Read all the file names in the weapons folder on non-web builds
+    #[cfg(not(target_family = "wasm"))]
     if let Ok(read_dir) = fs::read_dir("assets/weapons") {
         for entry in read_dir.filter_map(|entry| entry.ok()) {
             let file_name = entry
@@ -58,12 +60,25 @@ fn load_weapon_configs(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .into_string()
                 .expect("OsString of file name should always be convertable to String.");
 
-            let path = format!("weapons/{}", file_name);
-            let weapon_config_handle = asset_server.load::<WeaponConfig>(path);
-
-            weapon_config_handles.push(weapon_config_handle);
+            weapon_config_file_names.push(file_name);
         }
+
+        weapon_config_file_names.sort();
     }
+
+    // Hardcode the file names on web builds because std::fs module doesn't work on web
+    #[cfg(target_family = "wasm")]
+    {
+        weapon_config_file_names = vec!["default_rifle.ron", "heavy_rifle.ron", "smg.ron"];
+    }
+
+    let weapon_config_handles = weapon_config_file_names
+        .into_iter()
+        .map(|file_name| {
+            let path = format!("weapons/{}", file_name);
+            asset_server.load::<WeaponConfig>(path)
+        })
+        .collect();
 
     commands.insert_resource(WeaponsToSpawn {
         weapon_config_handles,
