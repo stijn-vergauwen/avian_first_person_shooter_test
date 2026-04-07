@@ -2,7 +2,7 @@ use bevy::{color::palettes::tailwind::*, prelude::*};
 
 use crate::{
     player::grabbed_object::GrabbedObject,
-    utilities::system_sets::DisplaySystems,
+    utilities::system_sets::UiSystems,
     world::{grabbable_object::GrabbableObject, interaction_target::PlayerInteractionTarget},
 };
 
@@ -11,7 +11,7 @@ pub struct CrosshairPlugin;
 impl Plugin for CrosshairPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_crosshair)
-            .add_systems(Update, update_crosshair_color.in_set(DisplaySystems));
+            .add_systems(Update, update_crosshair_color.in_set(UiSystems::UpdateUi));
     }
 }
 

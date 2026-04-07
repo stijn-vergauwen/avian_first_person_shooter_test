@@ -9,7 +9,9 @@ use crate::{
     },
 };
 
-use super::grabbed_object::HoldPosition;
+use super::{
+    escape_menu::EscapeMenuState, grabbed_object::HoldPosition, inspector_mode::InspectorModeState,
+};
 
 pub struct GrabbedWeaponPlugin;
 
@@ -17,7 +19,11 @@ impl Plugin for GrabbedWeaponPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (toggle_weapon_trigger, aim_down_sight).in_set(InputSystems),
+            (toggle_weapon_trigger, aim_down_sight)
+                .run_if(
+                    in_state(InspectorModeState::Disabled).and(in_state(EscapeMenuState::Disabled)),
+                )
+                .in_set(InputSystems),
         );
     }
 }
@@ -25,12 +31,10 @@ impl Plugin for GrabbedWeaponPlugin {
 fn toggle_weapon_trigger(
     mouse_input: Res<ButtonInput<MouseButton>>,
     grabbed_object: Res<GrabbedObject>,
-    hold_position: Res<HoldPosition>,
     weapons_query: Query<&Weapon>,
     mut commands: Commands,
 ) {
-    if *hold_position != HoldPosition::Inspecting
-        && let Some(grabbed_entity) = grabbed_object.entity
+    if let Some(grabbed_entity) = grabbed_object.entity
         && weapons_query.contains(grabbed_entity)
     {
         if mouse_input.just_pressed(MouseButton::Left) {

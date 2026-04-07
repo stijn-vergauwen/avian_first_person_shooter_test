@@ -12,7 +12,7 @@ use crate::{
     world::{character::SetCharacterActive, grabbable_object::GrabOrientation},
 };
 
-use super::{Player, grabbed_object::HoldPosition};
+use super::{Player, escape_menu::EscapeMenuState, grabbed_object::HoldPosition};
 
 pub struct InspectorModePlugin;
 
@@ -30,7 +30,9 @@ impl Plugin for InspectorModePlugin {
             )
             .add_systems(
                 Update,
-                toggle_inspector_mode_on_keypress.in_set(InputSystems),
+                toggle_inspector_mode_on_keypress
+                    .run_if(in_state(EscapeMenuState::Disabled))
+                    .in_set(InputSystems),
             )
             .add_observer(set_cursor_icon_on_pointer_event::<Over>(
                 SystemCursorIcon::Pointer,
@@ -51,12 +53,11 @@ pub enum InspectorModeState {
 
 fn toggle_inspector_mode_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    hold_position: Res<HoldPosition>,
     inspector_state: Res<State<InspectorModeState>>,
     mut next_inspector_state: ResMut<NextState<InspectorModeState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyT)
-        || *hold_position == HoldPosition::Inspecting
+        || *inspector_state == InspectorModeState::Enabled
             && keyboard_input.just_pressed(KeyCode::Escape)
     {
         let next_state = match inspector_state.get() {

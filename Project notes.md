@@ -30,7 +30,6 @@ Info and documentation for development.
         - jump on a few boxes to reach catwalk
         - final leap out of parkour course onto those large blocks I already placed? Might be fun and doesn't matter if you don't make the jump
 - export windows, linux and web builds
-- show quit button on esc and press it to close app
 
 
 Extra:
