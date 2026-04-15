@@ -48,8 +48,8 @@ fn main() {
         .add_plugins((
             default_plugins,
             PhysicsPlugins::default().with_collision_hooks::<PlayerWeaponCollisionHooks>(),
-            #[cfg(feature = "dev")]
-            PhysicsDebugPlugin,
+            // #[cfg(feature = "dev")]
+            // PhysicsDebugPlugin,
             PhysicsPickingPlugin,
             FeathersPlugins,
             WorldPlugin,
