@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::PURPLE_500, prelude::*};
 
@@ -57,16 +55,27 @@ fn spawn_parkour_course_targets(
     mut commands: Commands,
     standing_target_assets: Res<StandingTargetAssets>,
 ) {
-    spawn_falling_standing_target(
-        &mut commands,
-        &standing_target_assets,
-        Transform {
-            translation: Vec3::new(35.0, 0.06, 60.0),
-            rotation: Quat::from_axis_angle(Vec3::Y, PI),
-            ..default()
-        },
-        None,
-    );
+    let standing_targets_spawn_data: Vec<(Vec3, f32)> = vec![
+        (Vec3::new(27.0, 0.06, 53.2), 0.0), // in hallway
+        (Vec3::new(46.0, 0.06, 51.5), 90.0), // in hallway
+        (Vec3::new(37.2, 0.06, 62.8), -110.0), // behind container, visible through window
+        (Vec3::new(34.5, 0.06, 65.5), -60.0), // behind container, visible through window
+        (Vec3::new(33.0, 4.16, 69.0), -60.0), // on catwalk
+        (Vec3::new(23.5, 1.06, 66.5), -60.0), // behind boxes with ramp
+    ];
+
+    for spawn_data in standing_targets_spawn_data {
+        spawn_falling_standing_target(
+            &mut commands,
+            &standing_target_assets,
+            Transform {
+                translation: spawn_data.0,
+                rotation: Quat::from_axis_angle(Vec3::Y, spawn_data.1.to_radians()),
+                ..default()
+            },
+            None,
+        );
+    }
 }
 
 fn draw_point_light_gizmos(

@@ -39,6 +39,7 @@ fn spawn_player(
     skybox_assets: Res<SkyboxAssets>,
 ) {
     let start_position = Vec3::new(0.0, 0.0, 0.0);
+    // let start_position = Vec3::new(10.0, 1.2, 45.0); // in front of parkour course
 
     // Spawn root
 
@@ -97,7 +98,7 @@ fn spawn_player(
         .id();
 
     // Spawn head mesh
-    
+
     let head_shape = Cuboid::from_length(0.35);
 
     let player_head_mesh_entity = commands
@@ -167,7 +168,7 @@ fn spawn_player(
         .entity(player_root_entity)
         .insert(Grounded::from_config(GroundedConfig {
             raycast_height_offset: 0.05,
-            max_distance: 0.08,
+            max_distance: 0.12,
             query_filter: SpatialQueryFilter::from_excluded_entities(vec![player_body_mesh_entity]),
         }));
 }
