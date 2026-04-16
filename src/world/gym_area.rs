@@ -1,14 +1,21 @@
+use std::f32::consts::PI;
+
 use avian3d::prelude::*;
 use bevy::{color::palettes::tailwind::PURPLE_500, prelude::*};
 
 use crate::utilities::DrawGizmos;
 
+use super::shooting_targets::{StandingTargetAssets, spawn_falling_standing_target};
+
 pub struct GymAreaPlugin;
 
 impl Plugin for GymAreaPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_static_entities)
-            .add_systems(Update, draw_point_light_gizmos);
+        app.add_systems(
+            Startup,
+            (spawn_static_entities, spawn_parkour_course_targets),
+        )
+        .add_systems(Update, draw_point_light_gizmos);
     }
 }
 
@@ -44,6 +51,22 @@ fn spawn_static_entities(mut commands: Commands, asset_server: Res<AssetServer>)
             DrawGizmos,
         ));
     }
+}
+
+fn spawn_parkour_course_targets(
+    mut commands: Commands,
+    standing_target_assets: Res<StandingTargetAssets>,
+) {
+    spawn_falling_standing_target(
+        &mut commands,
+        &standing_target_assets,
+        Transform {
+            translation: Vec3::new(35.0, 0.06, 60.0),
+            rotation: Quat::from_axis_angle(Vec3::Y, PI),
+            ..default()
+        },
+        None,
+    );
 }
 
 fn draw_point_light_gizmos(

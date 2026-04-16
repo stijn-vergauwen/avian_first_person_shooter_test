@@ -1,56 +1,27 @@
-mod shooting_targets;
-
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Duration};
 
 use avian3d::prelude::*;
-use bevy::{color::palettes::tailwind::NEUTRAL_700, prelude::*};
+use bevy::prelude::*;
 use rand::random_range;
-use shooting_targets::{
-    ShootingTargetsPlugin, spawn_falling_standing_target, spawn_rotating_standing_target,
+
+use super::shooting_targets::{
+    ResetAfterDuration, StandingTargetAssets, spawn_falling_standing_target,
+    spawn_rotating_standing_target,
 };
 
 pub struct ShootingRangeAreaPlugin;
 
 impl Plugin for ShootingRangeAreaPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(ShootingTargetsPlugin)
-            .add_systems(PreStartup, setup_assets)
-            .add_systems(
-                Startup,
-                (
-                    spawn_static_entities,
-                    spawn_targets_in_lanes,
-                    spawn_target_props,
-                ),
-            );
+        app.add_systems(
+            Startup,
+            (
+                spawn_static_entities,
+                spawn_targets_in_lanes,
+                spawn_target_props,
+            ),
+        );
     }
-}
-
-#[derive(Resource)]
-struct StandingTargetAssets {
-    stand_shape: Cuboid,
-    stand_mesh: Handle<Mesh>,
-    stand_material: Handle<StandardMaterial>,
-    target_model: Handle<Scene>,
-}
-
-fn setup_assets(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
-) {
-    let stand_shape = Cuboid::new(0.1, 0.8, 0.1);
-    let stand_mesh = meshes.add(stand_shape);
-    let stand_material = materials.add(Color::from(NEUTRAL_700));
-    let target_model = asset_server.load("models/Shooting target.glb#Scene0");
-
-    commands.insert_resource(StandingTargetAssets {
-        stand_shape,
-        stand_mesh,
-        stand_material,
-        target_model,
-    });
 }
 
 fn spawn_static_entities(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -80,6 +51,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     spawn_falling_standing_target(
@@ -90,6 +62,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     spawn_falling_standing_target(
@@ -100,6 +73,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     // Lane 2
@@ -111,6 +85,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     spawn_falling_standing_target(
@@ -121,6 +96,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     spawn_falling_standing_target(
@@ -131,6 +107,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     // Lane 3
@@ -173,6 +150,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     spawn_falling_standing_target(
@@ -183,6 +161,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     spawn_falling_standing_target(
@@ -193,6 +172,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     spawn_falling_standing_target(
@@ -203,6 +183,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 
     spawn_falling_standing_target(
@@ -213,6 +194,7 @@ fn spawn_targets_in_lanes(
             rotation: Quat::from_axis_angle(Vec3::Y, PI),
             ..default()
         },
+        Some(ResetAfterDuration::new(Duration::from_secs(2))),
     );
 }
 

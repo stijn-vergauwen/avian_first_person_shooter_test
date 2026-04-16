@@ -1,7 +1,7 @@
 use std::{f32::consts::PI, time::Duration};
 
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{color::palettes::tailwind::NEUTRAL_700, prelude::*};
 
 use crate::utilities::{
     pd_controller::config::PdControllerConfig,
@@ -9,15 +9,14 @@ use crate::utilities::{
     system_sets::{DataSystems, InputSystems},
 };
 
-use super::StandingTargetAssets;
-
 const DISTANCE_TO_TARGET_THRESHOLD: f32 = 0.01;
 
 pub struct ShootingTargetsPlugin;
 
 impl Plugin for ShootingTargetsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, enable_controllers_on_key.in_set(InputSystems))
+        app.add_systems(PreStartup, setup_assets)
+            .add_systems(Update, enable_controllers_on_key.in_set(InputSystems))
             .add_systems(
                 FixedUpdate,
                 (
@@ -32,20 +31,47 @@ impl Plugin for ShootingTargetsPlugin {
     }
 }
 
+#[derive(Resource)]
+pub struct StandingTargetAssets {
+    stand_shape: Cuboid,
+    stand_mesh: Handle<Mesh>,
+    stand_material: Handle<StandardMaterial>,
+    target_model: Handle<Scene>,
+}
+
+fn setup_assets(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    let stand_shape = Cuboid::new(0.1, 0.8, 0.1);
+    let stand_mesh = meshes.add(stand_shape);
+    let stand_material = materials.add(Color::from(NEUTRAL_700));
+    let target_model = asset_server.load("models/Shooting target.glb#Scene0");
+
+    commands.insert_resource(StandingTargetAssets {
+        stand_shape,
+        stand_mesh,
+        stand_material,
+        target_model,
+    });
+}
+
 #[derive(Component)]
-struct TargetResetController {
+pub struct TargetResetController {
     controller: QuaternionPdController,
     is_enabled: bool,
 }
 
 #[derive(Component)]
-struct ResetAfterDuration {
+pub struct ResetAfterDuration {
     outside_threshold_since: Option<Duration>,
     reset_after: Duration,
 }
 
 impl ResetAfterDuration {
-    fn new(reset_after: Duration) -> Self {
+    pub fn new(reset_after: Duration) -> Self {
         Self {
             outside_threshold_since: None,
             reset_after,
@@ -110,24 +136,28 @@ pub fn spawn_falling_standing_target(
     commands: &mut Commands,
     assets: &StandingTargetAssets,
     transform: Transform,
+    reset_after_duration: Option<ResetAfterDuration>,
 ) {
     let root = commands.spawn((transform, RigidBody::Static)).id();
-    let pivot_point = commands
-        .spawn((
-            transform,
-            Visibility::default(),
-            RigidBody::Dynamic,
-            ConstantLocalAngularAcceleration(Vec3::NEG_X * 30.0),
-            TargetResetController {
-                controller: QuaternionPdController::with_start_position(
-                    PdControllerConfig::from_parameters(1.2, 1.0, 0.0),
-                    transform.rotation,
-                ),
-                is_enabled: false,
-            },
-            ResetAfterDuration::new(Duration::from_secs(2)),
-        ))
-        .id();
+    let mut pivot_point_commands = commands.spawn((
+        transform,
+        Visibility::default(),
+        RigidBody::Dynamic,
+        ConstantLocalAngularAcceleration(Vec3::NEG_X * 30.0),
+        TargetResetController {
+            controller: QuaternionPdController::with_start_position(
+                PdControllerConfig::from_parameters(1.2, 1.0, 0.0),
+                transform.rotation,
+            ),
+            is_enabled: false,
+        },
+    ));
+
+    if let Some(reset_after_duration) = reset_after_duration {
+        pivot_point_commands.insert(reset_after_duration);
+    }
+
+    let pivot_point = pivot_point_commands.id();
 
     commands.spawn(
         RevoluteJoint::new(root, pivot_point)

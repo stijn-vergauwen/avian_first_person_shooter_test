@@ -6,9 +6,10 @@ pub mod grounded;
 mod gym_area;
 pub mod interaction_target;
 mod shooting_range_area;
+pub mod shooting_targets;
+pub mod skybox;
 mod wall_mirror;
 pub mod weapons;
-pub mod skybox;
 
 use std::f32::consts::PI;
 
@@ -21,6 +22,7 @@ use bevy::{
 };
 use grabbable_object::GrabbableObjectPlugin;
 use rand::RngExt;
+use shooting_targets::ShootingTargetsPlugin;
 use skybox::SkyboxPlugin;
 
 use crate::{
@@ -57,6 +59,7 @@ impl Plugin for WorldPlugin {
             ShootingRangeAreaPlugin,
             GymAreaPlugin,
             SkyboxPlugin,
+            ShootingTargetsPlugin,
         ))
         .insert_resource(GlobalAmbientLight {
             color: Color::from(BLUE_300),
