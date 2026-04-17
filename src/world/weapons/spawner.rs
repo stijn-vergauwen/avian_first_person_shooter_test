@@ -33,15 +33,6 @@ struct WeaponsToSpawn {
     weapon_config_handles: Vec<Handle<WeaponConfig>>,
 }
 
-impl WeaponsToSpawn {
-    fn take_handle_with_id(&mut self, id: AssetId<WeaponConfig>) -> Option<Handle<WeaponConfig>> {
-        self.weapon_config_handles
-            .iter()
-            .position(|handle| handle.id() == id)
-            .map(|index| self.weapon_config_handles.swap_remove(index))
-    }
-}
-
 #[derive(Event)]
 struct SpawnWeapon {
     config: Handle<WeaponConfig>,
@@ -87,7 +78,7 @@ fn load_weapon_configs(asset_server: Res<AssetServer>, mut commands: Commands) {
 
 fn spawn_weapon_when_config_loaded(
     mut reader: MessageReader<AssetEvent<WeaponConfig>>,
-    mut weapons_to_spawn: ResMut<WeaponsToSpawn>,
+    weapons_to_spawn: Res<WeaponsToSpawn>,
     mut commands: Commands,
 ) {
     for message in reader.read() {
@@ -95,13 +86,15 @@ fn spawn_weapon_when_config_loaded(
             continue;
         };
 
-        let Some(config_handle) = weapons_to_spawn.take_handle_with_id(*id) else {
+        let Some(config_handle_index) = weapons_to_spawn.weapon_config_handles.iter().position(|handle| handle.id() == *id) else {
             continue;
         };
 
+        let config = weapons_to_spawn.weapon_config_handles[config_handle_index].clone();
+
         commands.trigger(SpawnWeapon {
-            config: config_handle,
-            transform: calculate_weapon_spawn_transform(&weapons_to_spawn),
+            config,
+            transform: calculate_weapon_spawn_transform(config_handle_index),
         });
     }
 }
@@ -139,8 +132,8 @@ fn on_spawn_weapon(
     }
 }
 
-fn calculate_weapon_spawn_transform(weapons_to_spawn: &WeaponsToSpawn) -> Transform {
-    let position_offset = Vec3::NEG_Z * weapons_to_spawn.weapon_config_handles.len() as f32;
+fn calculate_weapon_spawn_transform(handle_index: usize) -> Transform {
+    let position_offset = Vec3::NEG_Z * handle_index as f32;
     Transform {
         translation: TABLE_POSITION + Vec3::new(0.0, 0.5, 3.0) + position_offset,
         rotation: Quat::from_euler(EulerRot::YXZ, 20f32.to_radians(), 0.0, 90f32.to_radians()),

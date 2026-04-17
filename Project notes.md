@@ -29,7 +29,6 @@ Info and documentation for development.
         - warehouse style room with boxes and ~5 targets, catwalk on back right corner with exit doorway towards neg X direction
         - jump on a few boxes to reach catwalk
         - final leap out of parkour course onto those large blocks I already placed? Might be fun and doesn't matter if you don't make the jump
-- fix order of spawned weapons on table, I thought the file_names.sort() fixed it but it looks like the issue happens later down the line (probably during spawning? random order of asset loading being completed?)
 
 
 Extra:
