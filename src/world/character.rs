@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-const MOVEMENT_STRENGTH: f32 = 260.0;
+const MOVEMENT_STRENGTH: f32 = 230.0;
 
 pub struct CharacterPlugin;
 

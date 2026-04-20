@@ -27,9 +27,9 @@ const MOVEMENT_KEYBINDS: MovementKeybinds = MovementKeybinds {
     run_key: KeyCode::ShiftLeft,
 };
 
-const WALKING_SPEED: f32 = 5.0;
-const RUNNING_SPEED: f32 = 10.0;
-const JUMP_FORCE: f32 = 350.0;
+const WALKING_SPEED: f32 = 4.5;
+const RUNNING_SPEED: f32 = 9.0;
+const JUMP_FORCE: f32 = 310.0;
 
 /// Mouse sensitivity calculated as: how many pixels the mouse needs to move in a direction to rotate by 1 radian in that direction.
 /// - Higher value = less sensitive.

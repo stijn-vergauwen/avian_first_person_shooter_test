@@ -28,6 +28,14 @@ fn spawn_static_entities(mut commands: Commands, asset_server: Res<AssetServer>)
         ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
     ));
 
+    commands.spawn((
+        SceneRoot(asset_server.load("models/Outdoor table.glb#Scene0")),
+        Transform::from_xyz(44.0, 0.0, 69.5),
+        RigidBody::Dynamic,
+        ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh)
+            .with_default_density(ColliderDensity(600.0)),
+    ));
+
     let light_positions = [
         Vec3::new(0.0, 5.0, 22.0),
         Vec3::new(28.0, 2.8, 44.0),
@@ -46,7 +54,6 @@ fn spawn_static_entities(mut commands: Commands, asset_server: Res<AssetServer>)
                 ..default()
             },
             Transform::from_translation(position),
-            DrawGizmos,
         ));
     }
 }
@@ -56,12 +63,13 @@ fn spawn_parkour_course_targets(
     standing_target_assets: Res<StandingTargetAssets>,
 ) {
     let standing_targets_spawn_data: Vec<(Vec3, f32)> = vec![
-        (Vec3::new(27.0, 0.06, 53.2), 0.0), // in hallway
-        (Vec3::new(46.0, 0.06, 51.5), 90.0), // in hallway
+        (Vec3::new(27.0, 0.06, 53.2), 0.0),    // in hallway
+        (Vec3::new(46.0, 0.06, 51.5), 90.0),   // in hallway
+        (Vec3::new(42.3, 0.06, 55.8), -90.0), // next to doorway into large room
         (Vec3::new(37.2, 0.06, 62.8), -110.0), // behind container, visible through window
-        (Vec3::new(34.5, 0.06, 65.5), -60.0), // behind container, visible through window
-        (Vec3::new(33.0, 4.16, 69.0), -60.0), // on catwalk
-        (Vec3::new(23.5, 1.06, 66.5), -60.0), // behind boxes with ramp
+        (Vec3::new(34.5, 0.06, 65.5), -60.0),  // behind container, visible through window
+        (Vec3::new(33.0, 4.16, 69.0), -60.0),  // on catwalk
+        (Vec3::new(23.5, 1.06, 66.5), -60.0),  // behind boxes with ramp
     ];
 
     for spawn_data in standing_targets_spawn_data {
