@@ -2,8 +2,7 @@ use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
 
 use crate::{
     player::{
-        JUMP_FORCE, MOVEMENT_KEYBINDS, MovementKeybinds, PIXELS_PER_RADIAN, Player, RUNNING_SPEED,
-        WALKING_SPEED,
+        JUMP_FORCE, MOVEMENT_KEYBINDS, MovementKeybinds, Player, RUNNING_SPEED, WALKING_SPEED,
     },
     utilities::{euler_angle::EulerAngle, system_sets::InputSystems},
     world::{
@@ -12,6 +11,8 @@ use crate::{
         desired_rotation::{DesiredRotation, RotationType, SetDesiredRotation},
     },
 };
+
+use super::MouseSensitivity;
 
 /// Upper threshold for delta mouse motion in a single update, this is to ignore motion spikes caused by input through Parsec.
 const UPPER_MOUSE_MOTION_THRESHOLD: f32 = 1000.0;
@@ -60,6 +61,7 @@ fn handle_movement_input(
 
 fn handle_rotation_input(
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
+    mouse_sensitivity: Res<MouseSensitivity>,
     player: Single<(Entity, &Character), With<Player>>,
     mut commands: Commands,
 ) {
@@ -67,7 +69,9 @@ fn handle_rotation_input(
         return;
     }
 
-    if let Some(desired_rotation) = calculate_desired_rotation(accumulated_mouse_motion.delta) {
+    if let Some(desired_rotation) =
+        calculate_desired_rotation(accumulated_mouse_motion.delta, &mouse_sensitivity)
+    {
         commands.trigger(SetDesiredRotation {
             entity: player.0,
             desired_rotation,
@@ -115,23 +119,29 @@ fn move_direction_from_input(
     Dir3::new(direction).ok()
 }
 
-fn calculate_desired_rotation(delta_motion: Vec2) -> Option<DesiredRotation> {
+fn calculate_desired_rotation(
+    delta_motion: Vec2,
+    mouse_sensitivity: &MouseSensitivity,
+) -> Option<DesiredRotation> {
     if delta_motion.length() > UPPER_MOUSE_MOTION_THRESHOLD {
         println!("Mouse motion above threshold!");
     }
 
     (delta_motion.length() > 0.0 && delta_motion.length() < UPPER_MOUSE_MOTION_THRESHOLD).then(
         || DesiredRotation {
-            rotation: delta_rotation_from_mouse_motion(delta_motion),
+            rotation: delta_rotation_from_mouse_motion(delta_motion, mouse_sensitivity),
             rotation_type: RotationType::DeltaRotation,
         },
     )
 }
 
-fn delta_rotation_from_mouse_motion(delta_motion: Vec2) -> EulerAngle {
+fn delta_rotation_from_mouse_motion(
+    delta_motion: Vec2,
+    mouse_sensitivity: &MouseSensitivity,
+) -> EulerAngle {
     EulerAngle::from_radians(
-        -delta_motion.y / PIXELS_PER_RADIAN,
-        -delta_motion.x / PIXELS_PER_RADIAN,
+        -delta_motion.y / mouse_sensitivity.pixels_per_radian,
+        -delta_motion.x / mouse_sensitivity.pixels_per_radian,
         0.0,
         EulerRot::default(),
     )

@@ -14,8 +14,7 @@ Info and documentation for development.
 
 
 ## Backlog
-- add section with background color to esc menu
-- add slider for mouse sensitivity to esc menu, doesn't need to save to disk
+- Done!
 
 Extra:
 - add tabs to inspector menu

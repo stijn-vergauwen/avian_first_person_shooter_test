@@ -31,9 +31,7 @@ const WALKING_SPEED: f32 = 4.5;
 const RUNNING_SPEED: f32 = 9.0;
 const JUMP_FORCE: f32 = 310.0;
 
-/// Mouse sensitivity calculated as: how many pixels the mouse needs to move in a direction to rotate by 1 radian in that direction.
-/// - Higher value = less sensitive.
-const PIXELS_PER_RADIAN: f32 = 1400f32;
+const DEFAULT_MOUSE_SENSITIVITY: f32 = 1600f32;
 
 const MAX_GRAB_DISTANCE: f32 = 2.5;
 
@@ -50,7 +48,10 @@ impl Plugin for PlayerPlugin {
             GrabbedWeaponPlugin,
             InspectorModePlugin,
             EscapeMenuPlugin,
-        ));
+        ))
+        .insert_resource(MouseSensitivity {
+            pixels_per_radian: DEFAULT_MOUSE_SENSITIVITY,
+        });
     }
 }
 
@@ -77,4 +78,11 @@ struct MovementKeybinds {
     pub right_key: KeyCode,
     pub jump_key: KeyCode,
     pub run_key: KeyCode,
+}
+
+/// Mouse sensitivity calculated as: how many pixels the mouse needs to move in a direction to rotate by 1 radian in that direction.
+/// - Higher value = less sensitive.
+#[derive(Resource, Clone, Copy)]
+struct MouseSensitivity {
+    pixels_per_radian: f32,
 }

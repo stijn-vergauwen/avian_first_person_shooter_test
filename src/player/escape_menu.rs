@@ -1,13 +1,14 @@
 use bevy::{
-    color::palettes::tailwind::SKY_600,
+    color::palettes::tailwind::{NEUTRAL_600, SKY_600},
+    feathers::controls::{SliderProps, slider},
     prelude::*,
-    ui_widgets::observe,
+    ui_widgets::{SliderPrecision, SliderStep, ValueChange, observe, slider_self_update},
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 
 use crate::{utilities::system_sets::InputSystems, world::character::SetCharacterActive};
 
-use super::{Player, inspector_mode::InspectorModeState};
+use super::{MouseSensitivity, Player, inspector_mode::InspectorModeState};
 
 pub struct EscapeMenuPlugin;
 
@@ -55,14 +56,55 @@ fn spawn_escape_menu(mut commands: Commands) {
             },
         ),
         children![(
-            Button,
             Node {
-                padding: UiRect::all(Val::Px(10.0)),
+                padding: UiRect::all(Val::Px(16.0)),
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
                 ..default()
             },
-            BackgroundColor(Color::from(SKY_600)),
-            observe(on_exit_button_click),
-            children![Text::new("Exit to desktop")],
+            BackgroundColor(Color::from(NEUTRAL_600)),
+            observe(|mut on_click: On<Pointer<Click>>| {
+                on_click.propagate(false);
+            },),
+            children![
+                (
+                    Button,
+                    Node {
+                        padding: UiRect::all(Val::Px(12.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::from(SKY_600)),
+                    observe(on_exit_button_click),
+                    children![Text::new("Exit to desktop")],
+                ),
+                (
+                    Node {
+                        margin: UiRect::top(Val::Px(40.0)),
+                        ..default()
+                    },
+                    Text::new("Settings")
+                ),
+                (
+                    Node {
+                        margin: UiRect::top(Val::Px(8.0)),
+                        ..default()
+                    },
+                    Text::new("Mouse sensitivity"),
+                    TextFont::from_font_size(16.0)
+                ),
+                (
+                    slider(
+                        SliderProps {
+                            min: 0.0,
+                            max: 100.0,
+                            value: 50.0,
+                        },
+                        (SliderPrecision(1), SliderStep(0.1)),
+                    ),
+                    observe(slider_self_update),
+                    observe(on_sensitivity_slider_changed),
+                )
+            ],
         )],
     ));
 }
@@ -116,4 +158,16 @@ fn on_escape_menu_disabled(
         entity: *player_entity,
         set_active: true,
     });
+}
+
+fn on_sensitivity_slider_changed(
+    value_change: On<ValueChange<f32>>,
+    mut mouse_sensitivity: ResMut<MouseSensitivity>,
+) {
+    let pixels_per_radian = 2600f32.lerp(600f32, value_change.value / 100.0);
+
+    // Alternative calculation, outputs exponential values to make lower sensitivities much lower as these need exponentially higher pixels_per_radian values.
+    // let pixels_per_radian = (100.0 - value_change.value).powf(2.0).clamp(0.0, 10_000.0) + 400.0;
+
+    mouse_sensitivity.pixels_per_radian = pixels_per_radian;
 }

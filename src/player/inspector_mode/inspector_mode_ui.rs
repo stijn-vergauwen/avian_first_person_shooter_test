@@ -429,12 +429,15 @@ fn on_slider_value_changed(
     grabbed_object: Res<GrabbedObject>,
     mut weapon_configs: ResMut<Assets<WeaponConfig>>,
 ) {
+    let Ok(slider_for_weapon_config) = sliders.get(value_change.source) else {
+        return;
+    };
+
     if let Some(grabbed_entity) = grabbed_object.entity
         && let Ok(weapon) = weapons.get(grabbed_entity)
     {
         let weapon_config = weapon_configs.get_mut(weapon.config()).unwrap();
 
-        let slider_for_weapon_config = sliders.get(value_change.source).unwrap();
         (slider_for_weapon_config.set_value)(weapon_config, value_change.value);
     };
 }
